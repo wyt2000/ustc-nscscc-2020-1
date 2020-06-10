@@ -4,7 +4,7 @@
 
 小组成员：
 
-- @Gaoustcer
-- @ForeverTime20
-- @misakihanayo
-- @wyt2000
+- Gaoustcer
+- ForeverTime20
+- misakihanayo
+- wyt2000
