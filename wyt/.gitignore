@@ -1,4 +1,11 @@
-*
+/*
+!/nscscc
+/nscscc/*
+!/nscscc/nscscc.srcs
+/nscscc/nscscc.srcs/*
+!/nscscc/nscscc.srcs/sources_1
+/nscscc/nscscc.srcs/sources_1/*
+!/nscscc/nscscc.srcs/sources_1/new
 !.gitignore
 !.gitkeep
 !*.md
