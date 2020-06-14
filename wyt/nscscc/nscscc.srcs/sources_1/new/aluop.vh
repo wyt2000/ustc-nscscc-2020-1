@@ -3,6 +3,7 @@
 `define EXP_BREAK       3
 `define EXP_SYSCALL     4
 `define EXP_ADDRERR     5
+`define EXP_ERET        6
 
 `define ALU_NOP         0
 `define ALU_ADD         1

@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 `include "aluop.vh"
+
 module alu(
     input clk,
     input rst,
@@ -14,82 +15,42 @@ module alu(
     output logic stall			
     );
 
-    logic [2:0] mul_counter;
-    logic [63:0] mul_res, unsigned_mul_res;
-    logic [31:0] mul_a, mul_b;
-    logic mul_sign;
-    logic mul_begin;
+    wire [63:0] mul_res;
+    reg [31:0] mul_a, mul_b;
+    reg mul_sign;
+    reg mul_begin;
+    reg mul_done;
 
-    logic [2:0] div_counter;
-    logic [63:0] unsigned_div_res;
-    logic [31:0] div_dividend, div_divisor, div_quotient, div_remainder;
-    logic div_sign, div_dividend_sign;
-    logic div_begin;
+    reg [31:0] div_dividend, div_divisor;
+    wire [31:0] div_quotient, div_remainder;
+    reg div_sign, div_dividend_sign;
+    reg div_begin;
+    reg div_done;
 
-    Multiplier multiplier (
-        .CLK        (clk), 
-        .SCLR       (rst),
-        .A          (mul_a),
-        .B          (mul_b),
-        .P          (unsigned_mul_res)
+    multiplier_control multiplier_control (
+        .clk        (clk),
+        .rst        (rst),
+        .mul_begin  (mul_begin),
+        .mul_sign   (mul_sign),
+        .mul_a      (mul_a),
+        .mul_b      (mul_b),
+        .mul_res    (mul_res),
+        .mul_done   (mul_done)
+    );
+    divider_control divider_control (
+        .clk                (clk),
+        .rst                (rst),
+        .div_begin          (div_begin),
+        .div_sign           (div_sign),
+        .div_dividend_sign  (div_dividend_sign),
+        .div_dividend       (div_dividend),
+        .div_divisor        (div_divisor),
+        .div_quotient       (div_quotient),
+        .div_remainder      (div_remainder),
+        .div_done           (div_done)
     );
 
-    Divider divider (
-        .aclk                   (clk),
-        .s_axis_divisor_tdata   (div_divisor),
-        .s_axis_divisor_tvalid  (1),
-        .s_axis_dividend_tdata  (div_dividend),
-        .s_axis_dividend_tvalid (1),
-        .m_axis_dout_tdata      (unsigned_div_res)
-    );
-
-    assign stall = mul_begin | div_begin; 
-    assign mul_res = mul_sign ? ~ unsigned_mul_res + 1 : unsigned_mul_res;
-    assign div_quotient = div_sign ? ~ unsigned_div_res[63:32] + 1 : unsigned_div_res[63:32];
-    assign div_remainder = div_dividend_sign ? ~ unsigned_div_res[31:0] + 1 : unsigned_div_res[31:0];
-
-    always_ff @(posedge clk) begin : control_multiplier
-        if(rst) begin
-            mul_a <= 0;
-            mul_b <= 0;
-            mul_counter <= 0;
-            mul_sign <= 0;
-            mul_begin <= 0;
-        end
-        else begin
-            if(mul_counter != 0) begin
-                mul_counter <= mul_counter - 1;
-            end
-            else if(mul_begin == 1) begin
-                hi_o <= mul_res[63:32];
-                lo_o <= mul_res[31:0];
-                mul_begin <= 0;
-            end
-        end
-    end
-
-    always_ff @(posedge clk) begin : control_divider
-        if(rst) begin
-            div_dividend <= 0;
-            div_divisor <= 0;
-            div_counter <= 0;
-            div_sign <= 0;
-            div_dividend_sign <= 0;
-            div_begin <= 0;
-        end
-        else begin
-            if(div_counter != 0) begin
-                div_counter <= div_counter - 1;
-            end
-            else if(div_begin == 1) begin
-                hi_o <= div_quotient;
-                lo_o <= div_remainder;
-                div_begin <= 0;
-            end
-        end
-    end
-
-
+    assign stall = mul_begin | div_begin;
 
     always_comb begin : calculate_result
         result = 0;
@@ -97,8 +58,12 @@ module alu(
         mul_sign = 0;
         mul_a = 0;
         mul_b = 0;
-        mul_counter = 0;
-        unique case (op)
+        div_begin = 0;
+        div_sign = 0;
+        div_dividend_sign = 0;
+        div_dividend = 0;
+        div_divisor = 0;
+        case (op)
             `ALU_ADD, `ALU_ADDI:
                 result = a + b;
             `ALU_ADDIU:
@@ -120,7 +85,6 @@ module alu(
                 div_dividend_sign = a[31];
                 div_dividend = a[31]? ~ a + 1 : a;
                 div_divisor = b[31]? ~ b + 1 : b;
-                div_counter = 34;
             end
 
             `ALU_DIVU: begin
@@ -129,7 +93,6 @@ module alu(
                 div_dividend_sign = 0;
                 div_dividend = a;
                 div_divisor = b;
-                div_counter = 34;
             end
 
             `ALU_MULT: begin
@@ -137,7 +100,6 @@ module alu(
                 mul_sign = a[31] ^ b[31];
                 mul_a = a[31]? ~ a + 1 : a;
                 mul_b = b[31]? ~ b + 1 : b;
-                mul_counter = 5;
             end
 
             `ALU_MULTU: begin
@@ -145,7 +107,6 @@ module alu(
                 mul_sign = 0;
                 mul_a = a;
                 mul_b = b;
-                mul_counter = 5;
             end
 
             `ALU_AND, `ALU_ANDI:
@@ -172,16 +133,12 @@ module alu(
                 result = hi_i;
             `ALU_MFLO:
                 result = lo_i;
-            `ALU_MTHI:
-                hi_o = a; 
-            `ALU_MTLO:
-                lo_o = a;
         endcase
     end
     
     always_comb begin : set_exception
         exception = 0;
-        unique case (op)
+        case (op)
             `ALU_ADD, `ALU_ADDI:
                 if((a[31] ~^ b[31]) & (a[31] ^ result[31])) 
                     exception = `EXP_OVERFLOW;
@@ -201,7 +158,32 @@ module alu(
             `ALU_LW, `ALU_SW:
                 if(result[1:0] != 2'b00)
                     exception = `EXP_ADDRERR;
+            `ALU_ERET:
+                exception = `EXP_ERET;
         endcase
+    end
+
+    always_comb begin : set_hilo
+        if(mul_done) begin
+            hi_o = mul_res[63:32];
+            lo_o = mul_res[31:0];
+        end
+        else if(div_done) begin
+            hi_o = div_quotient;
+            lo_o = div_remainder;
+        end
+        else if(op == `ALU_MTHI) begin
+            hi_o = a; 
+            lo_o = lo_i;
+        end
+        else if(op == `ALU_MTLO) begin
+            hi_o = hi_i;
+            lo_o = a;
+        end
+        else begin
+            hi_o = hi_i;
+            lo_o = lo_i;
+        end
     end
 
 endmodule
