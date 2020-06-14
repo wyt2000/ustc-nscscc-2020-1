@@ -15,6 +15,8 @@ module alu(
     output logic stall			
     );
 
+    wire [31:0] signed_extend;
+
     wire [63:0] mul_res;
     reg [31:0] mul_a, mul_b;
     reg mul_sign;
@@ -26,6 +28,9 @@ module alu(
     reg div_sign, div_dividend_sign;
     reg div_begin;
     reg div_done;
+
+    assign stall = mul_begin | div_begin;
+    assign signed_extend = { {16{b[15]}}, b[15:0] };
 
     multiplier_control multiplier_control (
         .clk        (clk),
@@ -50,8 +55,6 @@ module alu(
         .div_done           (div_done)
     );
 
-    assign stall = mul_begin | div_begin;
-
     always_comb begin : calculate_result
         result = 0;
         mul_begin = 0;
@@ -64,20 +67,22 @@ module alu(
         div_dividend = 0;
         div_divisor = 0;
         case (op)
-            `ALU_ADD, `ALU_ADDI:
+            `ALU_ADD, `ALU_ADDU:
                 result = a + b;
+            `ALU_ADDI:
+                result = a + signed_extend;
             `ALU_ADDIU:
-                result = a + $signed(b[15:0]);
+                result = a + signed_extend;
             `ALU_SUB, `ALU_SUBU:
                 result = a - b;
             `ALU_SLT:
                 result = $signed(a) < $signed(b) ? 1 : 0;
             `ALU_SLTI:
-                result = $signed(a) < $signed(b[15:0]) ? 1 : 0;
+                result = $signed(a) < $signed(signed_extend) ? 1 : 0;
             `ALU_SLTU:
                 result = a < b ? 1 : 0;
             `ALU_SLTIU:
-                result = a < $signed(b[15:0]) ? 1 : 0;
+                result = a < signed_extend ? 1 : 0;
 
             `ALU_DIV: begin
                 div_begin = 1;
@@ -128,7 +133,7 @@ module alu(
             `ALU_LB, `ALU_LBU, `ALU_SB,
             `ALU_LH, `ALU_LHU, `ALU_SH,
             `ALU_LW, `ALU_SW:
-                result = a + $signed(b[15:0]);
+                result = a + signed_extend;
             `ALU_MFHI:
                 result = hi_i;
             `ALU_MFLO:
@@ -139,9 +144,12 @@ module alu(
     always_comb begin : set_exception
         exception = 0;
         case (op)
-            `ALU_ADD, `ALU_ADDI:
+            `ALU_ADD:
                 if((a[31] ~^ b[31]) & (a[31] ^ result[31])) 
                     exception = `EXP_OVERFLOW;
+            `ALU_ADDI:
+                if((a[31] ~^ signed_extend[31]) & (a[31] ^ result[31])) 
+                exception = `EXP_OVERFLOW;
             `ALU_SUB:
                 if((a[31] ^ b[31]) & (a[31] ^ result[31]))
                     exception = `EXP_OVERFLOW; 
