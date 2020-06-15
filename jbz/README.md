@@ -1,19 +1,7 @@
-# AXI
+# 数据通路Visio模板
 
-AXI为Advanced eXtensible Interface总线协议，支持握手，突发，乱序，非对齐传输等功能。
+DataPath_tmp是Visio的数据通路文件，根据发在群里的图所画，尚未进行改动。各位如果需要可以下载下来在其基础上修改。
 
-注意：当前模块暂未实现乱序和非对齐传输。**且仍需与cache进行适配**，因为需要在cache中确定访存请求的格式。
+**目前只有控制信号线标上了名字，数据线名字还没标好。**
 
-为了满足AXI协议格式的读写请求，模块中使用有限状态机生成信号。
-
-读部分：
-
-<div align="center">
-    <img src=".\attachment\image-20200614162830835.png" style="width:70%" />
-</div>
-
-写部分：
-
-<div align="center">
-    <img src=".\attachment\image-20200614162857629.png" style="width:70%" />
-</div>
+欢迎指出错误。
