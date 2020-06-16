@@ -9,11 +9,12 @@ AXI为Advanced eXtensible Interface总线协议，支持握手，突发，�
 读部分：
 
 <div align="center">
-    <img src=".\attachment\image-20200614162830835.png" style="width:70%" />
+    <img src="..\attachment\image-20200614162830835.png" style="width:70%" />
 </div>
+
 
 写部分：
 
 <div align="center">
-    <img src=".\attachment\image-20200614162857629.png" style="width:70%" />
+    <img src="..\attachment\image-20200614162857629.png" style="width:70%" />
 </div>
