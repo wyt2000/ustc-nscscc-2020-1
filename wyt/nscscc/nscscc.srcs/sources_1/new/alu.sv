@@ -124,12 +124,18 @@ module alu(
                 result = a | b;
             `ALU_XOR, `ALU_XORI:
                 result = a ^ b;
-            `ALU_SLLV, `ALU_SLL:
+            `ALU_SLLV:
                 result = b << a[4:0];
-            `ALU_SRAV, `ALU_SRA:
+            `ALU_SLL:
+                result = b << a[10:6]; 
+            `ALU_SRAV:
                 result = $signed(b) >>> a[4:0];
-            `ALU_SRLV, `ALU_SRL:
+            `ALU_SRA:
+                result = $signed(b) >>> a[10:6];
+            `ALU_SRLV:
                 result = b >> a[4:0];
+            `ALU_SRL:
+                result = b >> a[10:6];
             `ALU_LB, `ALU_LBU, `ALU_SB,
             `ALU_LH, `ALU_LHU, `ALU_SH,
             `ALU_LW, `ALU_SW:
