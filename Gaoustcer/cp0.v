@@ -66,7 +66,7 @@ module CP0
     reg [WIDTH-1:0] Reserved7;//29
     reg [WIDTH-1:0] ErrorEPC://30
     reg [WIDTH-1:0] DESAVE;//31
-
+    assign CP0_data = Readdata;
 
     assign EPC_data=EPC;
     assign BADVADDR_data=BADVADDR;
