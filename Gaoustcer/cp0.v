@@ -4,7 +4,8 @@ module CP0
         input clk,rst,
         input [5:0] hardware_interruption,//6 hardware break
         input [1:0] software_interruption,//2 software interruption
-        input we,//write enable signal
+        input [WIDTH-1:0] we,//write enable signal
+        input general_write_in;
         input [4:0] raddr,
         output [WIDTH-1:0] CP0_data,
         input [4:0] waddr,//write address of CP0
@@ -35,7 +36,7 @@ module CP0
 );  
     reg [WIDTH-1:0] Readdata;
     reg [WIDTH-1:0] Index;//0
-    reg [WIDTH-1:0] Ramdom;//1
+    reg [WIDTH-1:0] Ramdom;//1 Ramdom number producer
     reg [WIDTH-1:0] EntryLO0;//2
     reg [WIDTH-1:0] EntryLO1;//3
     reg [WIDTH-1:0] Context;//4
@@ -45,12 +46,12 @@ module CP0
     reg [WIDTH-1:0] BADVADDR;//8 deal with the exception such as TLB miss and address error
     reg [WIDTH-1:0] count;//9 +1 every two clock cycles
     reg [WIDTH-1:0] EntryHi;//10
-    reg [WIDTH-1:0] compare;//11
-    reg [WIDTH-1:0] Status;//12
-    reg [WIDTH-1:0] cause;//13
+    reg [WIDTH-1:0] compare;//11 create the time interrupt after a certain period of time 
+    reg [WIDTH-1:0] Status;//12 The Status of the processor
+    reg [WIDTH-1:0] cause;//13 The cause of the last Interrupt
     reg [WIDTH-1:0] EPC;//14 exception address 
-    reg [WIDTH-1:0] prid;//15
-    reg [WIDTH-1:0] configure;//16    
+    reg [WIDTH-1:0] prid;//15 The information of the processor
+    reg [WIDTH-1:0] configure;//16  config some information of the processor 
     reg [WIDTH-1:0] LLAddr;//17
     reg [WIDTH-1:0] WatchLo;//18
     reg [WIDTH-1:0] WatchHi;//19
@@ -91,9 +92,10 @@ module CP0
     always@(posedge clk or posedge rst)begin
         if(rst)
             EPC<=0;
-        else if(waddr==14&&we)
-            EPC<=epc;
-        else ;
+        else if(we[14])
+            EPC<=Branch_delay?epc-4:epc;
+        else if(waddr==14&&general_write_in)
+            EPC<=Branch_delay?epc-4:epc;
 
     end
     always@(posedge clk or posedge rst) begin
@@ -110,20 +112,28 @@ module CP0
     always@(posedge clk or posedge rst) begin
         if(rst)
             BADVADDR<=0;
-        else if(we&&waddr==8)
+        else if(we[8])
             BADVADDR<=BADADDR; 
+        else if(waddr==8)
+            BADVADDR<=BADADDR;
     end
     always@(posedge clk or posedge rst) begin
         if(rst)
             prid<=0;
-        else if(waddr==5'd15&&we) 
+        else if(we[15]) 
+            prid<=pridin;
+        else if(waddr==15&&general_write_in)
             prid<=pridin;
         else prid<=prid;
     end
     always@(posedge clk or posedge rst) begin
         if(rst)
             compare<=0;
-        else if(waddr==5'd11&&we) begin
+        else if(we[11]) begin
+            compare<=comparedata;
+            reg_time_int<=(compare==count)?((compare!=1'b0)?1:0):0;
+        end
+        else if(waddr==11&&general_write_in) begin
             compare<=comparedata;
             reg_time_int<=(compare==count)?((compare!=1'b0)?1:0):0;
         end
@@ -139,7 +149,12 @@ module CP0
             Status[1]<=1'b0;//EXL 0:normal state 1:Kernel state
             Status[0]<=1'b1;//IE  1:all breaks enable 0:all not enable
         end
-        else if(waddr==12&&we) begin
+        else if(we[12]) begin
+            Status[15:8]<=interrupt_enable;
+            Status[1]<=EXL;
+            Status[0]<=IE;
+        end
+        else if(waddr==12&&general_write_in)begin
             Status[15:8]<=interrupt_enable;
             Status[1]<=EXL;
             Status[0]<=IE;
@@ -157,15 +172,18 @@ module CP0
             configure[31:16]<=0;
             configure[14:0]<=0;
         end
-        else if(waddr==16&&we)begin
+        else if(we[16])begin
             configure<=configuredata;
-
+        end
+        else if(waddr==16&&general_write_in)begin
+            configure<=configuredata;
         end
     end
     always@(posedge clk or posedge rst)begin
         if(rst)
             cause<=0;
-        else if(waddr==14&&we)begin
+        else if(we[13])begin
+            cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
             cause[31]<=Branch_delay;
             cause[15]<=(Status[0]&&Status[15]&&(Status[1]==0))?hardware_interruption[5]:1'b0;
             cause[14]<=(Status[0]&&Status[14]&&(Status[1]==0))?hardware_interruption[4]:1'b0;
@@ -177,8 +195,20 @@ module CP0
             cause[8]<=(Status[0]&&Status[8]&&(Status[1]==0))?software_interruption[0]:1'b0;
             cause[6:2]<=Exception_code;
         end 
+        else if(waddr==13&&general_write_in)begin
+            cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
+            cause[31]<=Branch_delay;
+            cause[15]<=(Status[0]&&Status[15]&&(Status[1]==0))?hardware_interruption[5]:1'b0;
+            cause[14]<=(Status[0]&&Status[14]&&(Status[1]==0))?hardware_interruption[4]:1'b0;
+            cause[13]<=(Status[0]&&Status[13]&&(Status[1]==0))?hardware_interruption[3]:1'b0;
+            cause[12]<=(Status[0]&&Status[12]&&(Status[1]==0))?hardware_interruption[2]:1'b0;
+            cause[11]<=(Status[0]&&Status[11]&&(Status[1]==0))?hardware_interruption[1]:1'b0;
+            cause[10]<=(Status[0]&&Status[10]&&(Status[1]==0))?hardware_interruption[0]:1'b0;
+            cause[9]<=(Status[0]&&Status[9]&&(Status[1]==0))?software_interruption[1]:1'b0;
+            cause[8]<=(Status[0]&&Status[8]&&(Status[1]==0))?software_interruption[0]:1'b0;
+            cause[6:2]<=Exception_code;
+        end
     end
-
     always@(posedge clk or posedge rst) begin
         if(rst) begin
             Readdata<=32'h00000000;
