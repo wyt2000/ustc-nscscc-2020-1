@@ -5,14 +5,12 @@ module alu(
     input clk,
     input rst,
     input [31:0] a, b,
-    input [5:0] op,
-    input [31:0] hi_i,
-    input [31:0] lo_i,						
+    input [5:0] op,					
     output logic [31:0] result,
     output logic [2:0]  exception,
-    output logic [31:0] hi_o,
-    output logic [31:0] lo_o,
-    output logic stall			
+    output logic [63:0] hilo,
+    output logic stall,	
+    output logic done		
     );
 
     wire [31:0] signed_extend;
@@ -29,6 +27,7 @@ module alu(
     reg div_begin;
     reg div_done;
 
+    assign done = mul_done | div_done;
     assign stall = mul_begin | div_begin;
     assign signed_extend = { {16{b[15]}}, b[15:0] };
 
@@ -140,10 +139,6 @@ module alu(
             `ALU_LH, `ALU_LHU, `ALU_SH,
             `ALU_LW, `ALU_SW:
                 result = a + signed_extend;
-            `ALU_MFHI:
-                result = hi_i;
-            `ALU_MFLO:
-                result = lo_i;
         endcase
     end
     
@@ -174,29 +169,17 @@ module alu(
                     exception = `EXP_ADDRERR;
             `ALU_ERET:
                 exception = `EXP_ERET;
+            `ALU_NOP:
+                exception = `EXP_NOP;
         endcase
     end
 
     always_comb begin : set_hilo
         if(mul_done) begin
-            hi_o = mul_res[63:32];
-            lo_o = mul_res[31:0];
+            hilo = mul_res;
         end
         else if(div_done) begin
-            hi_o = div_quotient;
-            lo_o = div_remainder;
-        end
-        else if(op == `ALU_MTHI) begin
-            hi_o = a; 
-            lo_o = lo_i;
-        end
-        else if(op == `ALU_MTLO) begin
-            hi_o = hi_i;
-            lo_o = a;
-        end
-        else begin
-            hi_o = hi_i;
-            lo_o = lo_i;
+            hilo = {div_quotient, div_remainder};
         end
     end
 

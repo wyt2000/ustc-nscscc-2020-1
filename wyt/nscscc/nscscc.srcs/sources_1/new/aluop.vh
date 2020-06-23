@@ -4,6 +4,7 @@
 `define EXP_SYSCALL     4
 `define EXP_ADDRERR     5
 `define EXP_ERET        6
+`define EXP_NOP         7
 
 `define ALU_NOP         0
 `define ALU_ADD         1
