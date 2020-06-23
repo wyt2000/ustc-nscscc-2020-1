@@ -55,9 +55,7 @@ module decoder(
                     `FUNC_MFHI,`FUNC_MFLO,
                     `FUNC_MTHI,`FUNC_MTLO:  ALUop = `ALU_ADD;
                 endcase
-            `OP_PRIV:
-                if(rs == `FUNC_ERET)ALUop = `ALU_ERET;
-                else                        ALUop = `ALU_ADD;
+            `OP_PRIV:                       ALUop = `ALU_ADD;
             `OP_ADDI:                       ALUop = `ALU_ADDI;
             `OP_ADDIU:                      ALUop = `ALU_ADDIU;
             `OP_SLTI:                       ALUop = `ALU_SLTI;

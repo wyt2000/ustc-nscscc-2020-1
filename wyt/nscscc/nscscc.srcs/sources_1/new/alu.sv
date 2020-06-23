@@ -167,8 +167,6 @@ module alu(
             `ALU_LW, `ALU_SW:
                 if(result[1:0] != 2'b00)
                     exception = `EXP_ADDRERR;
-            `ALU_ERET:
-                exception = `EXP_ERET;
             `ALU_NOP:
                 exception = `EXP_NOP;
         endcase
