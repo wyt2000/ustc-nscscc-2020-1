@@ -20,6 +20,7 @@ module Instruction_Memory(
     input [7:0] addr,
     output [31:0] data);
 //the simplified Instruction_Memory, which is read only for the processor we designed
+endmodule
 
 module IF
     #(parameter WIDTH=32)
@@ -53,7 +54,7 @@ module IF
     else if({Jump,BranchD}==2'b00)begin
         PCin=PC_add_4;
     end
-    Instruction_Mem Instruction_Memory(.clk(clk),.addr(PCout[9:2]),.data(Instruction))
+    Instruction_Mem Instruction_Memory(.clk(clk),.addr(PCout[9:2]),.data(Instruction));
 
 
 endmodule
