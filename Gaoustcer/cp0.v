@@ -5,7 +5,7 @@ module CP0
         input [5:0] hardware_interruption,//6 hardware break
         input [1:0] software_interruption,//2 software interruption
         input [WIDTH-1:0] we,//write enable signal
-        input general_write_in;
+        input general_write_in,
         input [4:0] raddr,
         output [WIDTH-1:0] CP0_data,
         input [4:0] waddr,//write address of CP0
@@ -14,7 +14,7 @@ module CP0
         input [WIDTH-1:0] configuredata,
         input [WIDTH-1:0] epc,
         input [WIDTH-1:0] pridin,
-        input [7:0] interrupt_enable;
+        input [7:0] interrupt_enable,
         input EXL,
         input IE,
         input Branch_delay,
@@ -65,7 +65,7 @@ module CP0
     reg [WIDTH-1:0] Reserved6;//27
     reg [WIDTH-1:0] Taglo;//28
     reg [WIDTH-1:0] Reserved7;//29
-    reg [WIDTH-1:0] ErrorEPC://30
+    reg [WIDTH-1:0] ErrorEPC;//30
     reg [WIDTH-1:0] DESAVE;//31
     assign CP0_data = Readdata;
 
@@ -219,7 +219,7 @@ module CP0
             5'b00001:Readdata<=Ramdom;
             5'b00010:Readdata<=EntryLO0;
             5'b00011:Readdata<=EntryLO1;
-            5'b00100:Readdata<=Contex;
+            5'b00100:Readdata<=Context;
             5'b00101:Readdata<=Pagemask;
             5'b00101:Readdata<=Wired;
             5'b00111:Readdata<=Reserved1;

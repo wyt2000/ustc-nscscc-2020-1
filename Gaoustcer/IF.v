@@ -31,14 +31,14 @@ module IF
     input [WIDTH-1:0] EPC,//The last time Error PC
     input [WIDTH-1:0] Jump_reg,//The NPC of Jump to Reg Instruction
     input [WIDTH-1:0] Jump_addr,//The NPC of Jump Instruction
-    input [WDITH-1:0] beq_addr,//The NPC of Beq Instrcution
+    input [WIDTH-1:0] beq_addr,//The NPC of Beq Instrcution
     output [WIDTH-1:0] Instruction,
     output [WIDTH-1:0] PC_add_4
 );	
     wire [WIDTH-1:0] PCout;
     reg [WIDTH-1:0] PCin;
     PC_Reg_enable PC(.clk(clk),.rst(rst),.enable(!StallF),.data(PCin),.readregister(PCout));
-    assing PC_add_4=PCout+4;
+    assign PC_add_4=PCout+4;
     always@({Jump,BranchD,EPC_sel})
     if(EPC_sel==0)
         PCin=EPC;
