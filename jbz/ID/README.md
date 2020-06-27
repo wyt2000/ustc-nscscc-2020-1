@@ -8,7 +8,7 @@ branch_judge改动：branch_taken在Op为000000时也有效。
 
 ID增加输出branch_addr，原jump_addr更改为数据通路中最左边的多选器的第三个端口的信号，branch_addr为上述多选器中第一个端口的信号。
 
-控制单元的控制信号详见control unit signals.xlsx文件。可能存在错误，欢迎指出。
+控制单元的控制信号详见control unit signals.xlsx文件，使用了吴钰同的instruction.vh头文件。控制信号可能存在错误，欢迎指出。
 
 修正了一些小错：MemReadType和RS、RD、RT宽度。
 

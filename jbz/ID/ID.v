@@ -31,7 +31,7 @@ module ID(
         output [5:0] ALUOp,
         //outputs from ctl_unit
         output HI_LO_write_enableD,
-        output [1:0] MemReadType,
+        output [2:0] MemReadType,
         output MemReadD,
         output RegWriteD,
         output MemtoRegD,
