@@ -79,14 +79,19 @@ module Branch_judge(
             end
         end
         6'b000010: begin
+            //J
             BranchD = 1;
+            branch_taken = 1;
         end
         6'b000011: begin
+            //JAL
             BranchD = 1;
             RegWriteBD = 1;
+            branch_taken = 1;
         end
         6'b000000: begin
-            //*********************************************
+            //JR & JALR
+            branch_taken = 1;
         end
         default: ;
         endcase
