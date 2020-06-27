@@ -22,6 +22,12 @@
 | Instruction | [31:0] | 完整指令 | 指令存储器 | IF/ID |
 |  PC_add_4   | [31:0] |   PC+4   | PC 寄存器  | IF/ID |
 
+# IF/ID 段间寄存器
+
+|    来自     |   去往    |  位宽  |
+| :---------: | :-------: | :----: |
+| Instruction |   instr   | [31:0] |
+|  PC_add_4   | pc_plus_4 | [31:0] |
 
 # ID 段
 
@@ -76,6 +82,29 @@
 |          CLR_EN          |   1    |         清空 IF/ID 段间寄存器         | IF/ID  |
 |        exception         |   1    |             指令是否无效              | Hazard |
 
+# ID/EX 段间寄存器
+
+|           来自           |     去往      |    位宽    |
+| :----------------------: | :-----------: | :--------: |
+|          ALUOp           |  ALUControl   |   [5:0]    |
+|         ALUSrcDA         |    ALUSrcA    |     1      |
+|         ALUSrcDB         |    ALUSrcB    |     1      |
+|         RegDstD          |    RegDst     |     1      |
+|         MemReadD         |   MemRead_i   |     1      |
+|       MemReadType        | MemReadType_i |   [1:0]    |
+|        MemWriteD         |  MemWrite_i   |     1      |
+|        MemtoRegD         |  MemtoReg_i   |     1      |
+|   HI_LO_write_enableD    |  hiloWrite_i  |     1      |
+|        RegWriteD         |  RegWrite_i   |     1      |
+| Imm_sel_and_Branch_taken |    ImmSel     |     1      |
+|         RsValue          |       A       |   [31:0]   |
+|         RtValue          |       B       |   [31:0]   |
+|        pc_plus_8         |    PCplus8    |   [31:0]   |
+|            Rt            |      Rt       |   [6:0]    |
+|            Rd            |      Rd       |   [6:0]    |
+|         **imm**          |    **Imm**    | **[31:0]** |
+
+*零扩展
 
 # EX 段
 
@@ -119,11 +148,26 @@
 |  MemWrite_o   |   1    |       空传 mem 写使能       | EX/MEM |
 |   hiloData    | [63:0] |       乘除法计算结果        | EX/MEM |
 |   ALUResult   | [31:0] | 其他运算结果或 mem 读写地址 | EX/MEM |
-|  MemAddress   | [31:0] |          mem 地址           | EX/MEM |
+|    MemData    | [31:0] |         mem 写数据          | EX/MEM |
 | WriteRegister | [6:0]  |       写回的寄存器号        | EX/MEM |
 |     done      |   1    |        是否算出结果         | Hazard |
 |   exception   | [2:0]  |            异常             | Hazard |
 |     stall     |   1    |       是否暂停流水线        | Hazard |
+
+# EX/MEM 段间寄存器
+
+|     来自      |        去往         |  位宽  |
+| :-----------: | :-----------------: | :----: |
+|  hiloWrite_o  | HI_LO_write_enableM |   1    |
+| MemReadType_o |     MemReadType     | [1:0]  |
+|   MemRead_o   |      MemReadM       |   1    |
+|  RegWrite_o   |      RegWriteM      |   1    |
+|  MemtoReg_o   |      MemtoRegM      |   1    |
+|  MemWrite_o   |      MemWriteM      |   1    |
+|   hiloData    |     HI_LO_dataM     | [63:0] |
+|   ALUResult   |       ALUout        | [31:0] |
+|    MemData    |       RamData       | [31:0] |
+| WriteRegister |    WriteRegister    | [6:0]  |
 
 # MEM 段
 
@@ -134,11 +178,11 @@
 |         clk         |   1    |            全局时钟             |  全局  |
 |         rst         |   1    |            全局复位             |  全局  |
 | HI_LO_write_enableM |   1    |        空传 HILO 写使能         | EX/MEM |
-|     HI_LO_dataM     | [31:0] |       空传乘除法运算结果        | EX/MEM |
+|     HI_LO_dataM     | [63:0] |       空传乘除法运算结果        | EX/MEM |
 |      MemtoRegM      |   1    |          空传写回选择           | EX/MEM |
 |      RegWriteM      |   1    |       空传寄存器堆写使能        | EX/MEM |
 |       ALUout        | [31:0] | 空传其他运算结果或 mem 读写地址 | EX/MEM |
-|    WriteRegister    | [5:0]  |        空传写回寄存器号         | EX/MEM |
+|    WriteRegister    | [6:0]  |        空传写回寄存器号         | EX/MEM |
 |     MemReadType     | [1:0]  |           mem 读选择            | EX/MEM |
 |      MemReadM       |   1    |           mem 读使能            | EX/MEM |
 |      MemWriteM      |   1    |           mem 写使能            | EX/MEM |
@@ -154,7 +198,19 @@
 |     HI_LO_dataW     | [63:0] | 空传乘除法计算结果 | MEM/WB |
 |       RAMout        | [31:0] |     RAM 读结果     | MEM/WB |
 |       ALUoutW       | [31:0] |  空传其他计算结果  | MEM/WB |
-|   WriteRegisterW    | [5:0]  |  空传写回寄存器号  | MEM/WB |
+|   WriteRegisterW    | [6:0]  |  空传写回寄存器号  | MEM/WB |
+
+# MEM/WB 段间寄存器
+
+|        来自         |        去往         |  位宽  |
+| :-----------------: | :-----------------: | :----: |
+|      MemtoRegW      |      MemtoRegW      |   1    |
+|      RegWriteW      |      RegWriteW      |   1    |
+| HI_LO_write_enableW | HI_LO_writeenablein |   1    |
+|     HI_LO_dataW     |      HILO_data      | [63:0] |
+|       RAMout        |       Memdata       | [31:0] |
+|       ALUoutW       |       aluout        | [31:0] |
+|   WriteRegisterW    |   WritetoRFaddrin   | [6:0]  |
 
 # WB 段
 
@@ -165,6 +221,7 @@
 | aluout | [31:0] | ALU 计算结果 | MEM/WB |
 | Memdata | [31:0] | mem 读取结果 | MEM/WB |
 | MemtoRegW | 1 | 写回选择 | MEM/WB |
+| RegWriteW | 1 | 寄存器堆写使能 |  |
 | WritetoRFaddrin | [6:0] | 空传写回通用寄存器号 | MEM/WB |
 | HILO_data | [63:0] | 写回 HILO 寄存器的值 | MEM/WB |
 | Exception_Write_addr_sel | 1 | 1选择写回异常处理写的CP0地址，否则写回指令写回的地址 | Hazard |
@@ -182,6 +239,7 @@
 |    WritetoRFdata     | [31:0] | 空传写回通用寄存器的值 |  ID  |
 | HI_LO_writeenablein  |   1    |      HILO 写使能       |  ID  |
 | WriteinRF_HI_LO_data | [63:0] |  写回 HILO 寄存器的值  |  ID  |
+|       RegWrite       |   1    |     寄存器堆写使能     |  ID  |
 
 # Hazard
 
