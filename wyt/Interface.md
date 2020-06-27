@@ -292,6 +292,8 @@
 | EX_exception | [2:0] |          EX 段异常类型          |    EX.exception     |
 |    stall     |   1   |           暂停流水线            |      EX.stall       |
 |     done     |   1   |      乘除指令是否算出结果       |       EX.done       |
+|Exception_Stall|1|出现异常在写CP0寄存器的周期要停顿流水线，这是输出停顿流水线的信号|Exception_deal_module|
+|Exception_clean|1|出现异常开始要清零所有段间寄存器|Exception_deal_module|
 |  RegWriteM   |   1   |   MEM 段指令是否要写回寄存器    |    MEM.RegWriteM    |
 |  WriteRegM   | [6:0] |    MEM 段指令的写回寄存器号     |  MEM.WriteRegister  |
 |   MemReadM   |   1   |      MEM 段指令是否读 mem       |    MEM.MemReadM     |
@@ -317,8 +319,21 @@
 |        ForwardBD         | [1:0]  |                  选 ID 段 B 的旁路                   |   ID   |
 |        ForwardAE         | [1:0]  |                  选 EX 段 A 的旁路                   |   EX   |
 |        ForwardBE         | [1:0]  |                  选 EX 段 B 的旁路                   |   EX   |
+
+# Exception_deal_module
+
+##输入部分
+|          变量名          |  位宽  |                         功能                         |  来自  |
+| :----------------------: | :----: | :--------------------------------------------------: | :----: |
+|Exception_code|未定|出现的异常编码|各个流水段和功能部件产生|
+|clk|1|时钟，控制状态机|外部|
+
+##输出部分
+|          变量名          |  位宽  |                         功能                         |  去往  |
+| :----------------------: | :----: | :--------------------------------------------------: | :----: |
+|Exception_Stall|1|出现异常在写CP0寄存器的周期要停顿流水线，这是输出停顿流水线的信号|Harzard|
+|Exception_clean|1|出现异常开始要清零所有段间寄存器,输出到Harzard部分|Harzard|
 | Exception_Write_addr_sel |   1    | 1选择写回异常处理写的CP0地址，否则写回指令写回的地址 |   WB   |
 | Exception_Write_data_sel |   1    | 1选择异常处理单元生成的字，否则写回指令要求写回的数  |   WB   |
 |    Exception_RF_addr     | [6:0]  |          异常处理模块生成的写寄存器文件端口          |   WB   |
 |      Exceptiondata       | [31:0] |               寄存器文件生成的写CP0字                |   WB   |
-
