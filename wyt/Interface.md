@@ -92,7 +92,7 @@
 |         ALUSrcDB         |   1    |     空传选 b 是 B 或立即数（EX）      | ID/EX  |
 |         RegDstD          |   1    |       空传选写回 Rt 或 Rd（EX）       | ID/EX  |
 |         MemReadD         |   1    |            空传 mem 读使能            | ID/EX  |
-|       MemReadType        | [1:0]  |            空传 mem 读选择            | ID/EX  |
+|       MemReadType        | [2:0]  |            空传 mem 读选择            | ID/EX  |
 |        MemWriteD         |   1    |            空传 mem 写使能            | ID/EX  |
 |        MemtoRegD         |   1    |             空传写回选择              | ID/EX  |
 |   HI_LO_write_enableD    |   1    |        空传 HILO 寄存器写使能         | ID/EX  |
@@ -124,7 +124,7 @@
 |         ALUSrcDB         |    ALUSrcB    |     1      |
 |         RegDstD          |    RegDst     |     1      |
 |         MemReadD         |   MemRead_i   |     1      |
-|       MemReadType        | MemReadType_i |   [1:0]    |
+|       MemReadType        | MemReadType_i |   [2:0]    |
 |        MemWriteD         |  MemWrite_i   |     1      |
 |        MemtoRegD         |  MemtoReg_i   |     1      |
 |   HI_LO_write_enableD    |  hiloWrite_i  |     1      |
@@ -148,7 +148,7 @@
 |      clk      |   1    |        全局时钟        |  全局  |
 |      rst      |   1    |        全局复位        |  全局  |
 |  hiloWrite_i  |   1    |    空传 HILO 写使能    | ID/EX  |
-| MemReadType_i | [1:0]  |    空传 mem 读选择     | ID/EX  |
+| MemReadType_i | [2:0]  |    空传 mem 读选择     | ID/EX  |
 |   MemRead_i   |   1    |    空传 mem 读使能     | ID/EX  |
 |  RegWrite_i   |   1    |   空传寄存器堆写使能   | ID/EX  |
 |  MemtoReg_i   |   1    |      空传写回选择      | ID/EX  |
@@ -174,17 +174,17 @@
 |    变量名     |  位宽  |            功能             |  去往  |
 | :-----------: | :----: | :-------------------------: | :----: |
 |  hiloWrite_o  |   1    |      空传 HILO 写使能       | EX/MEM |
-| MemReadType_o | [1:0]  |       空传 mem 读选择       | EX/MEM |
+| MemReadType_o | [2:0]  |       空传 mem 读选择       | EX/MEM |
 |   MemRead_o   |   1    |       空传 mem 读使能       | EX/MEM |
 |  RegWrite_o   |   1    |     空传寄存器堆写使能      | EX/MEM |
 |  MemtoReg_o   |   1    |        空传写回选择         | EX/MEM |
 |  MemWrite_o   |   1    |       空传 mem 写使能       | EX/MEM |
-|     Rs_o      | [6:0]  |    传 Rs 供 Hazard 判断     | Hazard |
-|     Rt_o      | [6:0]  |    传 Rt 供 Hazard 判断     | Hazard |
 |   hiloData    | [63:0] |       乘除法计算结果        | EX/MEM |
 |   ALUResult   | [31:0] | 其他运算结果或 mem 读写地址 | EX/MEM |
 |    MemData    | [31:0] |         mem 写数据          | EX/MEM |
 | WriteRegister | [6:0]  |       写回的寄存器号        | EX/MEM |
+|     Rs_o      | [6:0]  |    传 Rs 供 Hazard 判断     | Hazard |
+|     Rt_o      | [6:0]  |    传 Rt 供 Hazard 判断     | Hazard |
 |     done      |   1    |        是否算出结果         | Hazard |
 |   exception   | [2:0]  |            异常             | Hazard |
 |     stall     |   1    |       是否暂停流水线        | Hazard |
@@ -194,7 +194,7 @@
 |     来自      |        去往         |  位宽  |
 | :-----------: | :-----------------: | :----: |
 |  hiloWrite_o  | HI_LO_write_enableM |   1    |
-| MemReadType_o |     MemReadType     | [1:0]  |
+| MemReadType_o |     MemReadType     | [2:0]  |
 |   MemRead_o   |      MemReadM       |   1    |
 |  RegWrite_o   |      RegWriteM      |   1    |
 |  MemtoReg_o   |      MemtoRegM      |   1    |
@@ -218,7 +218,7 @@
 |      RegWriteM      |   1    |       空传寄存器堆写使能        | EX/MEM |
 |       ALUout        | [31:0] | 空传其他运算结果或 mem 读写地址 | EX/MEM |
 |    WriteRegister    | [6:0]  |        空传写回寄存器号         | EX/MEM |
-|     MemReadType     | [1:0]  |           mem 读选择            | EX/MEM |
+|     MemReadType     | [2:0]  |           mem 读选择            | EX/MEM |
 |      MemReadM       |   1    |           mem 读使能            | EX/MEM |
 |      MemWriteM      |   1    |           mem 写使能            | EX/MEM |
 |       RamData       | [31:0] |           mem 写数据            | EX/MEM |
