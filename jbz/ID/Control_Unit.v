@@ -6,10 +6,10 @@ module Control_Unit(
 
     output EPC_sel,
     output HI_LO_write_enableD,
-    output MemReadType,
+    output [1:0] MemReadType,
     output Jump,
     output MemReadD,
-    output RegWriteD,
+    output RegWriteCD,
     output MemtoRegD,
     output MemWriteD,
     output ALUSrcDA,
@@ -18,6 +18,6 @@ module Control_Unit(
     output Imm_sel
 );
 
-    
+    /*see control unit signals.xlsx for detail, this file will be written according to it*/
 
 endmodule

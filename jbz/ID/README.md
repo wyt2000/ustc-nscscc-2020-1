@@ -1,12 +1,15 @@
 # ID模块
 
-**待补充**
+branch_judge改动：branch_taken在Op为000000时也有效。
 
-ID.v为顶层模块；Control_Unit尚未实现，需要确定输出逻辑；
+控制单元：删除了ALUControl信号，传给ID/EX段间寄存器的RegWriteD由RegWriteBD（来自branch_judge）和RegWriteCD（来自Control Unit）相或后生成。
 
-decode使用了吴钰同的解码模块；
+寄存器堆(register_file)读CP0的端口改为read_addr_2，因为只有MFC0指令需要读CP0寄存器且读取字段为RT。
 
-register_file内使用了高海涵的CP0模块；支持读写同时发生时旁路；
+ID增加输出branch_addr，原jump_addr更改为数据通路中最左边的多选器的第三个端口的信号，branch_addr为上述多选器中第一个端口的信号。
 
-Branch_judge是分支判断模块，BranchD在分支发生以及J和JAL指令下有效，Branch_taken在分支发生时有效。
+控制单元的控制信号详见control unit signals.xlsx文件。可能存在错误，欢迎指出。
 
+修正了一些小错：MemReadType和RS、RD、RT宽度。
+
+添加了新的旁路端口。

@@ -32,8 +32,8 @@ module register_file(
         else begin
             if(read_addr_1[6])                                                          //if read hi/lo
                 read_data_1 = (read_addr_1 == 7'b1111111) ? hi : lo;
-            else if(read_addr_1[5])                                                     //if read cp0
-                read_data_1 = CP0_data;
+            else if(read_addr_1[5])                                                     //if read cp0,output z
+                read_data_1 = 7'bzzzzzzz;
             else
                 read_data_1 = reg_file[read_addr_1[4:0]];
         end
@@ -48,8 +48,8 @@ module register_file(
         else begin
             if(read_addr_2[6])                                                          //if read hi/lo
                 read_data_2 = (read_addr_2 == 7'b1111111) ? hi : lo;
-            else if(read_addr_2[5])                                                     //if read cp0, output z
-                read_data_2 = 7'bzzzzzzz;
+            else if(read_addr_2[5])                                                     //if read cp0, output cp0
+                read_data_2 = CP0_data;
             else
                 read_data_2 = reg_file[read_addr_2[4:0]];
         end
@@ -90,7 +90,7 @@ module register_file(
                       .rst(rst),
                       .waddr(write_addr[4:0]),
                       .writedata(write_data),
-                      .raddr(read_addr_1[4:0]),
+                      .raddr(read_addr_2[4:0]),
                       .general_write_in(reg_cp0_we),
                       .readdata(CP0_data),
                       .count_data(count_data),
