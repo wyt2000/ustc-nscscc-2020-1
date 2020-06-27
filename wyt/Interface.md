@@ -221,7 +221,7 @@
 | aluout | [31:0] | ALU 计算结果 | MEM/WB |
 | Memdata | [31:0] | mem 读取结果 | MEM/WB |
 | MemtoRegW | 1 | 写回选择 | MEM/WB |
-| RegWriteW | 1 | 寄存器堆写使能 |  |
+| RegWriteW | 1 | 寄存器堆写使能 | MEM/WB |
 | WritetoRFaddrin | [6:0] | 空传写回通用寄存器号 | MEM/WB |
 | HILO_data | [63:0] | 写回 HILO 寄存器的值 | MEM/WB |
 | Exception_Write_addr_sel | 1 | 1选择写回异常处理写的CP0地址，否则写回指令写回的地址 | Hazard |
