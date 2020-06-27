@@ -7,6 +7,12 @@ aluout|ALU计算结果|无时序约束，读出的值即为本指令经过ALU计
 Memdata|访存结果|这里采用distributed Memory的IP核，因为不涉及cache，不考虑Mem段出现的异常，即为访存结果
 MemtoRegW|写回段写回数据控制| 为1是选择aluout，为0选择Memdata，写回的数据写回寄存器文件
 WritetoRFdata|写回的数据|32位
+Exception_Write_addr_sel|选择信号，控制写回寄存器文件的数据的地址是异常处理地址或是正常地址|1选择写回异常处理写的CP0地址，否则写回指令写回的地址，1位
+Exception_Write_data_sel|选择信号，控制写回寄存器文件的数据，来自异常处理单元或是指令生成|1选择异常处理单元生成的字，否则写回指令要求写回的数，32位
+Exception_RF_addr|异常处理模块生成的写寄存器文件端口|7位
+Exceptiondata|寄存器文件生成的写CP0字|32位
+WriteinRF_HI_LO_data|写回寄存器文件的64位数|直接拼接生成，这里传入的是两位32位数
+HI_LO_writeenablein|HI/LO写使能信号，直接传
 
 ##The interface of the IF module
 The name of the interface| The function && use of the interface| any limitation when using the interface
