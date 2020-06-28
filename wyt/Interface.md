@@ -22,7 +22,7 @@
 |          ID.RAMoutM           |             MEM.RAMout             | [31:0] |
 |         ID.ForwardAD          |          Hazard.ForwardAD          | [1:0]  |
 |         ID.ForwardBD          |          Hazard.ForwardBD          | [1:0]  |
-|         EX.ForwardMEM         |            MEM.ALUoutW             | [31:0] |
+|         EX.ForwardMEM         |             MEM.RAMout             | [31:0] |
 |         EX.ForwardWB          |          WB.WritetoRFdata          | [31:0] |
 |          EX.ForwardA          |          Hazard.ForwardAE          | [1:0]  |
 |          EX.ForwardB          |          Hazard.ForwardBE          | [1:0]  |
@@ -244,7 +244,7 @@
 |      MemtoRegW      |      MemtoRegW      |   1    |
 |      RegWriteW      |      RegWriteW      |   1    |
 | HI_LO_write_enableW | HI_LO_writeenablein |   1    |
-|     HI_LO_dataW     |      HILO_data      | [63:0] |
+|     HI_LO_dataW     |      HILO_data      |   64   |
 |       RAMout        |       Memdata       |   32   |
 |       ALUoutW       |       aluout        |   32   |
 |   WriteRegisterW    |   WritetoRFaddrin   |   7    |
