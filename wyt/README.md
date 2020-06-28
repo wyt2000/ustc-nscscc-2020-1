@@ -1,3 +1,15 @@
+# 组装流水线
+
+CPU_TOP.sv 是顶层文件。
+
+Interface.sv 是接口定义文件，使用 system Verilog 结构体。
+
+Interface.md 是接口说明文档。
+
+readTable.py 是我写的一个脚本，可以将 markdown 表格转成 python 数组，大家可以修改这个文件将接口文档的内容转成 verilog 代码。
+
+**如果要修改接口，请修改上述所有内容。**
+
 # EX 段
 
 ### 输入部分
