@@ -7,7 +7,7 @@
 |             ID.Jump             |            IF.Jump            |   1    |
 |           ID.BranchD            |          IF.BranchD           |   1    |
 |           ID.EPC_sel            |          IF.EPC_sel           |   1    |
-|             ID_EPC              |            IF_EPC             | [31:0] |
+|             ID.EPC              |            IF.EPC             | [31:0] |
 |          ID.PCSrc_reg           |          IF.Jump_reg          | [31:0] |
 |          ID.Jump_addr           |         IF.Jump_addr          | [31:0] |
 |         ID.Branch_addr          |          IF.beq_addr          | [31:0] |
@@ -22,7 +22,7 @@
 |           MEM.RAMout            |          ID.RAMoutM           | [31:0] |
 |        Hazard.ForwardAD         |         ID.ForwardAD          | [1:0]  |
 |        Hazard.ForwardBD         |         ID.ForwardBD          | [1:0]  |
-|           MEM.ALUoutW           |         EX.ForwardMEM         | [31:0] |
+|           MEM.RAMoutW           |         EX.ForwardMEM         | [31:0] |
 |        WB.WritetoRFdata         |         EX.ForwardWB          | [31:0] |
 |        Hazard.ForwardAE         |          EX.ForwardA          | [1:0]  |
 |        Hazard.ForwardBE         |          EX.ForwardB          | [1:0]  |
@@ -87,10 +87,10 @@
 
 |          变量名          |  位宽  |                 功能                  |  去往  |
 | :----------------------: | :----: | :-----------------------------------: | :----: |
-|          ALUOp           | [5:0]  |      decoder 算出的 ALUOp（EX）       | ID/EX  |
-|         ALUSrcDA         |   1    |     空传选 a 是 A 或立即数（EX）      | ID/EX  |
-|         ALUSrcDB         |   1    |     空传选 b 是 B 或立即数（EX）      | ID/EX  |
-|         RegDstD          |   1    |       空传选写回 Rt 或 Rd（EX）       | ID/EX  |
+|          ALUOp           | [5:0]  |         decoder 算出的 ALUOp          | ID/EX  |
+|         ALUSrcDA         |   1    |        空传选 a 是 A 或立即数         | ID/EX  |
+|         ALUSrcDB         |   1    |        空传选 b 是 B 或立即数         | ID/EX  |
+|         RegDstD          |   1    |          空传选写回 Rt 或 Rd          | ID/EX  |
 |         MemReadD         |   1    |            空传 mem 读使能            | ID/EX  |
 |       MemReadType        | [2:0]  |            空传 mem 读选择            | ID/EX  |
 |        MemWriteD         |   1    |            空传 mem 写使能            | ID/EX  |
@@ -110,8 +110,8 @@
 |           Jump           |   1    |             Jump 是否成功             |   IF   |
 |        PCSrc_reg         | [31:0] |      传回 IF 段作为 NPC 的 Rs 值      |   IF   |
 |           EPC            | [31:0] |       传回 IF 段作为 NPC 的EPC        |   IF   |
-|        Jump_addr         | [31:0] |  传回 IF 段作为 NPC 的 Jump 跳转地址  |   IF   |
-|       Branch_addr        | [31:0] | 传回 IF 段作为 NPC 的 Branch 跳转地址 |   IF   |
+|        jump_addr         | [31:0] |  传回 IF 段作为 NPC 的 Jump 跳转地址  |   IF   |
+|       branch_addr        | [31:0] | 传回 IF 段作为 NPC 的 Branch 跳转地址 |   IF   |
 |          CLR_EN          |   1    |         清空 IF/ID 段间寄存器         | IF/ID  |
 |        exception         |   1    |             指令是否无效              | Hazard |
 
@@ -129,7 +129,7 @@
 |        MemtoRegD         |  MemtoReg_i   |     1      |
 |   HI_LO_write_enableD    |  hiloWrite_i  |     1      |
 |        RegWriteD         |  RegWrite_i   |     1      |
-| Imm_sel_and_Branch_taken |    ImmSel     |     1      |
+| Imm_sel_and_Branch_taken |    immSel     |     1      |
 |         RsValue          |       A       |   [31:0]   |
 |         RtValue          |       B       |   [31:0]   |
 |        pc_plus_8         |    PCplus8    |   [31:0]   |
@@ -164,7 +164,7 @@
 |      Rs       | [6:0]  |     Rs 的寄存器号      | ID/EX  |
 |      Rt       | [6:0]  |     Rt 的寄存器号      | ID/EX  |
 |      Rd       | [6:0]  |     Rd 的寄存器号      | ID/EX  |
-|      Imm      | [31:0] |   0 扩展的 ins[15:0]   | ID/EX  |
+|      imm      | [31:0] |   0 扩展的 ins[15:0]   | ID/EX  |
 |  ForwardMEM   | [31:0] |   来自 MEM 段的旁路    |  MEM   |
 |   ForwardWB   | [31:0] |    来自 WB 段的旁路    |   WB   |
 |   ForwardA    | [1:0]  |      选 A 的旁路       | Hazard |
