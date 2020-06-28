@@ -144,17 +144,17 @@ module Control_Unit(
     //ALUSrcDB
     always@(*) begin
         ALUSrcDB = 0;
-        if((Op == `OP_ZERO && (func == `FUNC_ADDI ||
-                               func == `FUNC_ADDIU ||
-                               func == `FUNC_SLTI ||
-                               func == `FUNC_SLTIU ||
-                               func == `FUNC_ANDI ||
-                               func == `FUNC_LUI ||
-                               func == `FUNC_ORI ||
-                               func == `FUNC_XORI ||
-                               func == `FUNC_JAL)) ||
-            (Op == `OP_BELSE && (func == `FUNC_BGEZAL ||
+        if((Op == `OP_BELSE && (func == `FUNC_BGEZAL ||
                                  func == `FUNC_BLTZAL)) ||
+            Op == `OP_ADDI ||
+            Op == `OP_ADDIU ||
+            Op == `OP_SLTI ||
+            Op == `OP_SLTIU ||
+            Op == `OP_ANDI ||
+            Op == `OP_LUI ||
+            Op == `OP_ORI ||
+            Op == `OP_XORI ||
+            Op == `OP_JAL ||
             Op == `OP_LB ||
             Op == `OP_LBU ||
             Op == `OP_LH ||
