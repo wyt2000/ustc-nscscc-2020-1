@@ -6,18 +6,18 @@ module Control_Unit(
     input [5:0] Op,
     input [4:0] func,
 
-    output EPC_sel,
-    output HI_LO_write_enableD,
-    output [2:0] MemReadType,
-    output Jump,
-    output MemReadD,
-    output RegWriteCD,
-    output MemtoRegD,
-    output MemWriteD,
-    output ALUSrcDA,
-    output ALUSrcDB,
-    output RegDstD,
-    output Imm_sel
+    output reg EPC_sel,
+    output reg HI_LO_write_enableD,
+    output reg [2:0] MemReadType,
+    output reg Jump,
+    output reg MemReadD,
+    output reg RegWriteCD,
+    output reg MemtoRegD,
+    output reg MemWriteD,
+    output reg ALUSrcDA,
+    output reg ALUSrcDB,
+    output reg RegDstD,
+    output reg Imm_sel
 );
 
     //HI_LO_write_enableD
