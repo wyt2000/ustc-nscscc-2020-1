@@ -1,10 +1,10 @@
 `timescale 1ns / 1ps
 
-module EX(
+module EX_module(
     input clk,
     input rst,
     input hiloWrite_i,
-    input [1:0] MemReadType_i,
+    input [2:0] MemReadType_i,
     input RegWrite_i,
     input MemtoReg_i,
     input MemWrite_i,
@@ -18,22 +18,25 @@ module EX(
     input [31:0] A,
     input [31:0] B,
     input [31:0] PCplus8,
+    input [6:0] Rs,
     input [6:0] Rt,
     input [6:0] Rd,
     input [31:0] imm,
     input [31:0] ForwardMEM,
     input [31:0] ForwardWB,
     output hiloWrite_o,
-    output [1:0] MemReadType_o,
+    output [2:0] MemReadType_o,
     output RegWrite_o,
     output MemtoReg_o,
     output MemWrite_o,
+    output [6:0] Rs_o,
+    output [6:0] Rt_o,
     output [63:0] hiloData,
     output [31:0] ALUResult,
     output done,
     output [2:0] exception,
     output stall,
-    output [31:0] MemAddress,
+    output [31:0] MemData,
     output [6:0] WriteRegister
     );
     wire [31:0] imm_o;
@@ -48,8 +51,9 @@ module EX(
     assign RegWrite_o = RegWrite_i;
     assign MemtoReg_o = MemtoReg_i;
     assign MemWrite_o = MemWrite_i;
-    assign MemAddress = B_o;
-
+    assign MemData = B_o;
+    assign Rs_o = Rs;
+    assign Rt_o = Rt;
     //mux
     assign imm_o = immSel ? PCplus8 : imm;
     assign WriteRegister = RegDst ? Rd : Rt;
