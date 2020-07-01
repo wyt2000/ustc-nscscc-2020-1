@@ -1,3 +1,23 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 2020/06/27 19:24:35
+// Design Name: 
+// Module Name: errordetect
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
 
 
 module errordetect(
@@ -8,25 +28,29 @@ input overflow_error,
 input syscall,
 input break,
 input reversed,
-input [5:0] hardware_abortion,
-input [1:0] software_abortion,
-input [31:0] curpc,
+output write_BadVAddr,
 output [31:0] BadVAddr,
-input [31:0] Count,
+input [31:0] ADDR,
+input [31:0] Branch,
 input [31:0] Status,
 input [31:0] Cause,
 input [31:0] pc,
+input [5:0] HW,
+output Write_EPC,
 output [31:0] EPC,
 output [31:0] NewPC,
+output Write_Status,
 output new_Status_EXL,
+output Write_Cause,
 output new_Cause_BD1,
 output exception_occur,
-output [6:0] Cause_IP,
-output [6:0] Status_IM,
+input [7:0] Cause_IP,
+input [7:0] Status_IM,
+output WriteExcCode,
 output [4:0] ExcCode
     );
-reg [31:0] Abortion_access;
-initial Abortion_access=32'HBFC00380;
+wire [31:0] Abortion_access;
+assign Abortion_access=32'HBFC00380;
 assign NewPC=Abortion_access;
 
 wire Status_EXL;
@@ -39,18 +63,23 @@ assign ExcCode=Cause[6:2];
 assign EPC=Cause_BD==1 ? pc-4:pc;
 
 assign exception_occur=(!Status_EXL)
-                       &((|hardware_abortion)|(|software_abortion)|address_error|overflow_error|syscall|break|reversed);
-//assign new_Cause_BD=(Status_EXL == 0 && C) 分支延迟槽是哪个？
+                       &((|(Cause_IP&&Status_IM))|address_error|overflow_error|syscall|break|reversed);
+assign Write_EPC=(!Status_EXL)
+                       &((|(Cause_IP&&Status_IM))|address_error|overflow_error|syscall|break|reversed);
+assign Write_Cause=(!Status_EXL)
+                       &((|(Cause_IP&&Status_IM))|address_error|overflow_error|syscall|break|reversed);
+assign WriteExcCode=(!Status_EXL)
+                       &((|(Cause_IP&&Status_IM))|address_error|overflow_error|syscall|break|reversed);
+
+//assign new_Cause_BD=;
 
 //中断例外需要再讨论一下
 
-assign Cause_IP={hardware_abortion,software_abortion};
-
-assign BadVAddr=pc+8;
+assign BadVAddr=ADDR;
 reg [4:0] ExcCodereg;
 always@(*)
 begin
-    if ((|hardware_abortion)|(|software_abortion)) ExcCodereg<=5'h00;
+    if (|(Cause_IP&&Status_IM)) ExcCodereg<=5'h00;
     else if (address_error && memread) ExcCodereg<=5'h04;
     else if (reversed) ExcCodereg<=5'h0a;
     else if (overflow_error) ExcCodereg<=5'h0c;
