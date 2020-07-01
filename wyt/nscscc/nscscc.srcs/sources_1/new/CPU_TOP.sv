@@ -60,6 +60,8 @@ module CPU_TOP(
     assign Hazard.MemtoRegM                 = MEM.MemtoRegM;
     assign Hazard.RegWriteW                 = WB.RegWrite;
     assign Hazard.WriteRegW                 = WB.WritetoRFaddrout;
+	assign Hazard.WriteRegE					= EX.WriteRegister;
+	assign Hazard.RegWriteE					= EX.RegWrite_o;
 
     // IF/ID registers
 
@@ -81,7 +83,7 @@ module CPU_TOP(
 
     // ID/EX registers
 
-	register #(6) ID_EX_ALUControl (
+    register #(6) ID_EX_ALUControl (
         .clk(clk),
         .rst(FlushE),
         .en(~StallE),
@@ -510,10 +512,13 @@ module CPU_TOP(
         .RsD                        (Hazard.RsD),
         .RtD                        (Hazard.RtD),
         .ID_exception               (Hazard.ID_exception),
+		.isaBranchInstrution		(Hazard.isaBranchInstrution),
         .RsE                        (Hazard.RsE),
         .RtE                        (Hazard.RtE),
         .MemReadE                   (Hazard.MemReadE),
         .MemtoRegE                  (Hazard.MemtoRegE),
+		.WriteRegE					(Hazard.WriteRegE),
+		.RegWriteE					(Hazard.RegWriteE),
         .EX_exception               (Hazard.EX_exception),
         .stall                      (Hazard.stall),
         .done                       (Hazard.done),

@@ -1,3 +1,19 @@
+# Trace
+
+装交叉编译环境不能用 wsl ，要开虚拟机。
+
+**需要额外安装两个库：**
+
+```shell
+sudo apt-get install lib32z1 lib32ncurses5
+```
+
+**2020 的包里有一个文件是乱码，直接编译不行，要把 2019 包里的 soft 文件夹拷过来！！！**
+
+inst_ram 对应的 ip 核综合时间很长，整个工程仿真所用时间也很长。
+
+**仿真完成之后要 reset 再重新跑**，才能得到 gettrace 的正确结果，在 Tcl console 会有输出。
+
 # 组装流水线
 
 CPU_TOP.sv 是顶层文件。

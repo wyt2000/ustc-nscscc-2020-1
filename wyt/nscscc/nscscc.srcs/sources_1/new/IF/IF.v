@@ -15,12 +15,7 @@ module PC_Reg_enable
         else readregister<=readregister;
 
 endmodule
-module Instruction_Memory(
-    input clk,
-    input [7:0] addr,
-    output [31:0] data);
-//the simplified Instruction_Memory, which is read only for the processor we designed
-endmodule
+
 
 module IF_module
     #(parameter WIDTH=32)
@@ -56,7 +51,7 @@ module IF_module
     else if({Jump,BranchD}==2'b00)begin
         PCin=PC_add_4;
     end
-    Instruction_Mem Instruction_Memory(.clk(clk),.addr(PCout[9:2]),.data(Instruction));
+    Instruction_Memory Instruction_Memory(.clk(clk),.addr(PCout[9:2]),.data(Instruction));
 
 
 endmodule

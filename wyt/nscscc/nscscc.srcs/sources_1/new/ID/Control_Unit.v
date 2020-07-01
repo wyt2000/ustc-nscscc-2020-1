@@ -6,18 +6,19 @@ module Control_Unit(
     input [5:0] Op,
     input [4:0] func,
 
-    output EPC_sel,
-    output HI_LO_write_enableD,
-    output [2:0] MemReadType,
-    output Jump,
-    output MemReadD,
-    output RegWriteCD,
-    output MemtoRegD,
-    output MemWriteD,
-    output ALUSrcDA,
-    output ALUSrcDB,
-    output RegDstD,
-    output Imm_sel
+    output reg EPC_sel,
+    output reg HI_LO_write_enableD,
+    output reg [2:0] MemReadType,
+    output reg Jump,
+    output reg MemReadD,
+    output reg RegWriteCD,
+    output reg MemtoRegD,
+    output reg MemWriteD,
+    output reg ALUSrcDA,
+    output reg ALUSrcDB,
+    output reg RegDstD,
+    output reg Imm_sel,
+    output reg isBranch
 );
 
     //HI_LO_write_enableD
@@ -144,17 +145,17 @@ module Control_Unit(
     //ALUSrcDB
     always@(*) begin
         ALUSrcDB = 0;
-        if((Op == `OP_ZERO && (func == `FUNC_ADDI ||
-                               func == `FUNC_ADDIU ||
-                               func == `FUNC_SLTI ||
-                               func == `FUNC_SLTIU ||
-                               func == `FUNC_ANDI ||
-                               func == `FUNC_LUI ||
-                               func == `FUNC_ORI ||
-                               func == `FUNC_XORI ||
-                               func == `FUNC_JAL)) ||
-            (Op == `OP_BELSE && (func == `FUNC_BGEZAL ||
+        if((Op == `OP_BELSE && (func == `FUNC_BGEZAL ||
                                  func == `FUNC_BLTZAL)) ||
+            Op == `OP_ADDI ||
+            Op == `OP_ADDIU ||
+            Op == `OP_SLTI ||
+            Op == `OP_SLTIU ||
+            Op == `OP_ANDI ||
+            Op == `OP_LUI ||
+            Op == `OP_ORI ||
+            Op == `OP_XORI ||
+            Op == `OP_JAL ||
             Op == `OP_LB ||
             Op == `OP_LBU ||
             Op == `OP_LH ||
@@ -187,6 +188,17 @@ module Control_Unit(
         EPC_sel = 1;
         if(Op == `OP_PRIV && func == `FUNC_ERET)
             EPC_sel = 0;
+    end
+
+    //isBranch
+    always @(*) begin
+        isBranch = 0;
+        case(Op)
+            `OP_BEQ,`OP_BNE,
+            `OP_BGTZ,`OP_BLEZ,
+            `OP_BELSE:
+            isBranch = 1;
+        endcase
     end
 
 endmodule

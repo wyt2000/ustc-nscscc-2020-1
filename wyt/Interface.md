@@ -1,3 +1,38 @@
+[toc]
+
+# SRAM 接口
+
+SRAM 到 myCPU：
+
+|      来自       |      去往      |  位宽  |
+| :-------------: | :------------: | :----: |
+|       clk       |      clk       |   1    |
+|   **resetn**    |    **rst**     | **1**  |
+|  int（恒为0）   |       ?        | [5:0]  |
+| inst_sram_rdata | IF.Instruction | [31:0] |
+| data_sram_rdata |   MEM.RAMtmp   | [31:0] |
+
+myCPU 到 SRAM：
+
+|           来自           |       去往        |  位宽  |
+| :----------------------: | :---------------: | :----: |
+|          恒为1           |   inst_sram_en    |   1    |
+|          恒为0           |   inst_sram_wen   | [3:0]  |
+|         IF.PCout         |  inst_sram_addr   | [31:0] |
+|          恒为0           |  inst_sram_wdata  | [31:0] |
+|       MEM.MemReadM       |   data_sram_en    |   1    |
+|        MEM.calWE         |   data_sram_wen   | [3:0]  |
+|        MEM.ALUout        |  data_sram_addr   | [31:0] |
+|       MEM.RAMData        |  data_sram_wdata  | [31:0] |
+|         WB.PCout         |    debug_wb_pc    | [31:0] |
+|     **WB.RegWrite**      |  debug_wb_rf_wen  | [3:0]  |
+| WB.WritetoRFaddrout[4:0] | debug_wb_rf_wnum  | [4:0]  |
+|     WB.WritetoRFdata     | debug_wb_rf_wdata | [31:0] |
+
+*需要把 rst 改成低电平有效
+
+*复制四次
+
 # CPU_TOP
 
 以下主要是不通过段间寄存器直接跨越模块的接口。
@@ -114,6 +149,7 @@
 |       branch_addr        | [31:0] | 传回 IF 段作为 NPC 的 Branch 跳转地址 |   IF   |
 |          CLR_EN          |   1    |         清空 IF/ID 段间寄存器         | IF/ID  |
 |        exception         |   1    |             指令是否无效              | Hazard |
+|         isBranch         |   1    |        ID 段指令是 Branch 指令        | Hazard |
 
 # ID/EX 段间寄存器
 
@@ -287,6 +323,7 @@
 |     RsD      | [6:0] |       ID 段的 Rs 寄存器号       |        ID.Rs        |
 |     RtD      | [6:0] |       ID 段的 Rt 寄存器号       |        ID.Rt        |
 | ID_exception |   1   |            无效指令             |    ID.exception     |
+| isaBranchInstrution | 1 | ID 段是 Branch 指令 | ID.isBranch |
 |     RsE      | [6:0] |       EX 段的 Rs 寄存器号       |       EX.Rs_o       |
 |     RtE      | [6:0] |       EX 段的 Rt 寄存器号       |       EX.Rt_o       |
 |   MemReadE   |   1   |       EX 段指令是否读 mem       |    EX.MemRead_o     |
@@ -297,11 +334,13 @@
 |Exception_Stall|1|出现异常在写CP0寄存器的周期要停顿流水线，这是输出停顿流水线的信号|Exception_deal_module|
 |Exception_clean|1|出现异常开始要清零所有段间寄存器|Exception_deal_module|
 |  RegWriteM   |   1   |   MEM 段指令是否要写回寄存器    |    MEM.RegWriteM    |
-|  WriteRegM   | [6:0] |    MEM 段指令的写回寄存器号     |  MEM.WriteRegister  |
 |   MemReadM   |   1   |      MEM 段指令是否读 mem       |    MEM.MemReadM     |
 |  MemtoRegM   |   1   | MEM 段指令是否将 mem 写回寄存器 |    MEM.MemtoRegM    |
 |  RegWriteW   |   1   |    WB 段指令是否要写回寄存器    |     WB.RegWrite     |
 |  WriteRegW   | [6:0] |     WB 段指令的写回寄存器号     | WB.WritetoRFaddrout |
+|  WriteRegM   | [6:0] |    MEM 段指令的写回寄存器号     |  MEM.WriteRegister  |
+| WriteRegE | [6:0] | EX 段指令的写回寄存器号 | EX.WriteRegister |
+| RegWriteE | 1 | EX 段指令是否要写回寄存器 | EX.Regwrite_o |
 
 ### 输出部分
 

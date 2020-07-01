@@ -54,7 +54,8 @@ typedef struct packed {
     logic [31:0] Jump_addr;
     logic [31:0] Branch_addr;
     logic CLR_EN;
-    logic exception; 
+    logic exception;
+    logic isBranch;
 } ID_interface;
 
 typedef struct packed {
@@ -163,6 +164,9 @@ typedef struct packed {
     logic MemtoRegM;
     logic RegWriteW;
     logic [6:0] WriteRegW;
+    logic isaBranchInstrution;
+    logic [6:0] WriteRegE;
+    logic RegWriteE;
     //output
     logic StallF;
     logic StallD;

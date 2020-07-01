@@ -60,8 +60,8 @@ module ID_module(
     //to IF/ID stage
     output CLR_EN,
     //to Harzard unit
-    output exception
-    
+    output exception,
+    output isBranch
     );
 
     wire Imm_sel, Branch_taken, RegWriteCD, RegWriteBD;
@@ -103,7 +103,9 @@ module ID_module(
                         .ALUSrcDA(ALUSrcDA),
                         .ALUSrcDB(ALUSrcDB),
                         .RegDstD(RegDstD),
-                        .Imm_sel(Imm_sel));
+                        .Imm_sel(Imm_sel),
+                        .isBranch(isBranch)
+    );
 
     register_file reg_file(.clk(clk),
                            .rst(rst),
