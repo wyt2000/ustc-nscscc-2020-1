@@ -23,7 +23,7 @@ module CP0
         input [WIDTH-1:0] configuredata,
         input [WIDTH-1:0] epc,
         input [WIDTH-1:0] pridin,
-        input [7:0] interrupt_enable;
+        input [7:0] interrupt_enable,
         input EXL,
         input IE,
         input Branch_delay,
@@ -40,8 +40,6 @@ module CP0
         output timer_int_data,//when compare==count, create a break
         output allow_interrupt,
         output state//user mode:0 kernel mode:1
-
-
 );
 //pridin,configuredata,comparedata,BADADDR,epc是相应寄存器单独的输入
 //timer_int_data为时钟中断，1代表时钟中断有效

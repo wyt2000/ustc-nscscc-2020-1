@@ -24,6 +24,7 @@ module EX_module(
     input [31:0] imm,
     input [31:0] ForwardMEM,
     input [31:0] ForwardWB,
+    input [31:0] PCin,
     output hiloWrite_o,
     output [2:0] MemReadType_o,
     output RegWrite_o,
@@ -37,7 +38,8 @@ module EX_module(
     output [2:0] exception,
     output stall,
     output [31:0] MemData,
-    output [6:0] WriteRegister
+    output [6:0] WriteRegister,
+    output [31:0] PCout
     );
     wire [31:0] imm_o;
     wire [31:0] A_o;
@@ -54,6 +56,8 @@ module EX_module(
     assign MemData = B_o;
     assign Rs_o = Rs;
     assign Rt_o = Rt;
+    assign PCout = PCin;
+
     //mux
     assign imm_o = immSel ? PCplus8 : imm;
     assign WriteRegister = RegDst ? Rd : Rt;

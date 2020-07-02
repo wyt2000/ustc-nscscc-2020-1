@@ -8,7 +8,8 @@ module ID_module(
     //from IF/ID reg
     input [31:0] instr,
     input [31:0] pc_plus_4,
-    
+    input [31:0] PCin,
+
     //from WB
     input [6:0] WriteRegW,
     input [31:0] ResultW,
@@ -49,6 +50,7 @@ module ID_module(
         output [6:0] Rt, 
         output [6:0] Rd,
         output [15:0] imm,
+        output [31:0] PCout,
     //to IF stage
     output EPC_sel,
     output BranchD,
@@ -74,6 +76,7 @@ module ID_module(
     assign CLR_EN = Jump | BranchD;
     assign RegWriteD = RegWriteBD | RegWriteCD;
     assign PCSrc_reg = RsValue;
+    assign PCout = PCin;
 
     mux_4 rd1_mux(.m(ForwardAD),
                 .in_0(Read_data_1),

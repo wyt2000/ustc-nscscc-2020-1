@@ -8,9 +8,11 @@ typedef struct packed {
     logic [31:0] Jump_addr;
     logic [31:0] beq_addr;
     logic stallF;
+    logic [31:0] Instruction_in;
     //output
     logic [31:0] Instruction;
     logic [31:0] PC_add_4;
+    logic [31:0] PCout;
 } IF_interface;
 
 typedef struct packed {
@@ -27,6 +29,7 @@ typedef struct packed {
     logic [31:0] RAMoutM;
     logic [1:0] ForwardAD;
     logic [1:0] ForwardBD;
+    logic [31:0] PCin;
     //output
     logic [5:0] ALUOp;
     logic ALUSrcDA;
@@ -56,6 +59,7 @@ typedef struct packed {
     logic CLR_EN;
     logic exception;
     logic isBranch;
+    logic [31:0] PCout;
 } ID_interface;
 
 typedef struct packed {
@@ -82,6 +86,7 @@ typedef struct packed {
     logic [31:0] ForwardWB;
     logic [1:0] ForwardA;
     logic [1:0] ForwardB;
+    logic [31:0] PCin;
     //output
     logic hiloWrite_o;
     logic [2:0] MemReadType_o;
@@ -98,6 +103,7 @@ typedef struct packed {
     logic done;
     logic [2:0] exception;
     logic stall;
+    logic [31:0] PCout;
 } EX_interface;
 
 typedef struct packed {
@@ -106,12 +112,14 @@ typedef struct packed {
     logic [63:0] HI_LO_dataM;
     logic MemtoRegM;
     logic RegWriteM;
-    logic [31:0] ALUout;
-    logic [6:0] WriteRegister;
-    logic [2:0] MemReadType;
     logic MemReadM;
     logic MemWriteM;
+    logic [31:0] ALUout;
     logic [31:0] RamData;
+    logic [6:0] WriteRegister;
+    logic [2:0] MemReadType;
+    logic [31:0] RAMtmp;
+    logic [31:0] PCin;
     //output
     logic MemtoRegW;
     logic RegWriteW;
@@ -120,6 +128,8 @@ typedef struct packed {
     logic [31:0] RAMout;
     logic [31:0] ALUoutW;
     logic [6:0] WriteRegisterW;
+    logic [3:0] calWE;
+    logic [31:0] PCout;
 } MEM_interface;
 
 typedef struct packed {
@@ -135,12 +145,14 @@ typedef struct packed {
     logic Exception_Write_data_sel;
     logic [6:0] Exception_RF_addr;
     logic [31:0] Exceptiondata;
+    logic [31:0] PCin;
     //output
     logic [6:0] WritetoRFaddrout;
     logic [31:0] WritetoRFdata;
     logic HI_LO_writeenableout;
     logic [63:0] WriteinRF_HI_LO_data;
     logic RegWrite;
+    logic [31:0] PCout;
 } WB_interface;
 
 typedef struct packed {
