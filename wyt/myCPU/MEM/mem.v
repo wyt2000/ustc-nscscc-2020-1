@@ -18,7 +18,7 @@ input [31:0] PCin,
 output MemtoRegW,
 output RegWriteW,
 output HI_LO_write_enableW,
-output [63:0] Hi_LO_dataW,
+output [63:0] HI_LO_dataW,
 output reg [31:0] RAMout,
 output [31:0] ALUoutW,
 output [6:0] WriteRegisterW,
@@ -87,7 +87,8 @@ assign MemtoRegW=MemtoRegM;
 assign HI_LO_write_enableW=HI_LO_write_enableM;
 assign RegWriteW=RegWriteM;
 assign WriteRegisterW=WriteRegister;
-assign Hi_LO_dataW=HI_LO_dataM;
+assign HI_LO_dataW=HI_LO_dataM;
 assign PCout = PCin;
+assign ALUoutW = ALUout;
 
 endmodule

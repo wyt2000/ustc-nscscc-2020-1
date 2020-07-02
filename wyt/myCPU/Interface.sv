@@ -7,7 +7,7 @@ typedef struct packed {
     logic [31:0] Jump_reg;
     logic [31:0] Jump_addr;
     logic [31:0] beq_addr;
-    logic stallF;
+    logic StallF;
     logic [31:0] Instruction_in;
     //output
     logic [31:0] Instruction;
@@ -143,6 +143,7 @@ typedef struct packed {
     logic [63:0] HILO_data;
     logic Exception_Write_addr_sel;
     logic Exception_Write_data_sel;
+    logic HI_LO_writeenablein;
     logic [6:0] Exception_RF_addr;
     logic [31:0] Exceptiondata;
     logic [31:0] PCin;
@@ -201,7 +202,7 @@ typedef struct packed {
     logic clk;
     //output
     logic Exception_Stall;
-    logic EXception_clean;
+    logic Exception_clean;
     logic Exception_Write_addr_sel;
     logic Exception_Write_data_sel;
     logic [6:0] Exception_RF_addr;

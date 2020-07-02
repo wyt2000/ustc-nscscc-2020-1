@@ -5,8 +5,10 @@ module ID_module(
     input clk,
     input rst,
 
-    //from IF/ID reg
+    //from SRAM
     input [31:0] instr,
+
+    //from IF/ID reg
     input [31:0] pc_plus_4,
     input [31:0] PCin,
 
@@ -70,10 +72,10 @@ module ID_module(
     wire [31:0] Read_data_1, Read_data_2;
 
     assign pc_plus_8 = pc_plus_4 + 4;
-    assign branch_addr = pc_plus_4 + {{14{imm[15]}},imm,2'b00};
-    assign jump_addr = {pc_plus_4[31:28], instr[25:0], 2'b00};
+    assign Branch_addr = pc_plus_4 + {{14{imm[15]}},imm,2'b00};
+    assign Jump_addr = {pc_plus_4[31:28], instr[25:0], 2'b00};
     assign Imm_sel_and_Branch_taken = Imm_sel & Branch_taken;
-    assign CLR_EN = Jump | BranchD;
+    assign CLR_EN = rst | Jump | BranchD;
     assign RegWriteD = RegWriteBD | RegWriteCD;
     assign PCSrc_reg = RsValue;
     assign PCout = PCin;
@@ -94,7 +96,6 @@ module ID_module(
 
     Control_Unit CPU_CTL(.Op(instr[31:26]),
                         .func(instr[5:0]),
-
                         .EPC_sel(EPC_sel),
                         .HI_LO_write_enableD(HI_LO_write_enableD),
                         .MemReadType(MemReadType),
@@ -132,7 +133,7 @@ module ID_module(
                           .branch_taken(Branch_taken));
 
     decoder dcd(.ins(instr[31:0]),
-               .ALUop(ALUop),
+               .ALUop(ALUOp),
                .Rs(Rs),
                .Rt(Rt),
                .Rd(Rd),

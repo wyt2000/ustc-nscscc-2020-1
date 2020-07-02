@@ -21,11 +21,11 @@ module WB_module
 		output [31:0] PCout
 	);
 	assign HI_LO_writeenableout=HI_LO_writeenablein;
-	wire [WIDTH-1:0] WriteRFtemp;
+	wire [WIDTH-1:0] WritetoRFtemp;
 	assign WritetoRFtemp = MemtoRegW?aluout:Memdata; 
 	assign WritetoRFdata = Exception_Write_data_sel?Exceptiondata:WritetoRFtemp;
 	assign WritetoRFaddrout = Exception_Write_addr_sel?Exception_RF_addr:WritetoRFaddrin;
 	assign WriteinRF_HI_LO_data = HILO_data;
-	assign RegWrite = RegWriteW;
+	assign RegWrite = RegWriteW; //in order to pass test
 	assign PCout = PCin;
 endmodule

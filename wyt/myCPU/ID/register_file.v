@@ -86,7 +86,7 @@ module register_file(
 
     //CP0
     assign reg_cp0_we = regwrite & ~write_addr[6] & write_addr[5];
-    CP0 #(32) reg_cp0(.clk(clk),
+    cp0_up #(32) reg_cp0(.clk(clk),
                       .rst(rst),
                       .waddr(write_addr[4:0]),
                       .writedata(write_data),
