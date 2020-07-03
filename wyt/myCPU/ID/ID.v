@@ -5,10 +5,8 @@ module ID_module(
     input clk,
     input rst,
 
-    //from SRAM
-    input [31:0] instr,
-
     //from IF/ID reg
+    input [31:0] instr,
     input [31:0] pc_plus_4,
     input [31:0] PCin,
 
@@ -29,6 +27,19 @@ module ID_module(
     //from Hazard Unit
     input [1:0] ForwardAD,
     input [1:0] ForwardBD,
+
+    //from Exception_module
+    input [31:0] we,
+    input [7:0] interrupt_enable,
+    input [4:0] Exception_code,
+    input EXL,
+    input [31:0] epc,
+    input [31:0] BADADDR,
+    input  Branch_delay,
+
+    //from External interruption
+    input [5:0] hardware_interruption,
+    input [1:0] software_interruption,
 
     //to ID/EX reg
         output [5:0] ALUOp,
@@ -65,17 +76,21 @@ module ID_module(
     output CLR_EN,
     //to Harzard unit
     output exception,
-    output isBranch
+    output isBranch,
+    //to Exception_module
+    output [31:0] Status_data,
+    output [31:0] cause_data
+    //Line 32-38 41-42 81-82 are added by Gaoustcer
     );
 
     wire Imm_sel, Branch_taken, RegWriteCD, RegWriteBD;
     wire [31:0] Read_data_1, Read_data_2;
 
     assign pc_plus_8 = pc_plus_4 + 4;
-    assign Branch_addr = pc_plus_4 + {{14{imm[15]}},imm,2'b00};
-    assign Jump_addr = {pc_plus_4[31:28], instr[25:0], 2'b00};
+    assign branch_addr = pc_plus_4 + {{14{imm[15]}},imm,2'b00};
+    assign jump_addr = {pc_plus_4[31:28], instr[25:0], 2'b00};
     assign Imm_sel_and_Branch_taken = Imm_sel & Branch_taken;
-    assign CLR_EN = rst | Jump | BranchD;
+    assign CLR_EN = Jump | BranchD;
     assign RegWriteD = RegWriteBD | RegWriteCD;
     assign PCSrc_reg = RsValue;
     assign PCout = PCin;
@@ -96,6 +111,7 @@ module ID_module(
 
     Control_Unit CPU_CTL(.Op(instr[31:26]),
                         .func(instr[5:0]),
+
                         .EPC_sel(EPC_sel),
                         .HI_LO_write_enableD(HI_LO_write_enableD),
                         .MemReadType(MemReadType),
@@ -122,7 +138,19 @@ module ID_module(
                            .write_data(ResultW),
                            .read_data_1(Read_data_1),
                            .read_data_2(Read_data_2),
-                           .epc(EPC));
+                           .EPC_data(EPC),
+                           .hardware_interruption(hardware_interruption),
+                           .software_interruption(software_interruption),
+                           .we(we),
+                           .interrupt_enable(interrupt_enable),
+                            .Exception_code(Exception_code),
+                            .EXL(EXL),
+                            .epc(epc),
+                            .BADADDR(BADADDR),
+                            .Branch_delay(Branch_delay),
+                            .Status_data(Status_data),
+                            .cause_data(cause_data)
+                            );
 
     Branch_judge brch_jdg(.Op(instr[31:26]),
                           .rt(instr[20:16]),
@@ -133,7 +161,7 @@ module ID_module(
                           .branch_taken(Branch_taken));
 
     decoder dcd(.ins(instr[31:0]),
-               .ALUop(ALUOp),
+               .ALUop(ALUop),
                .Rs(Rs),
                .Rt(Rt),
                .Rd(Rd),

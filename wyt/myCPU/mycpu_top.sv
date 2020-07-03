@@ -33,16 +33,16 @@ module mycpu_top(
 
 	//Data path connect to SRAM
 	assign rst 								= ~resetn;
-	assign ID.instr			 				= inst_sram_rdata;
+	assign IF.Instruction_in			 	= inst_sram_rdata;
 	assign MEM.RAMtmp 						= data_sram_rdata;
-	assign inst_sram_en 					= resetn;
+	assign inst_sram_en 					= 1;
 	assign inst_sram_wen 					= 0;
 	assign inst_sram_addr 					= IF.PCout;
 	assign inst_sram_wdata	 				= 0;
 	assign data_sram_en 					= MEM.MemReadM;
 	assign data_sram_wen 					= MEM.calWE;
 	assign data_sram_addr 					= MEM.ALUout;
-	assign data_sram_wdata 					= MEM.RamData;
+	assign data_sram_wdata 					= MEM.RAMdata;
 	assign debug_wb_pc 						= WB.PCout;
 	assign debug_wb_rf_wen					= (WB.RegWrite && WB.WritetoRFaddrout[6:5] == 2'b00) ? 4'b1111 : 4'b0000;
 	assign debug_wb_rf_wnum					= WB.WritetoRFaddrout[4:0];
@@ -96,23 +96,42 @@ module mycpu_top(
 	assign Hazard.WriteRegW                 = WB.WritetoRFaddrout;
 	assign Hazard.WriteRegE					= EX.WriteRegister;
 	assign Hazard.RegWriteE					= EX.RegWrite_o;
+	//These are added by Gaoustcer
+	assign Hazard.Exception_Stall			=Exception.Exception_Stall;
+	assign Hazard.Exception_clean			=Exception.Exception_Stall;
+	assign ID.Exception_EXL					=Exception.Exception_EXL;
+	assign ID.Exception_enable				=Exception.Exception_enable;
+	assign ID.hardware_interruption			=Exception.Status_IM[7:2];
+	assign ID.software_interruption			=Exception.Status_IM[1:0];
+	assign ID.Exception_code				=Exception.Exception_code;
+	assign ID.we							=Exception.Exception_we;
+	assign ID.Branch_delay					=Exception.Exception_Branch_delay;
+	assign ID.EPC							=Exception.EPC;
+	assign Exception.Status					=ID.Status;
+	assign Exception.Cause					=ID.cause;
 
 	// IF/ID registers
 
+	register #(32) IF_ID_instr (
+		.clk(clk),
+		.rst(FlushD | CLR_EN),
+		.en(~StallD),
+		.d(IF.Instruction),
+		.q(ID.instr)
+	);
+
 	register #(32) IF_ID_pc_plus_4 (
 		.clk(clk),
-		.rst(rst),
-		.Flush(Hazard.FlushD | ID.CLR_EN),
-		.en(~Hazard.StallD),
+		.rst(FlushD | CLR_EN),
+		.en(~StallD),
 		.d(IF.PC_add_4),
 		.q(ID.pc_plus_4)
 	);
 
 	register #(32) IF_ID_PCout (
 		.clk(clk),
-		.rst(rst),
-		.Flush(Hazard.FlushD | ID.CLR_EN),
-		.en(~Hazard.StallD),
+		.rst(FlushD | CLR_EN),
+		.en(~StallD),
 		.d(IF.PCout),
 		.q(ID.PCin)
 	);
@@ -121,171 +140,152 @@ module mycpu_top(
 
 	register #(6) ID_EX_ALUControl (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.ALUOp),
 		.q(EX.ALUControl)
 	);
 
 	register #(1) ID_EX_ALUSrcA (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.ALUSrcDA),
 		.q(EX.ALUSrcA)
 	);
 
 	register #(1) ID_EX_ALUSrcB (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.ALUSrcDB),
 		.q(EX.ALUSrcB)
 	);
 
 	register #(1) ID_EX_RegDst (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.RegDstD),
 		.q(EX.RegDst)
 	);
 
 	register #(1) ID_EX_MemRead_i (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.MemReadD),
 		.q(EX.MemRead_i)
 	);
 
 	register #(3) ID_EX_MemReadType_i (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.MemReadType),
 		.q(EX.MemReadType_i)
 	);
 
 	register #(1) ID_EX_MemWrite_i (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.MemWriteD),
 		.q(EX.MemWrite_i)
 	);
 
 	register #(1) ID_EX_MemtoReg_i (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.MemtoRegD),
 		.q(EX.MemtoReg_i)
 	);
 
 	register #(1) ID_EX_hiloWrite_i (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.HI_LO_write_enableD),
 		.q(EX.hiloWrite_i)
 	);
 
 	register #(1) ID_EX_RegWrite_i (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.RegWriteD),
 		.q(EX.RegWrite_i)
 	);
 
 	register #(1) ID_EX_immSel (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.Imm_sel_and_Branch_taken),
 		.q(EX.immSel)
 	);
 
 	register #(32) ID_EX_A (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.RsValue),
 		.q(EX.A)
 	);
 
 	register #(32) ID_EX_B (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.RtValue),
 		.q(EX.B)
 	);
 
 	register #(32) ID_EX_PCplus8 (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.pc_plus_8),
 		.q(EX.PCplus8)
 	);
 
 	register #(7) ID_EX_Rs (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.Rs),
 		.q(EX.Rs)
 	);
 
 	register #(7) ID_EX_Rt (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.Rt),
 		.q(EX.Rt)
 	);
 
 	register #(7) ID_EX_Rd (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.Rd),
 		.q(EX.Rd)
 	);
 
 	register #(32) ID_EX_imm (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d({16'b0, ID.imm}),
 		.q(EX.imm)
 	);
 
 	register #(32) ID_EX_PCout (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(ID.PCout),
 		.q(EX.PCin)
 	);
@@ -294,99 +294,88 @@ module mycpu_top(
 	
 	register #(1) EX_MEM_HI_LO_write_enableM (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.hiloWrite_o),
 		.q(MEM.HI_LO_write_enableM)
 	);
 
 	register #(3) EX_MEM_MemReadType (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.MemReadType_o),
 		.q(MEM.MemReadType)
 	);
 
 	register #(1) EX_MEM_MemReadM (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.MemRead_o),
 		.q(MEM.MemReadM)
 	);
 
 	register #(1) EX_MEM_RegWriteM (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.RegWrite_o),
 		.q(MEM.RegWriteM)
 	);
 
 	register #(1) EX_MEM_MemtoRegM (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.MemtoReg_o),
 		.q(MEM.MemtoRegM)
 	);
 
 	register #(1) EX_MEM_MemWriteM (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.MemWrite_o),
 		.q(MEM.MemWriteM)
 	);
 
 	register #(64) EX_MEM_HI_LO_dataM (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.hiloData),
 		.q(MEM.HI_LO_dataM)
 	);
 
 	register #(32) EX_MEM_ALUout (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.ALUResult),
 		.q(MEM.ALUout)
 	);
 
 	register #(32) EX_MEM_RamData (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.MemData),
 		.q(MEM.RamData)
 	);
 
 	register #(7) EX_MEM_WriteRegister (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushM),
-		.en(~Hazard.StallM),
+		.rst(FlushM),
+		.en(~StallM),
 		.d(EX.WriteRegister),
 		.q(MEM.WriteRegister)
 	);
 
 	register #(32) EX_MEM_PCout (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(EX.PCout),
 		.q(MEM.PCin)
 	);
@@ -396,72 +385,64 @@ module mycpu_top(
 
 	register #(1) MEM_WB_MemtoRegW (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushW),
-		.en(~Hazard.StallW),
+		.rst(FlushW),
+		.en(~StallW),
 		.d(MEM.MemtoRegW),
 		.q(WB.MemtoRegW)
 	);
 
 	register #(1) MEM_WB_RegWriteW (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushW),
-		.en(~Hazard.StallW),
+		.rst(FlushW),
+		.en(~StallW),
 		.d(MEM.RegWriteW),
 		.q(WB.RegWriteW)
 	);
 
 	register #(1) MEM_WB_HI_LO_writeenablein (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushW),
-		.en(~Hazard.StallW),
+		.rst(FlushW),
+		.en(~StallW),
 		.d(MEM.HI_LO_write_enableW),
 		.q(WB.HI_LO_writeenablein)
 	);
 
 	register #(64) MEM_WB_HILO_data (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushW),
-		.en(~Hazard.StallW),
+		.rst(FlushW),
+		.en(~StallW),
 		.d(MEM.HI_LO_dataW),
 		.q(WB.HILO_data)
 	);
 
 	register #(32) MEM_WB_Memdata (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushW),
-		.en(~Hazard.StallW),
+		.rst(FlushW),
+		.en(~StallW),
 		.d(MEM.RAMout),
 		.q(WB.Memdata)
 	);
 
 	register #(32) MEM_WB_aluout (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushW),
-		.en(~Hazard.StallW),
+		.rst(FlushW),
+		.en(~StallW),
 		.d(MEM.ALUoutW),
 		.q(WB.aluout)
 	);
 
 	register #(7) MEM_WB_WritetoRFaddrin (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushW),
-		.en(~Hazard.StallW),
+		.rst(FlushW),
+		.en(~StallW),
 		.d(MEM.WriteRegisterW),
 		.q(WB.WritetoRFaddrin)
 	);
 
 	register #(32) MEM_WB_PCout (
 		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushW),
-		.en(~Hazard.StallW),
+		.rst(FlushE),
+		.en(~StallE),
 		.d(MEM.PCout),
 		.q(WB.PCin)
 	);
@@ -478,6 +459,8 @@ module mycpu_top(
 		.Jump_addr                  (IF.Jump_addr),
 		.beq_addr                   (IF.beq_addr),
 		.StallF                     (IF.StallF),
+		.Instruction_in				(IF.Instruction_in),
+		.Instruction                (IF.Instruction),
 		.PC_add_4                   (IF.PC_add_4),
 		.PCout						(IF.PCout)
 	);
@@ -525,9 +508,20 @@ module mycpu_top(
 		.CLR_EN                     (ID.CLR_EN),
 		.exception                  (ID.exception),
 		.PCin						(ID.PCin),
-		.PCout						(ID.PCout)
+		.PCout						(ID.PCout),
+		.we							(ID.we),
+    	.interrupt_enable			(ID.Exception_enable),
+    	.Exception_code				(ID.Exception_code),
+    	.EXL						(ID.Exception_EXL),
+    	.epc						(),
+    	.BADADDR					(),
+    	.Branch_delay				(ID.Branch_delay),
+    	.hardware_interruption		(ID.hardware_interruption),
+    	.software_interruption		(ID.software_interruption),
+		.Status_data				(ID.Status),
+    	.cause_data					(ID.cause)
 	);
-
+	
 	EX_module EX_module(
 		.clk                        (clk),
 		.rst                        (rst),
@@ -616,7 +610,6 @@ module mycpu_top(
 	);
 
 	Hazard_module Hazard_module(
-		.rst 						(rst),
 		.BranchD                    (Hazard.BranchD),
 		.RsD                        (Hazard.RsD),
 		.RtD                        (Hazard.RtD),
@@ -653,16 +646,41 @@ module mycpu_top(
 		.ForwardAE                  (Hazard.ForwardAE),
 		.ForwardBE                  (Hazard.ForwardBE)
 	);
-
+	
 	Exception_module Exception_module(
+		.clk						(clk),
+    	.address_error				(),
+    	.memread					(),					
+    	.overflow_error				(),
+    	.syscall					(),
+    	.break						(),
+    	.reversed					(),
+    	.hardware_abortion			(ext_int),
+    	.software_abortion			(2'b00),
+    	.Status						(Exception.Status),
+    	.Cause						(Exception.Cause),
+    	.pc							(PCout),
+    	.BadVAddr					(),
+    	.EPC						(Exception.EPC),
+    	.NewPC						(Exception.NewPc),
+    	.we							(Exception.Exception_we),
+    	.new_Cause_BD1				(Exception.Exception_Branch_delay),
+    	.exception_occur			(Exception.Exception_Stall),
+    	.new_Status_EXL				(Exception.Exception_EXL),
+    	.new_Status_IE				(Exception.new_Status_IE),
+    	.Cause_IP					(Exception.Exception_enable),
+    	.Status_IM					(Exception.Status_IM),
+    	.ExcCode					(Exception.Exception_code)
+	);
+	/*Exception_module Exception_module(
 		.clk                        (clk),
 		.Exception_code             (Exception.Exception_code),
 		.Exception_Stall            (Exception.Exception_Stall),
-		.Exception_clean            (Exception.Exception_clean),
+		.Exception_Stall            (Exception.Exception_clean),
 		.Exception_Write_addr_sel   (Exception.Exception_Write_addr_sel),
 		.Exception_Write_data_sel   (Exception.Exception_Write_data_sel),
 		.Exception_RF_addr          (Exception.Exception_RF_addr),
 		.Exceptiondata              (Exception.Exceptiondata)
-	);
+	);*/
 
 endmodule

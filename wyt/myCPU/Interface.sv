@@ -1,5 +1,5 @@
 typedef struct packed {
-    //Input
+    //input
     logic Jump;
     logic BranchD;
     logic EPC_sel;
@@ -7,7 +7,7 @@ typedef struct packed {
     logic [31:0] Jump_reg;
     logic [31:0] Jump_addr;
     logic [31:0] beq_addr;
-    logic StallF;
+    logic stallF;
     logic [31:0] Instruction_in;
     //output
     logic [31:0] Instruction;
@@ -143,7 +143,6 @@ typedef struct packed {
     logic [63:0] HILO_data;
     logic Exception_Write_addr_sel;
     logic Exception_Write_data_sel;
-    logic HI_LO_writeenablein;
     logic [6:0] Exception_RF_addr;
     logic [31:0] Exceptiondata;
     logic [31:0] PCin;
@@ -196,15 +195,43 @@ typedef struct packed {
     logic [1:0] ForwardBE;
 } Hazard_interface;
 
-typedef struct packed {
+/*typedef struct packed {
     //input
     logic Exception_code; //undefined
     logic clk;
     //output
     logic Exception_Stall;
-    logic Exception_clean;
+    logic EXception_clean;
     logic Exception_Write_addr_sel;
     logic Exception_Write_data_sel;
     logic [6:0] Exception_RF_addr;
     logic [31:0] Exceptiondata;
+} Exception_interface;*/
+typedef struct packed{
+    //input
+    logic clk;
+    logic address_error;
+    logic memread;
+    logic overflow_error;
+    logic syscall;
+    logic break;
+    logic reversed;
+    logic [5:0] hardware_abortion;//硬件中断
+    logic [1:0] software_abortion;//软件中断
+    logic [31:0] Status;//Status寄存器当前的值
+    logic [31:0] Cause;//Cause寄存器当前的值
+    logic [31:0] pc;//错误指令pc
+    //output
+    logic [31:0] BadVAddr;//输出置BadVaddr
+    logic [31:0] EPC;//输出置EPC
+    logic [31:0] NewPC;//PC跳转
+    logic [31:0] we;//写使能字
+    logic new_Cause_BD1;//给cause寄存器赋新值
+    logic exception_occur;//异常发生（Stall，Clear）
+    logic new_Status_EXL;//给Status寄存器赋新值
+    logic new_Status_IE;//给Status寄存器赋新值
+    logic [7:0] Cause_IP;//给cause寄存器赋新值
+    logic [7:0] Status_IM;//给Status寄存器赋新值
+    logic [4:0] ExcCode;//异常编码
+
 } Exception_interface;

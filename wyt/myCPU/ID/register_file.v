@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 module register_file(
     input               clk,
     input               rst,
@@ -12,7 +10,24 @@ module register_file(
     input       [31:0]  write_data,
     output reg  [31:0]  read_data_1,
     output reg  [31:0]  read_data_2,
-    output      [31:0]  epc
+    //output      [31:0]  epc
+
+    //update contents 2020.7.1, adapt for error_detect module
+    output      [31:0]  Status_data,
+    output      [31:0]  EPC_data,
+    output      [31:0]  cause_data,
+    input       [31:0]  we,
+    input       [7:0]   interrupt_enable,
+    input       [4:0]   Exception_code,
+    input               EXL,
+    input       [5:0]   hardware_interruption,
+    input       [1:0]   software_interruption,
+    input       [31:0]  epc,
+    input       [31:0]  BADADDR,
+    input               Branch_delay
+    // output              timer_int_data,
+    // output              allow_interrupt,
+    // output              state
     );
 
     reg     [31:0]  reg_file[0:31];
@@ -91,16 +106,32 @@ module register_file(
                       .waddr(write_addr[4:0]),
                       .writedata(write_data),
                       .raddr(read_addr_2[4:0]),
+                      .hardware_interruption(hardware_interruption),
+                      .software_interruption(software_interruption),
+                      .we(we),
                       .general_write_in(reg_cp0_we),
+                      .BADADDR(BADADDR),
+                      .comparedata(32'h00000000),
+                      .configuredata(32'h00000000),
+                      .epc(epc),
+                      .interrupt_enable(interrupt_enable),
+                      .EXL(EXL),
+                      .IE(1'b1),
+                      .Branch_delay(Branch_delay),          
+                      .Exception_code(Exception_code),
                       .readdata(CP0_data),
                       .count_data(count_data),
                       .compare_data(compare_data),
                       .Status_data(Status_data),
                       .cause_data(cause_data),
-                      .EPC_data(epc),
+                      .EPC_data(EPC_data),
                       .configure_data(configure_data),
                       .prid_data(prid_data),
                       .BADVADDR_data(BADVADDR_data),
-                      .Random_data(Random_data));
+                      .Random_data(Random_data),
+                      .timer_int_data(timer_int_data),     
+                      .allow_interrupt(allow_interrupt),    
+                      .state(state)                         
+                      );
 
 endmodule

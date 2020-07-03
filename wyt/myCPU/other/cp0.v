@@ -27,7 +27,7 @@ module CP0
         output [WIDTH-1:0] configure_data,
         output [WIDTH-1:0] prid_data,
         output [WIDTH-1:0] BADVADDR_data,
-        output [WIDTH-1:0] Random_data,
+        output [WIDTH-1:0] Ramdom_data,
         output timer_int_data,//when compare==count, create a break
         output allow_interrupt,
         output state//user mode:0 kernel mode:1
@@ -36,7 +36,7 @@ module CP0
 );  
     reg [WIDTH-1:0] Readdata;
     reg [WIDTH-1:0] Index;//0
-    reg [WIDTH-1:0] Random;//1 Random number producer
+    reg [WIDTH-1:0] Ramdom;//1 Ramdom number producer
     reg [WIDTH-1:0] EntryLO0;//2
     reg [WIDTH-1:0] EntryLO1;//3
     reg [WIDTH-1:0] Context;//4
@@ -83,7 +83,7 @@ module CP0
     assign prid_data=prid;
 
     assign compare_data=compare;
-    assign Random_data=Random;
+    assign Ramdom_data=Ramdom;
     reg temp;
     assign state=Status[1]?1'b0:1;
     reg reg_time_int;
@@ -95,7 +95,7 @@ module CP0
         else if(we[14])
             EPC<=Branch_delay?epc-4:epc;
         else if(waddr==14&&general_write_in)
-            EPC<=epc;
+            EPC<=Branch_delay?epc-4:epc;
 
     end
     always@(posedge clk or posedge rst) begin
@@ -146,8 +146,8 @@ module CP0
             Status[21:16]<=6'b000000;//read only can't be modified
             Status[15:8]<=8'b11111111;//0:Break can take 1:Break can't take
             Status[7:2]<=6'b000000;//read only and always 0
-            Status[1]<=1'b1;//EXL 0:normal state 1:Kernel state
-            Status[0]<=1'b0;//IE  1:all breaks enable 0:all not enable
+            Status[1]<=1'b0;//EXL 0:normal state 1:Kernel state
+            Status[0]<=1'b1;//IE  1:all breaks enable 0:all not enable
         end
         else if(we[12]) begin
             Status[15:8]<=interrupt_enable;
@@ -162,9 +162,9 @@ module CP0
     end
     always@(posedge clk or posedge rst) begin
         if(rst)
-            Random<=32'h00000000;
+            Ramdom<=32'h00000000;
         else 
-            Random<=count; 
+            Ramdom<=count; 
     end
     always@(posedge clk or posedge rst)begin
         if(rst)begin
@@ -198,14 +198,14 @@ module CP0
         else if(waddr==13&&general_write_in)begin
             cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
             cause[31]<=Branch_delay;
-            cause[15]<=hardware_interruption[5];
-            cause[14]<=hardware_interruption[4];
-            cause[13]<=hardware_interruption[3];
-            cause[12]<=hardware_interruption[2];
-            cause[11]<=hardware_interruption[1];
-            cause[10]<=hardware_interruption[0];
-            cause[9]<=software_interruption[1];
-            cause[8]<=software_interruption[0];
+            cause[15]<=(Status[0]&&Status[15]&&(Status[1]==0))?hardware_interruption[5]:1'b0;
+            cause[14]<=(Status[0]&&Status[14]&&(Status[1]==0))?hardware_interruption[4]:1'b0;
+            cause[13]<=(Status[0]&&Status[13]&&(Status[1]==0))?hardware_interruption[3]:1'b0;
+            cause[12]<=(Status[0]&&Status[12]&&(Status[1]==0))?hardware_interruption[2]:1'b0;
+            cause[11]<=(Status[0]&&Status[11]&&(Status[1]==0))?hardware_interruption[1]:1'b0;
+            cause[10]<=(Status[0]&&Status[10]&&(Status[1]==0))?hardware_interruption[0]:1'b0;
+            cause[9]<=(Status[0]&&Status[9]&&(Status[1]==0))?software_interruption[1]:1'b0;
+            cause[8]<=(Status[0]&&Status[8]&&(Status[1]==0))?software_interruption[0]:1'b0;
             cause[6:2]<=Exception_code;
         end
     end
@@ -216,7 +216,7 @@ module CP0
         else begin
             case(raddr)
             5'b00000:Readdata<=Index;
-            5'b00001:Readdata<=Random;
+            5'b00001:Readdata<=Ramdom;
             5'b00010:Readdata<=EntryLO0;
             5'b00011:Readdata<=EntryLO1;
             5'b00100:Readdata<=Context;
@@ -286,7 +286,7 @@ module cp0_up
         output [WIDTH-1:0] configure_data,
         output [WIDTH-1:0] prid_data,
         output [WIDTH-1:0] BADVADDR_data,
-        output [WIDTH-1:0] Random_data,
+        output [WIDTH-1:0] Ramdom_data,
         output timer_int_data,//when compare==count, create a break
         output allow_interrupt,
         output state//user mode:0 kernel mode:1
@@ -307,7 +307,7 @@ module cp0_up
     reg r_Branch_delay;
     reg [4:0] r_Exception_code;
     
-	CP0 cp0_pipeline(
+	cp0 cp0_pipeline(
         .clk(clk),.rst(rst),
         .hardware_interruption(r_hardware_interruption),//6 hardware break
         .software_interruption(r_software_interruption),//2 software interruption
@@ -334,7 +334,7 @@ module cp0_up
         .configure_data(configure_data),
         .prid_data(prid_data),
         .BADVADDR_data(BADVADDR_data),
-        .Random_data(Random_data),
+        .Ramdom_data(Ramdom_data),
         .timer_int_data(timer_int_data),//when compare==count, create a break
         .allow_interrupt(allow_interrupt),
         .state(state)//user mode:0 kernel mode:1
