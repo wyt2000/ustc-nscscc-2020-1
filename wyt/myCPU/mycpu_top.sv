@@ -39,7 +39,7 @@ module mycpu_top(
 	assign inst_sram_wen 					= 0;
 	assign inst_sram_addr 					= IF.PCout;
 	assign inst_sram_wdata	 				= 0;
-	assign data_sram_en 					= MEM.MemReadM;
+	assign data_sram_en 					= 1;
 	assign data_sram_wen 					= MEM.calWE;
 	assign data_sram_addr 					= MEM.ALUout;
 	assign data_sram_wdata 					= MEM.RamData;
@@ -67,8 +67,8 @@ module mycpu_top(
 	assign ID.RAMoutM                       = MEM.RAMout;
 	assign ID.ForwardAD                     = Hazard.ForwardAD;
 	assign ID.ForwardBD                     = Hazard.ForwardBD;
-	assign EX.ForwardMEM                    = MEM.RAMout;
-	assign EX.ForwardWB                     = WB.WritetoRFdata;
+	assign EX.ForwardMEM                    = MEM.ALUout;
+	assign EX.ForwardWB                     = MEM.RAMout;
 	assign EX.ForwardA                      = Hazard.ForwardAE;
 	assign EX.ForwardB                      = Hazard.ForwardBE;
 	assign WB.Exception_Write_addr_sel      = Exception.Exception_Write_addr_sel;
@@ -536,6 +536,7 @@ module mycpu_top(
 		.RegWrite_i                 (EX.RegWrite_i),
 		.MemtoReg_i                 (EX.MemtoReg_i),
 		.MemWrite_i                 (EX.MemWrite_i),
+		.MemRead_i					(EX.MemRead_i),
 		.ALUControl                 (EX.ALUControl),
 		.ALUSrcA                    (EX.ALUSrcA),
 		.ALUSrcB                    (EX.ALUSrcB),
@@ -557,6 +558,7 @@ module mycpu_top(
 		.RegWrite_o                 (EX.RegWrite_o),
 		.MemtoReg_o                 (EX.MemtoReg_o),
 		.MemWrite_o                 (EX.MemWrite_o),
+		.MemRead_o					(EX.MemRead_o),
 		.Rs_o                       (EX.Rs_o),
 		.Rt_o                       (EX.Rt_o),
 		.hiloData                   (EX.hiloData),
@@ -580,6 +582,7 @@ module mycpu_top(
 		.MemReadM                   (MEM.MemReadM),
 		.MemtoRegM                  (MEM.MemtoRegM),
 		.MemWriteM                  (MEM.MemWriteM),
+		.calWE						(MEM.calWE),
 		.ALUout                     (MEM.ALUout),
 		.RamData                    (MEM.RamData),
 		.WriteRegister              (MEM.WriteRegister),
@@ -587,6 +590,7 @@ module mycpu_top(
 		.RegWriteW                  (MEM.RegWriteW),
 		.HI_LO_write_enableW        (MEM.HI_LO_write_enableW),
 		.HI_LO_dataW                (MEM.HI_LO_dataW),
+		.RAMtmp						(MEM.RAMtmp),
 		.RAMout                     (MEM.RAMout),
 		.ALUoutW                    (MEM.ALUoutW),
 		.WriteRegisterW             (MEM.WriteRegisterW),

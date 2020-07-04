@@ -44,6 +44,6 @@ module Hazard_module(
     	else if(Exception_clean) {FlushW,FlushM,FlushE,FlushD,StallF,StallW,StallM,StallE,StallD} = 9'b111111111;
     	else if(Exception_Stall||(stall&&!done)) {FlushW,FlushM,FlushE,FlushD,StallF,StallW,StallM,StallE,StallD} = 9'b000011111;
     	else if(BranchD) {FlushW,FlushM,FlushE,FlushD,StallF,StallW,StallM,StallE,StallD} = 9'b000100000;//branch successful
-    	else if(MemReadE&&isaBranchInstrution) {FlushW,FlushM,FlushE,FlushD,StallF,StallW,StallM,StallE,StallD} = 9'b000010001;//lw+beq
+    	else if(MemReadM&&isaBranchInstrution) {FlushW,FlushM,FlushE,FlushD,StallF,StallW,StallM,StallE,StallD} = 9'b000010001;//lw+beq
         else {FlushW,FlushM,FlushE,FlushD,StallF,StallW,StallM,StallE,StallD} = 9'b000000000;
 endmodule // Hazard_detection_control

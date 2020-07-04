@@ -52,6 +52,7 @@
 `define FUNC_SYSCALL    6'b001100
 
 `define OP_PRIV         6'b010000
+`define ERET_LAST       6'b011000
 `define FUNC_ERET       5'b10000
 `define FUNC_MFC0       5'b00000
 `define FUNC_MTC0       5'b00100

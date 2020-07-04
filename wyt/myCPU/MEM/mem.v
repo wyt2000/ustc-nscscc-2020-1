@@ -28,6 +28,8 @@ output [31:0] PCout
 
 always@(*)
 begin
+    RAMout = 0;
+    calWE = 0;
     if (MemReadType[1:0]==2'b00)
     begin
         if (ALUout[1:0]==2'b00)
@@ -81,6 +83,7 @@ begin
         if (MemWriteM==1) calWE[3:0]=4'b1111;
         else calWE[3:0]=4'b0000;
     end
+
 end
 
 assign MemtoRegW=MemtoRegM;

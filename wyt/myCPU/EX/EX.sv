@@ -8,6 +8,7 @@ module EX_module(
     input RegWrite_i,
     input MemtoReg_i,
     input MemWrite_i,
+    input MemRead_i,
     input [5:0] ALUControl,
     input ALUSrcA,
     input ALUSrcB,
@@ -39,7 +40,8 @@ module EX_module(
     output stall,
     output [31:0] MemData,
     output [6:0] WriteRegister,
-    output [31:0] PCout
+    output [31:0] PCout,
+    output MemRead_o
     );
     wire [31:0] imm_o;
     wire [31:0] A_o;
@@ -57,6 +59,7 @@ module EX_module(
     assign Rs_o = Rs;
     assign Rt_o = Rt;
     assign PCout = PCin;
+    assign MemRead_o = MemRead_i;
 
     //mux
     assign imm_o = immSel ? PCplus8 : imm;

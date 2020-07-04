@@ -15,7 +15,7 @@ module decoder(
     wire [4:0] rt;
     wire [4:0] rd;
     wire [4:0] sa;
-    wire [5:0] funct;
+    wire [5:0] func;
 
     assign op = ins[31:26];
     assign rs = ins[25:21];
@@ -42,6 +42,7 @@ module decoder(
                     `FUNC_MULTU:            ALUop = `ALU_MULTU;
                     `FUNC_AND:              ALUop = `ALU_AND;
                     `FUNC_NOR:              ALUop = `ALU_NOR;
+                    `FUNC_OR:               ALUop = `ALU_OR;
                     `FUNC_XOR:              ALUop = `ALU_XOR;
                     `FUNC_SLLV:             ALUop = `ALU_SLLV;
                     `FUNC_SLL:              ALUop = `ALU_SLL;
@@ -147,6 +148,7 @@ module decoder(
                 endcase
             `OP_J: Rd = 0;
             `OP_JAL: begin
+                Rs = 0;
                 Rd = 31;
                 Rt = 0;
             end

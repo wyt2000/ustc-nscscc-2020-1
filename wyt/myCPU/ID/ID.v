@@ -116,7 +116,7 @@ module ID_module(
                            .regwrite(RegWriteW),
                            .hl_write_enable_from_wb(HI_LO_write_enable_from_WB),
                            .read_addr_1(Rs),
-                           .read_addr_2(Rd),
+                           .read_addr_2(Rt),
                            .hl_data(HI_LO_data),
                            .write_addr(WriteRegW),
                            .write_data(ResultW),
