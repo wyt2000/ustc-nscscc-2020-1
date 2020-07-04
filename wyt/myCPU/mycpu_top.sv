@@ -34,14 +34,14 @@ module mycpu_top(
 	//Data path connect to SRAM
 	assign rst 								= ~resetn;
 	assign ID.instr			 				= inst_sram_rdata;
-	assign MEM.RAMtmp 						= data_sram_rdata;
+	assign WB.Memdata 						= data_sram_rdata;
 	assign inst_sram_en 					= resetn;
 	assign inst_sram_wen 					= 0;
 	assign inst_sram_addr 					= IF.PCout;
 	assign inst_sram_wdata	 				= 0;
 	assign data_sram_en 					= 1;
 	assign data_sram_wen 					= MEM.calWE;
-	assign data_sram_addr 					= MEM.ALUout;
+	assign data_sram_addr 					= {3'b000, MEM.ALUout[28:0]};
 	assign data_sram_wdata 					= MEM.RamData;
 	assign debug_wb_pc 						= WB.PCout;
 	assign debug_wb_rf_wen					= (WB.RegWrite && WB.WritetoRFaddrout[6:5] == 2'b00) ? 4'b1111 : 4'b0000;
@@ -64,11 +64,10 @@ module mycpu_top(
 	assign ID.HI_LO_data                    = WB.WriteinRF_HI_LO_data;
 	assign ID.ALUoutE                       = EX.ALUResult;
 	assign ID.ALUoutM                       = MEM.ALUoutW;
-	assign ID.RAMoutM                       = MEM.RAMout;
 	assign ID.ForwardAD                     = Hazard.ForwardAD;
 	assign ID.ForwardBD                     = Hazard.ForwardBD;
 	assign EX.ForwardMEM                    = MEM.ALUout;
-	assign EX.ForwardWB                     = MEM.RAMout;
+	assign EX.ForwardWB                     = WB.WritetoRFdata;
 	assign EX.ForwardA                      = Hazard.ForwardAE;
 	assign EX.ForwardB                      = Hazard.ForwardBE;
 	assign WB.Exception_Write_addr_sel      = Exception.Exception_Write_addr_sel;
@@ -96,6 +95,7 @@ module mycpu_top(
 	assign Hazard.WriteRegW                 = WB.WritetoRFaddrout;
 	assign Hazard.WriteRegE					= EX.WriteRegister;
 	assign Hazard.RegWriteE					= EX.RegWrite_o;
+	assign Hazard.isaBranchInstruction 		= ID.isBranch;
 
 	// IF/ID registers
 
@@ -430,15 +430,6 @@ module mycpu_top(
 		.q(WB.HILO_data)
 	);
 
-	register #(32) MEM_WB_Memdata (
-		.clk(clk),
-		.rst(rst),
-        .Flush(Hazard.FlushW),
-		.en(~Hazard.StallW),
-		.d(MEM.RAMout),
-		.q(WB.Memdata)
-	);
-
 	register #(32) MEM_WB_aluout (
 		.clk(clk),
 		.rst(rst),
@@ -464,6 +455,15 @@ module mycpu_top(
 		.en(~Hazard.StallW),
 		.d(MEM.PCout),
 		.q(WB.PCin)
+	);
+
+	register #(3) MEM_WB_MemReadTypeW (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushW),
+		.en(~Hazard.StallW),
+		.d(MEM.MemReadTypeW),
+		.q(WB.MemReadTypeW)
 	);
 
 
@@ -494,7 +494,6 @@ module mycpu_top(
 		.RegWriteW                  (ID.RegWriteW),
 		.ALUoutE                    (ID.ALUoutE),
 		.ALUoutM                    (ID.ALUoutM),
-		.RAMoutM                    (ID.RAMoutM),
 		.ForwardAD                  (ID.ForwardAD),
 		.ForwardBD                  (ID.ForwardBD),
 		.ALUOp                      (ID.ALUOp),
@@ -525,7 +524,8 @@ module mycpu_top(
 		.CLR_EN                     (ID.CLR_EN),
 		.exception                  (ID.exception),
 		.PCin						(ID.PCin),
-		.PCout						(ID.PCout)
+		.PCout						(ID.PCout),
+		.isBranch					(ID.isBranch)
 	);
 
 	EX_module EX_module(
@@ -590,12 +590,11 @@ module mycpu_top(
 		.RegWriteW                  (MEM.RegWriteW),
 		.HI_LO_write_enableW        (MEM.HI_LO_write_enableW),
 		.HI_LO_dataW                (MEM.HI_LO_dataW),
-		.RAMtmp						(MEM.RAMtmp),
-		.RAMout                     (MEM.RAMout),
 		.ALUoutW                    (MEM.ALUoutW),
 		.WriteRegisterW             (MEM.WriteRegisterW),
 		.PCin						(MEM.PCin),
-		.PCout						(MEM.PCout)
+		.PCout						(MEM.PCout),
+		.MemReadTypeW				(MEM.MemReadTypeW)
 	);
 
 	WB_module WB_module(
@@ -616,16 +615,18 @@ module mycpu_top(
 		.WritetoRFdata              (WB.WritetoRFdata),
 		.RegWrite                   (WB.RegWrite),
 		.PCin						(WB.PCin),
-		.PCout						(WB.PCout)
+		.PCout						(WB.PCout),
+		.MemReadTypeW				(WB.MemReadTypeW)
 	);
 
 	Hazard_module Hazard_module(
+		.clk						(clk),
 		.rst 						(rst),
 		.BranchD                    (Hazard.BranchD),
 		.RsD                        (Hazard.RsD),
 		.RtD                        (Hazard.RtD),
 		.ID_exception               (Hazard.ID_exception),
-		.isaBranchInstrution		(Hazard.isaBranchInstrution),
+		.isaBranchInstruction		(Hazard.isaBranchInstruction),
 		.RsE                        (Hazard.RsE),
 		.RtE                        (Hazard.RtE),
 		.MemReadE                   (Hazard.MemReadE),

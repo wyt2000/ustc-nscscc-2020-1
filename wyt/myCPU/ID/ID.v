@@ -24,7 +24,6 @@ module ID_module(
 
     //from MEM
     input [31:0] ALUoutM,
-    input [31:0] RAMoutM,
 
     //from Hazard Unit
     input [1:0] ForwardAD,
@@ -80,19 +79,9 @@ module ID_module(
     assign PCSrc_reg = RsValue;
     assign PCout = PCin;
 
-    mux_4 rd1_mux(.m(ForwardAD),
-                .in_0(Read_data_1),
-                .in_1(ALUoutE),
-                .in_2(RAMoutM),
-                .in_3(ALUoutM),
-                .out(RsValue));
-
-    mux_4 rd2_mux(.m(ForwardBD),
-                .in_0(Read_data_2),
-                .in_1(ALUoutE),
-                .in_2(RAMoutM),
-                .in_3(ALUoutM),
-                .out(RtValue));
+    //mux
+    assign RsValue = ForwardAD[1] ?  ALUoutM : (ForwardAD[0] ? ALUoutE : Read_data_1);
+    assign RtValue = ForwardBD[1] ?  ALUoutM : (ForwardBD[0] ? ALUoutE : Read_data_2);
 
     Control_Unit CPU_CTL(.Op(instr[31:26]),
                         .func(instr[5:0]),

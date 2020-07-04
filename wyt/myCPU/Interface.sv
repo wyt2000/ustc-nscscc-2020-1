@@ -130,6 +130,7 @@ typedef struct packed {
     logic [6:0] WriteRegisterW;
     logic [3:0] calWE;
     logic [31:0] PCout;
+    logic [2:0] MemReadTypeW;
 } MEM_interface;
 
 typedef struct packed {
@@ -147,6 +148,7 @@ typedef struct packed {
     logic [6:0] Exception_RF_addr;
     logic [31:0] Exceptiondata;
     logic [31:0] PCin;
+    logic [2:0] MemReadTypeW;
     //output
     logic [6:0] WritetoRFaddrout;
     logic [31:0] WritetoRFdata;
@@ -177,7 +179,7 @@ typedef struct packed {
     logic MemtoRegM;
     logic RegWriteW;
     logic [6:0] WriteRegW;
-    logic isaBranchInstrution;
+    logic isaBranchInstruction;
     logic [6:0] WriteRegE;
     logic RegWriteE;
     //output
