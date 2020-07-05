@@ -203,6 +203,7 @@ reg [31:0] cache [0:31];
          awcache = 4'd0;
          awprot = 3'd0;
          wid = 4'd1;
+         wstrb = 4'b1111;
     end
     
 endmodule
