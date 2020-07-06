@@ -33,7 +33,6 @@ module mycpu_top(
 
 	//Data path connect to SRAM
 	assign rst 								= ~resetn;
-	//assign ID.instr			 				= inst_sram_rdata;
 	assign WB.Memdata 						= data_sram_rdata;
 	assign inst_sram_en 					= resetn;
 	assign inst_sram_wen 					= 0;
@@ -70,10 +69,6 @@ module mycpu_top(
 	assign EX.ForwardWB                     = WB.WritetoRFdata;
 	assign EX.ForwardA                      = Hazard.ForwardAE;
 	assign EX.ForwardB                      = Hazard.ForwardBE;
-	assign WB.Exception_Write_addr_sel      = Exception.Exception_Write_addr_sel;
-	assign WB.Exception_Write_data_sel      = Exception.Exception_Write_data_sel;
-	assign WB.Exception_RF_addr             = Exception.Exception_RF_addr;
-	assign WB.Exceptiondata                 = Exception.Exceptiondata;
 	assign Hazard.BranchD                   = ID.BranchD;
 	assign Hazard.RsD                       = ID.Rs;
 	assign Hazard.RtD                       = ID.Rt;
@@ -85,8 +80,8 @@ module mycpu_top(
 	assign Hazard.EX_exception              = EX.exception;
 	assign Hazard.stall                     = EX.stall;
 	assign Hazard.done                      = EX.done;
-	assign Hazard.Exception_Stall           = Exception.Exception_Stall;
-	assign Hazard.Exception_clean           = Exception.Exception_clean;
+	assign Hazard.Exception_Stall           = Exception.Stall;
+	assign Hazard.Exception_clean           = Exception.clean;
 	assign Hazard.RegWriteM                 = MEM.RegWriteM;
 	assign Hazard.WriteRegM                 = MEM.WriteRegister;
 	assign Hazard.MemReadM                  = MEM.MemReadM;
@@ -95,9 +90,23 @@ module mycpu_top(
 	assign Hazard.WriteRegW                 = WB.WritetoRFaddrout;
 	assign Hazard.WriteRegE					= EX.WriteRegister;
 	assign Hazard.RegWriteE					= EX.RegWrite_o;
-	assign Hazard.isaBranchInstruction 		= ID.isBranch;
+	assign Hazard.isaBranchInstruction		= ID.isBranch;
 
-	// IF/ID registers
+	// IF/ID registers	
+	assign Hazard.Exception_Stall			= Exception.Stall;
+	assign Hazard.Exception_clean			= Exception.Stall;
+	assign ID.Exception_EXL					= Exception.EXL;
+	assign ID.Exception_enable				= Exception.enable;
+	assign ID.hardware_interruption			= Exception.Status_IM[7:2];
+	assign ID.software_interruption			= Exception.Status_IM[1:0];
+	assign ID.Exception_code				= Exception.ExcCode;
+	assign ID.we							= Exception.we;
+	assign ID.Branch_delay					= Exception.Branch_delay;
+	assign ID.EPC							= Exception.EPC;
+	assign Exception.Status					= ID.Status;
+	assign Exception.Cause					= ID.cause;
+	assign IF.Error_happend					= Exception.Stall;
+
 
 	register #(32) IF_ID_pc_plus_4 (
 		.clk(clk),
@@ -535,7 +544,18 @@ module mycpu_top(
 		.Jump_addr                  (ID.Jump_addr),
 		.exception                  (ID.exception),
 		.PCin						(ID.PCin),
-		.PCout						(ID.PCout),
+		.PCout						(ID.PCout),		
+		.we							(ID.we),
+    	.interrupt_enable			(ID.Exception_enable),
+    	.Exception_code				(ID.Exception_code),
+    	.EXL						(ID.Exception_EXL),
+    	.epc						(32'h00000000),
+    	.BADADDR					(32'h00000000),
+    	.Branch_delay				(ID.Branch_delay),
+    	.hardware_interruption		(ext_int),
+    	.software_interruption		(2'b00),
+		.Status_data				(ID.Status),
+    	.cause_data					(ID.cause),
 		.isBranch					(ID.isBranch)
 	);
 
@@ -614,10 +634,10 @@ module mycpu_top(
 		.WritetoRFaddrin            (WB.WritetoRFaddrin),
 		.MemtoRegW                  (WB.MemtoRegW),
 		.RegWriteW                  (WB.RegWriteW),
-		.Exception_Write_addr_sel   (WB.Exception_Write_addr_sel),
-		.Exception_Write_data_sel   (WB.Exception_Write_data_sel),
-		.Exception_RF_addr          (WB.Exception_RF_addr),
-		.Exceptiondata              (WB.Exceptiondata),
+		.Exception_Write_addr_sel   (1'b0),
+		.Exception_Write_data_sel   (1'b0),
+		.Exception_RF_addr          (7'b0000000),
+		.Exceptiondata              (32'h00000000),
 		.HILO_data                  (WB.HILO_data),
 		.WriteinRF_HI_LO_data       (WB.WriteinRF_HI_LO_data),
 		.HI_LO_writeenablein        (WB.HI_LO_writeenablein),
@@ -671,14 +691,30 @@ module mycpu_top(
 	);
 
 	Exception_module Exception_module(
-		.clk                        (clk),
-		.Exception_code             (Exception.Exception_code),
-		.Exception_Stall            (Exception.Exception_Stall),
-		.Exception_clean            (Exception.Exception_clean),
-		.Exception_Write_addr_sel   (Exception.Exception_Write_addr_sel),
-		.Exception_Write_data_sel   (Exception.Exception_Write_data_sel),
-		.Exception_RF_addr          (Exception.Exception_RF_addr),
-		.Exceptiondata              (Exception.Exceptiondata)
-	);
+		.clk						(clk),
+    	.address_error				(1'b0),
+    	.memread					(1'b0),					
+    	.overflow_error				(1'b0),
+    	.syscall					(1'b0),
+    	._break						(1'b0),
+    	.reversed					(1'b0),
+    	.hardware_abortion			(ext_int),
+    	.software_abortion			(2'b00),
+    	.Status						(Exception.Status),
+    	.Cause						(Exception.Cause),
+    	.pc							(WB.PCout),
+    	.BadVAddr					(Exception.BadVAddr),
+    	.EPC						(Exception.EPC),
+    	.NewPC						(Exception.NewPc),
+    	.we							(Exception.we),
+    	.new_Cause_BD1				(Exception.Branch_delay),
+    	.exception_occur			(Exception.Stall),
+    	.new_Status_EXL				(Exception.EXL),
+    	.new_Status_IE				(Exception.new_Status_IE),
+    	.Cause_IP					(Exception.enable),
+    	.Status_IM					(Exception.Status_IM),
+    	.ExcCode					(Exception.ExcCode)
+			);
+
 
 endmodule

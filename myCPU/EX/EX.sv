@@ -25,7 +25,7 @@ module EX_module(
     input [31:0] imm,
     input [31:0] ForwardMEM,
     input [31:0] ForwardWB,
-    input [31:0] PCin
+    input [31:0] PCin,
     output hiloWrite_o,
     output [2:0] MemReadType_o,
     output RegWrite_o,

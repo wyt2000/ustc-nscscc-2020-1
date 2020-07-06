@@ -62,7 +62,21 @@ module ID_module(
     output [31:0] Jump_addr,
     //to Harzard unit
     output exception,
-    output isBranch
+    output isBranch,
+    //epc
+    //added by Gaoustcer
+    output      [31:0]  Status_data,
+    //output      [31:0]  ,
+    output      [31:0]  cause_data,
+    input       [31:0]  we,
+    input       [7:0]   interrupt_enable,
+    input       [4:0]   Exception_code,
+    input               EXL,
+    input       [5:0]   hardware_interruption,
+    input       [1:0]   software_interruption,
+    input       [31:0]  epc,
+    input       [31:0]  BADADDR,
+    input               Branch_delay
     );
 
     wire Imm_sel, Branch_taken, RegWriteCD, RegWriteBD;
@@ -75,6 +89,7 @@ module ID_module(
     assign RegWriteD = RegWriteBD | RegWriteCD;
     assign PCSrc_reg = RsValue;
     assign PCout = PCin;
+    assign EPC = epc;
 
     //mux
     assign RsValue = ForwardAD[1] ?  ALUoutM : (ForwardAD[0] ? ALUoutE : Read_data_1);
@@ -108,7 +123,18 @@ module ID_module(
                            .write_data(ResultW),
                            .read_data_1(Read_data_1),
                            .read_data_2(Read_data_2),
-                           .epc(EPC));
+                           .Status_data(Status_data),
+                           .EPC_data(EPC_data),
+                           .cause_data(cause_data),
+                           .we(we),
+                           .interrupt_enable(interrupt_enable),
+                           .Exception_code(Exception_code),
+                           .EXL(EXL),
+                           .hardware_interruption(hardware_interruption),
+                           .software_interruption(software_interruption),
+                           .epc(epc),
+                           .BADADDR(BADADDR),
+                           .Branch_delay(Branch_delay));
 
     Branch_judge brch_jdg(.Op(instr[31:26]),
                           .rt(instr[20:16]),

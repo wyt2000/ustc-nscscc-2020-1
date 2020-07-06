@@ -10,6 +10,7 @@ module IF_module
     input [WIDTH-1:0] Jump_reg,//The NPC of Jump to Reg Instruction
     input [WIDTH-1:0] Jump_addr,//The NPC of Jump Instruction
     input [WIDTH-1:0] beq_addr,//The NPC of Beq Instrcution
+    input Error_happend,
     output [WIDTH-1:0] PC_add_4,
     output reg [WIDTH-1:0] PCout,
 
@@ -18,6 +19,7 @@ module IF_module
     assign PC_add_4 = PCout + 4;
     always@(posedge clk)
         if(rst) PCout <= 32'hbfc0_0000;
+        else if(Error_happend) PCout <= 32'hbfc0_0380;
         else if(StallF) PCout <= PCout;
         else if(EPC_sel == 0)             PCout <= EPC;
         else if({Jump,BranchD} == 2'b11)  PCout <= Jump_addr;
