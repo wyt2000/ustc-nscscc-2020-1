@@ -33,7 +33,7 @@ module mycpu_top(
 
 	//Data path connect to SRAM
 	assign rst 								= ~resetn;
-	assign ID.instr			 				= inst_sram_rdata;
+	//assign ID.instr			 				= inst_sram_rdata;
 	assign WB.Memdata 						= data_sram_rdata;
 	assign inst_sram_en 					= resetn;
 	assign inst_sram_wen 					= 0;
@@ -102,7 +102,7 @@ module mycpu_top(
 	register #(32) IF_ID_pc_plus_4 (
 		.clk(clk),
 		.rst(rst),
-		.Flush(Hazard.FlushD | ID.CLR_EN),
+		.Flush(Hazard.FlushD | IF.is_newPC),
 		.en(~Hazard.StallD),
 		.d(IF.PC_add_4),
 		.q(ID.pc_plus_4)
@@ -111,11 +111,20 @@ module mycpu_top(
 	register #(32) IF_ID_PCout (
 		.clk(clk),
 		.rst(rst),
-		.Flush(Hazard.FlushD | ID.CLR_EN),
+		.Flush(Hazard.FlushD | IF.is_newPC),
 		.en(~Hazard.StallD),
 		.d(IF.PCout),
 		.q(ID.PCin)
 	);
+
+    register #(32) IF_ID_instr (
+		.clk(clk),
+		.rst(rst),
+		.Flush(Hazard.FlushD | IF.is_newPC),
+		.en(~Hazard.StallD),
+        .d(inst_sram_rdata),
+        .q(ID.instr)
+    );
 
 	// ID/EX registers
 
@@ -477,9 +486,12 @@ module mycpu_top(
 		.Jump_reg                   (IF.Jump_reg),
 		.Jump_addr                  (IF.Jump_addr),
 		.beq_addr                   (IF.beq_addr),
-		.StallF                     (IF.StallF),
+		// .StallF                     (IF.StallF),
+        .StallF                     ( IF.StallF | (IF.is_newPC && ID.EPC_sel && !ID.Jump && !ID.BranchD) ),
 		.PC_add_4                   (IF.PC_add_4),
-		.PCout						(IF.PCout)
+		.PCout						(IF.PCout),
+        
+        .is_newPC                   (IF.is_newPC)
 	);
 	
 	ID_module ID_module(
@@ -521,7 +533,6 @@ module mycpu_top(
 		.EPC                        (ID.EPC),
 		.Branch_addr                (ID.Branch_addr),
 		.Jump_addr                  (ID.Jump_addr),
-		.CLR_EN                     (ID.CLR_EN),
 		.exception                  (ID.exception),
 		.PCin						(ID.PCin),
 		.PCout						(ID.PCout),

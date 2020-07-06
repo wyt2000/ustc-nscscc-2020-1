@@ -13,6 +13,8 @@ typedef struct packed {
     logic [31:0] Instruction;
     logic [31:0] PC_add_4;
     logic [31:0] PCout;
+
+    logic is_newPC;
 } IF_interface;
 
 typedef struct packed {

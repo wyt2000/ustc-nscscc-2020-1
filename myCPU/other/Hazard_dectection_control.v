@@ -21,12 +21,16 @@ module Hazard_module(
     always@(*)
         if(rst || RsD == 0) ForwardAD=2'b00;
     	else if(RegWriteE&&WriteRegE==RsD&&MemtoRegE&&RsD) ForwardAD=2'b01;//add+use,forwardtoID
-    	else if(RegWriteM&&WriteRegM==RsD&&MemtoRegM&&isaBranchInstruction&&RsD) ForwardAD=2'b10;//add+nop+Branch
+    	else if(RegWriteM&&WriteRegM==RsD&&MemtoRegM&&
+                //isaBranchInstruction&&
+                RsD) ForwardAD=2'b10;//add+nop+Branch
     	else ForwardAD=2'b00;
     always@(*)
     	if(rst || RtD == 0) ForwardBD=2'b00;
         else if(RegWriteE&&WriteRegE==RtD&&MemtoRegE&&RtD) ForwardBD=2'b01;
-    	else if(RegWriteM&&WriteRegM==RtD&&MemtoRegM&&isaBranchInstruction&&RtD) ForwardBD=2'b10;//add+nop+Branch
+    	else if(RegWriteM&&WriteRegM==RtD&&MemtoRegM&&
+                //isaBranchInstruction&&
+                RtD) ForwardBD=2'b10;//add+nop+Branch
     	else ForwardBD=2'b00;
     always@(*)
         if(rst || RsE == 0) ForwardAE=2'b00;
@@ -50,14 +54,12 @@ module Hazard_module(
         if(rst) next_state=4'b0000;
         if(Exception_clean||Exception_Stall) next_state=4'b0001;//Exception situation (clean and Stall all the Registers)
         if(MemReadE&&((WriteRegE==RsD)||(WriteRegE==RtD))&&RegWriteE&&isaBranchInstruction) next_state=4'b0100;//lw+use(Branch),WB-->>EX
-        if(isaBranchInstruction&&BranchD) next_state=4'b1111;
         if(MemReadM&&((WriteRegM==RsE)||(WriteRegM==RtE))&&RegWriteM) next_state=4'b1000;//lw+use,WB-->>EX
         else case (State)
             4'b0001: next_state=4'b0000;
             4'b0100: next_state=4'b0010;
             4'b0010: next_state=4'b0000;
             4'b1000: next_state=4'b0000;
-            4'b1111: next_state=4'b0000;
             default: next_state=4'b0000;
         endcase
     end
@@ -68,7 +70,6 @@ module Hazard_module(
             4'b0010: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111000100;
             4'b0100: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111000100;
             4'b1000: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111100010;
-            4'b1111: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b010001000;
             default: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b000000000;
         endcase
     end

@@ -11,7 +11,9 @@ module IF_module
     input [WIDTH-1:0] Jump_addr,//The NPC of Jump Instruction
     input [WIDTH-1:0] beq_addr,//The NPC of Beq Instrcution
     output [WIDTH-1:0] PC_add_4,
-    output reg [WIDTH-1:0] PCout
+    output reg [WIDTH-1:0] PCout,
+
+    output is_newPC
 );	
     assign PC_add_4 = PCout + 4;
     always@(posedge clk)
@@ -22,4 +24,14 @@ module IF_module
         else if({Jump,BranchD} == 2'b10)  PCout <= Jump_reg;
         else if({Jump,BranchD} == 2'b01)  PCout <= beq_addr;
         else PCout <= PCout + 4;
+
+    reg [31:0] old_PC;
+    always@(posedge clk) begin
+        if(rst)
+            old_PC <= 32'b0;
+        else
+            old_PC <= PCout;
+    end
+    assign is_newPC = (PCout == old_PC) ? 0 : 1;
+
 endmodule

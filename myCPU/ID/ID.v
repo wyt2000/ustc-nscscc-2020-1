@@ -60,8 +60,6 @@ module ID_module(
     output [31:0] EPC,
     output [31:0] Branch_addr,
     output [31:0] Jump_addr,
-    //to IF/ID stage
-    output CLR_EN,
     //to Harzard unit
     output exception,
     output isBranch
@@ -74,7 +72,6 @@ module ID_module(
     assign Branch_addr = pc_plus_4 + {{14{imm[15]}},imm,2'b00};
     assign Jump_addr = {pc_plus_4[31:28], instr[25:0], 2'b00};
     assign Imm_sel_and_Branch_taken = Imm_sel & Branch_taken;
-    assign CLR_EN = rst | Jump | BranchD;
     assign RegWriteD = RegWriteBD | RegWriteCD;
     assign PCSrc_reg = RsValue;
     assign PCout = PCin;
