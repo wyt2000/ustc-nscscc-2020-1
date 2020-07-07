@@ -44,7 +44,8 @@ typedef struct packed {
     logic MemtoRegD;
     logic HI_LO_write_enableD;
     logic RegWriteD;
-    logic Imm_sel_and_Branch_taken;
+    //logic Imm_sel_and_Branch_taken;
+    logic Imm_sel;
     logic [31:0] RsValue;
     logic [31:0] RtValue;
     logic [31:0] pc_plus_8;

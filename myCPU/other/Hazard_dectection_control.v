@@ -18,6 +18,9 @@ module Hazard_module(
     output reg FlushD,FlushE,FlushM,FlushW,
     output reg [1:0] ForwardAD,ForwardBD,ForwardAE,ForwardBE
 );
+
+    //reg StallF_reg, StallD_reg, StallM_reg, StallW_reg;
+
     always@(*)
         if(rst || RsD == 0) ForwardAD=2'b00;
     	else if(RegWriteE&&WriteRegE==RsD&&MemtoRegE&&RsD) ForwardAD=2'b01;//add+use,forwardtoID
@@ -54,6 +57,9 @@ module Hazard_module(
         if(rst) next_state=4'b0000;
         else if (Exception_clean||Exception_Stall) next_state = 4'b0001;//Exception situation (clean and Stall all the Registers)
         else if (MemReadM&&((WriteRegM==RsD)||(WriteRegM==RtD))&&RegWriteM&&isaBranchInstruction) next_state = 4'b0100;//lw+use(Branch),WB-->>EX
+        else if (stall && !done) next_state = 4'b1000; //stall requested by alu
+        else if (State == 4'b1000) next_state = 4'b1001; //mul/div stall 1
+        else if (State == 4'b1001) next_state = 4'b1010; //mul/div stall 2
         else next_state=4'b0000;
     end
     always@(next_state)begin
@@ -61,6 +67,9 @@ module Hazard_module(
             4'b0000: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b000000000;
             4'b0001: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111111111;
             4'b0100: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111100010;
+            4'b1000: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111000010;
+            4'b1001: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b110000100;
+            4'b1010: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b110000100;
             default: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b000000000;
         endcase
     end

@@ -1,5 +1,61 @@
 [toc]
 
+## 7.7上午变动说明
+
+**发现的问题：**
+
+1.分支判断数值不是有符号的
+
+2.分支需要写寄存器时写入的数据错误
+
+3.分支写入的imm_sel寄存器无需分支发生branch_taken
+
+4.JALR指令写入寄存器号错误
+
+5.div指令在ALU发出stall请求时Harzard Unit没有stall
+
+6.FlushE时ID/EX的EPC_sel被清为0，导致PC地址被非预期地址修改，以及div计算出的HILO结果无法被旁路
+
+7.div_control.sv中的div_count在除法执行完后会继续递减，导致后续的除法指令出错
+
+**解决方案：**
+
+1.在ID模块的branch_judge中加上signed声明
+
+2.*修改了instruction.vh中的\`FUNC_BGEZAL和\`FUNC_BLTZAL声明错误
+
+​	*修改了ID段Control Unit中控制ALUSrcA和B的信号，详见控制信号表格
+
+​	*修改了branch_judge中的RegWriteBD信号，在BLTZAL和BGEZAL这两个指令分支不发生时也有效
+
+3.修改了ID段传给EX的Imm_sel_and_branch_taken为Imm_sel
+
+4.修改了控制单元中JALR指令的RegDst信号为1（即选择Rd写入），更新了控制信号表格
+
+5.修改了Harzard Unit的状态机使得其支持div的stall
+
+6.*修改IF.v使EPC_sel为0时候不选EPC；修改Hazard Unit 的状态机使其在div或mul指令后stall IF、ID两周期。
+
+​	*修改了alu.sv中div时hilo的输出，高位32为余数，低32位为商。
+
+7.在div_control.sv中div_count复位处增加判断条件!div_done
+
+**结果：**
+
+1.通过36号测试点，在41号测试点发生错误
+
+2.通过先前发生错误的地址，在新的地址发生错误，仍未通过41号测试点
+
+3.通过41号测试点，未通过42号测试点
+
+4.通过42号测试点，未通过44号测试点
+
+5.stall成功，但在写入时出错，仍未通过原出错地址
+
+6.通过原出错地址，仍未通过44号测试点
+
+7.爽了，过了58个测试点，第59个没过（LB部分）
+
 ## 7.6
 
 ### jbz

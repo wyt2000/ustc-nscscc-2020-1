@@ -177,7 +177,7 @@ module alu(
             hilo = mul_res;
         end
         else if(div_done) begin
-            hilo = {div_quotient, div_remainder};
+            hilo = {div_remainder, div_quotient};
         end
     end
 

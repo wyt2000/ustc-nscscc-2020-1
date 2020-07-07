@@ -232,7 +232,7 @@ module mycpu_top(
 		.rst(rst),
         .Flush(Hazard.FlushE),
 		.en(~Hazard.StallE),
-		.d(ID.Imm_sel_and_Branch_taken),
+		.d(ID.Imm_sel),//_and_Branch_taken),
 		.q(EX.immSel)
 	);
 
@@ -585,7 +585,8 @@ module mycpu_top(
 		.ALUSrcDA                   (ID.ALUSrcDA),
 		.ALUSrcDB                   (ID.ALUSrcDB),
 		.RegDstD                    (ID.RegDstD),
-		.Imm_sel_and_Branch_taken   (ID.Imm_sel_and_Branch_taken),
+		//.Imm_sel_and_Branch_taken   (ID.Imm_sel_and_Branch_taken),
+        .Imm_sel                    (ID.Imm_sel),
 		.RsValue                    (ID.RsValue),
 		.RtValue                    (ID.RtValue),
 		.pc_plus_8                  (ID.pc_plus_8),

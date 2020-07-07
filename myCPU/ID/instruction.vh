@@ -60,8 +60,11 @@
 `define OP_BELSE        6'b000001 
 `define FUNC_BGEZ       6'b000001
 `define FUNC_BLTZ       6'b000000
-`define FUNC_BGEZAL     6'b100001
-`define FUNC_BLTZAL     6'b100000
+// `define FUNC_BGEZAL     6'b100001
+// `define FUNC_BLTZAL     6'b100000
+//changed by jbz 7.7.2020
+`define FUNC_BGEZAL     6'b10001
+`define FUNC_BLTZAL     6'b10000
 
 `define HI_ADDR         7'b1111111
 `define LO_ADDR         7'b1000000

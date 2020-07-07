@@ -49,7 +49,8 @@ module ID_module(
         output ALUSrcDA,
         output ALUSrcDB,
         output RegDstD,
-        output Imm_sel_and_Branch_taken,
+        //output Imm_sel_and_Branch_taken,
+        output Imm_sel,
         //outputs from reg_file
         output [31:0] RsValue,
         output [31:0] RtValue,
@@ -84,7 +85,7 @@ module ID_module(
     assign pc_plus_8 = pc_plus_4 + 4;
     assign Branch_addr = pc_plus_4 + {{14{imm[15]}},imm,2'b00};
     assign Jump_addr = {pc_plus_4[31:28], instr[25:0], 2'b00};
-    assign Imm_sel_and_Branch_taken = Imm_sel & Branch_taken;
+    //assign Imm_sel_and_Branch_taken = Imm_sel;// & Branch_taken;
     assign RegWriteD = RegWriteBD | RegWriteCD;
     assign PCSrc_reg = RsValue;
     assign PCout = PCin;

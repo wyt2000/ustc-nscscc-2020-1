@@ -138,15 +138,16 @@ module Control_Unit(
         if((Op == `OP_ZERO && func == `FUNC_SLL) ||
            (Op == `OP_ZERO && func == `FUNC_SRA) ||
            (Op == `OP_ZERO && func == `FUNC_SRL) ||
-           (Op == `OP_ZERO && func == `FUNC_JALR))
+           (Op == `OP_ZERO && func == `FUNC_JALR)||
+           (Op == `OP_BELSE))
            ALUSrcDA = 1;
     end
 
     //ALUSrcDB
     always@(*) begin
         ALUSrcDB = 0;
-        if((Op == `OP_BELSE && (func == `FUNC_BGEZAL ||
-                                 func == `FUNC_BLTZAL)) ||
+         if(//(Op == `OP_BELSE && (func == `FUNC_BGEZAL ||
+            //                          func == `FUNC_BLTZAL)) ||
             Op == `OP_ADDI ||
             Op == `OP_ADDIU ||
             Op == `OP_SLTI ||
@@ -171,10 +172,10 @@ module Control_Unit(
     always@(*) begin
         RegDstD = ~ALUSrcDB;
         if(Op == `OP_ZERO && func == `FUNC_JALR)
-            RegDstD = 0;
-        if((Op == `OP_BELSE && (func == `FUNC_BGEZAL ||
-                                 func == `FUNC_BLTZAL) ) ||
-            (Op == `OP_JAL))
+            //RegDstD = 0;
+            RegDstD = 1;
+        if(Op == `OP_BELSE ||
+           Op == `OP_JAL)
             RegDstD = 1;
     end
 
@@ -189,9 +190,9 @@ module Control_Unit(
 
     //EPC_sel
     always@(*) begin
-        EPC_sel = 1;
+        EPC_sel = 0;
         if(Op == `OP_PRIV && func == `ERET_LAST)
-            EPC_sel = 0;
+            EPC_sel = 1;
     end
 
     //isBranch

@@ -21,7 +21,8 @@ module IF_module
         if(rst) PCout <= 32'hbfc0_0000;
         else if(Error_happend) PCout <= 32'hbfc0_0380;
         else if(StallF) PCout <= PCout;
-        else if(EPC_sel == 0)             PCout <= EPC;
+        // else if(EPC_sel == 0)             PCout <= EPC;
+        else if(EPC_sel == 1)             PCout <= EPC;
         else if({Jump,BranchD} == 2'b11)  PCout <= Jump_addr;
         else if({Jump,BranchD} == 2'b10)  PCout <= Jump_reg;
         else if({Jump,BranchD} == 2'b01)  PCout <= beq_addr;

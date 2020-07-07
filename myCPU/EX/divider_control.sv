@@ -41,7 +41,7 @@ module divider_control(
             if(div_counter != 0) begin
                 div_counter <= div_counter - 1;
             end
-            else if(div_begin) begin
+            else if(div_begin && !div_done) begin   //added !div_done by jbz 7.7.2020
                 div_counter <= `div_cycle;                
             end
         end

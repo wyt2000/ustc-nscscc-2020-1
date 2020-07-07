@@ -34,7 +34,7 @@ module register_file(
     );
 
     reg     [31:0]  reg_file[0:31];
-    reg             hi, lo;
+    reg     [31:0]  hi, lo;
 
     wire            reg_file_we, reg_cp0_we;
     wire    [31:0]  CP0_data;
