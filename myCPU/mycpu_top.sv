@@ -41,7 +41,7 @@ module mycpu_top(
 	assign data_sram_en 					= 1;
 	assign data_sram_wen 					= MEM.calWE;
 	assign data_sram_addr 					= {3'b000, MEM.ALUout[28:0]};
-	assign data_sram_wdata 					= MEM.RamData;
+	assign data_sram_wdata 					= MEM.TrueRamData;
 	assign debug_wb_pc 						= WB.PCout;
 	assign debug_wb_rf_wen					= (WB.RegWrite && WB.WritetoRFaddrout[6:5] == 2'b00) ? 4'b1111 : 4'b0000;
 	assign debug_wb_rf_wnum					= WB.WritetoRFaddrout[4:0];
@@ -698,7 +698,8 @@ module mycpu_top(
 		.WriteRegisterW             (MEM.WriteRegisterW),
 		.PCin						(MEM.PCin),
 		.PCout						(MEM.PCout),
-		.MemReadTypeW				(MEM.MemReadTypeW)
+		.MemReadTypeW				(MEM.MemReadTypeW),
+		.TrueRamData				(MEM.TrueRamData)
 	);
 
 	WB_module WB_module(

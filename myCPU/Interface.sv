@@ -164,6 +164,7 @@ typedef struct packed {
     logic [3:0] calWE;
     logic [31:0] PCout;
     logic [2:0] MemReadTypeW;
+    logic [31:0] TrueRamData;
 } MEM_interface;
 
 typedef struct packed {

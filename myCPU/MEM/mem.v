@@ -22,32 +22,46 @@ output [31:0] ALUoutW,
 output [6:0] WriteRegisterW,
 output reg [3:0] calWE,
 output [31:0] PCout,
-output [2:0] MemReadTypeW
+output [2:0] MemReadTypeW,
+output reg [31:0] TrueRamData
     );
 
 always@(*)
 begin
     calWE = 0;
+    TrueRamData = 0;
     if (MemReadType[1:0]==2'b00)
     begin
         if (ALUout[1:0]==2'b00)
         begin
-            if (MemWriteM==1) calWE[3:0]=4'b1000;
+            if (MemWriteM==1) begin
+                calWE[3:0] = 4'b0001;
+                TrueRamData[7:0] = RamData[7:0];
+            end
             else calWE[3:0]=4'b0000;
         end
         else if (ALUout[1:0]==2'b01) 
         begin
-            if (MemWriteM==1) calWE[3:0]=4'b0100;
+            if (MemWriteM==1) begin
+                calWE[3:0] = 4'b0010;
+                TrueRamData[15:8] = RamData[7:0];
+            end
             else calWE[3:0]=4'b0000;
         end
         else if (ALUout[1:0]==2'b10)
         begin
-            if (MemWriteM==1) calWE[3:0]=4'b0010;
+            if (MemWriteM==1) begin
+                calWE[3:0] = 4'b0100;
+                TrueRamData[23:16] = RamData[7:0];
+            end
             else calWE[3:0]=4'b0000;
         end
         else if (ALUout[1:0]==2'b11)
         begin
-            if (MemWriteM==1) calWE[3:0]=4'b0001;
+            if (MemWriteM==1) begin
+                calWE[3:0] = 4'b1000;
+                TrueRamData[31:24] = RamData[7:0];
+            end
             else calWE[3:0]=4'b0000;
         end
     end
@@ -55,18 +69,27 @@ begin
     begin
         if (ALUout[1:0]==2'b00)
         begin
-            if (MemWriteM==1) calWE[3:0]=4'b1100;
+            if (MemWriteM==1) begin
+                calWE[3:0]=4'b0011;
+                TrueRamData[15:0] = RamData[15:0];
+            end 
             else calWE[3:0]=4'b0000;
         end
         else if (ALUout[1:0]==2'b10)
         begin
-            if (MemWriteM==1) calWE[3:0]=4'b0011;
+            if (MemWriteM==1) begin
+                calWE[3:0]=4'b1100;
+                TrueRamData[31:16] = RamData[15:0];
+            end
             else calWE[3:0]=4'b0000;
         end
     end
     else if (MemReadType[1:0]==2'b10)
     begin
-        if (MemWriteM==1) calWE[3:0]=4'b1111;
+        if (MemWriteM==1) begin
+            calWE[3:0]=4'b1111;
+            TrueRamData = RamData;
+        end
         else calWE[3:0]=4'b0000;
     end
 

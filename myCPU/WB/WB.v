@@ -38,36 +38,36 @@ begin
     begin
         if (aluout[1:0]==2'b00)
         begin
-            if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[31:24]};
-            else TrueMemData={{24{Memdata[31]}},Memdata[31:24]};
+            if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[7:0]};
+            else TrueMemData={{24{Memdata[7]}},Memdata[7:0]};
         end
         else if (aluout[1:0]==2'b01) 
-        begin
-            if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[23:16]};
-            else TrueMemData={{24{Memdata[23]}},Memdata[23:16]};
-        end
-        else if (aluout[1:0]==2'b10)
         begin
             if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[15:8]};
             else TrueMemData={{24{Memdata[15]}},Memdata[15:8]};
         end
+        else if (aluout[1:0]==2'b10)
+        begin
+            if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[23:16]};
+            else TrueMemData={{24{Memdata[23]}},Memdata[23:16]};
+        end
         else if (aluout[1:0]==2'b11)
         begin
-            if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[7:0]};
-            else TrueMemData={{24{Memdata[7]}},Memdata[7:0]};
+            if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[31:24]};
+            else TrueMemData={{24{Memdata[31]}},Memdata[31:24]};
         end
     end
     else if (MemReadTypeW[1:0]==2'b01)
     begin
         if (aluout[1:0]==2'b00)
         begin
-            if (MemReadTypeW[2]==0) TrueMemData={16'b0,Memdata[31:16]};
-            else TrueMemData={{16{Memdata[31]}},Memdata[31:16]};
+            if (MemReadTypeW[2]==0) TrueMemData={16'b0,Memdata[15:0]};
+            else TrueMemData={{16{Memdata[15]}},Memdata[15:0]};
         end
         else if (aluout[1:0]==2'b10)
         begin
-            if (MemReadTypeW[2]==0) TrueMemData={16'b0,Memdata[15:0]};
-            else TrueMemData={{16{Memdata[15]}},Memdata[15:0]};
+            if (MemReadTypeW[2]==0) TrueMemData={16'b0,Memdata[31:16]};
+            else TrueMemData={{16{Memdata[31]}},Memdata[31:16]};
         end
     end
 end

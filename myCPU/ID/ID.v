@@ -69,8 +69,9 @@ module ID_module(
     output [31:0] EPC,
     output [31:0] Branch_addr,
     output [31:0] Jump_addr,
-    //to Harzard unit
+    //to Exception_module
     output exception,
+    //to Harzard unit
     output isBranch,
     //epc
     //added by Gaoustcer
@@ -79,7 +80,7 @@ module ID_module(
     output      [31:0]  cause_data
     );
 
-    wire Imm_sel, Branch_taken, RegWriteCD, RegWriteBD;
+    wire Branch_taken, RegWriteCD, RegWriteBD;
     wire [31:0] Read_data_1, Read_data_2;
 
     assign pc_plus_8 = pc_plus_4 + 4;
