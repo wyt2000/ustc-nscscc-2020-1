@@ -554,7 +554,7 @@ module mycpu_top(
 		.Jump_addr                  (IF.Jump_addr),
 		.beq_addr                   (IF.beq_addr),
 		// .StallF                     (IF.StallF),
-        .StallF                     ( IF.StallF | (IF.is_newPC) ),
+        .StallF                     (IF.StallF | IF.is_newPC),
 		.PC_add_4                   (IF.PC_add_4),
 		.PCout						(IF.PCout),
         

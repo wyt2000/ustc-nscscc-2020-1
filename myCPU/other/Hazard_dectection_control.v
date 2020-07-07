@@ -53,24 +53,14 @@ module Hazard_module(
     always@(*)begin
         if(rst) next_state=4'b0000;
         else if (Exception_clean||Exception_Stall) next_state = 4'b0001;//Exception situation (clean and Stall all the Registers)
-        else if (MemReadE&&((WriteRegE==RsD)||(WriteRegE==RtD))&&RegWriteE&&isaBranchInstruction) next_state = 4'b0100;//lw+use(Branch),WB-->>EX
-        else if (MemReadM&&((WriteRegM==RsE)||(WriteRegM==RtE))&&RegWriteM) next_state = 4'b1000;//lw+use,WB-->>EX
-        else case (State)
-            4'b0001: next_state=4'b0000;
-            4'b0100: next_state=4'b0010;
-            4'b0010: next_state=4'b0000;
-            4'b1000: next_state=4'b0000;
-            4'b0000: next_state=4'b0000;
-            default: next_state=4'b0000;
-        endcase
+        else if (MemReadM&&((WriteRegM==RsD)||(WriteRegM==RtD))&&RegWriteM&&isaBranchInstruction) next_state = 4'b0100;//lw+use(Branch),WB-->>EX
+        else next_state=4'b0000;
     end
     always@(next_state)begin
         case (next_state)
             4'b0000: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b000000000;
             4'b0001: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111111111;
-            4'b0010: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111000100;
-            4'b0100: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111000100;
-            4'b1000: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111100010;
+            4'b0100: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b111100010;
             default: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW}=9'b000000000;
         endcase
     end
