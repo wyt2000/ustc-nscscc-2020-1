@@ -26,6 +26,13 @@ module EX_module(
     input [31:0] ForwardMEM,
     input [31:0] ForwardWB,
     input [31:0] PCin,
+    input BranchD,
+    input JumpD,
+    input EPC_selD,
+    input [31:0] Branch_addrD,
+    input [31:0] Jump_addrD,
+    input [31:0] PCSrc_regD,
+    input [31:0] EPCD,
     output hiloWrite_o,
     output [2:0] MemReadType_o,
     output RegWrite_o,
@@ -41,7 +48,14 @@ module EX_module(
     output [31:0] MemData,
     output [6:0] WriteRegister,
     output [31:0] PCout,
-    output MemRead_o
+    output MemRead_o,
+    output Branch,
+    output Jump,
+    output EPC_sel,
+    output [31:0] Branch_addr,
+    output [31:0] Jump_addr,
+    output [31:0] PCSrc_reg,
+    output [31:0] EPC
     );
     wire [31:0] imm_o;
     wire [31:0] A_o;
@@ -60,6 +74,13 @@ module EX_module(
     assign Rt_o = Rt;
     assign PCout = PCin;
     assign MemRead_o = MemRead_i;
+    assign Branch = BranchD;
+    assign Jump = JumpD;
+    assign EPC_sel = EPC_selD;
+    assign Branch_addr = Branch_addrD;
+    assign Jump_addr = Jump_addrD;
+    assign EPC = EPCD;
+    assign PCSrc_reg = PCSrc_regD;
 
     //mux
     assign imm_o = immSel ? PCplus8 : imm;

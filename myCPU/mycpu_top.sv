@@ -48,13 +48,13 @@ module mycpu_top(
 	assign debug_wb_rf_wdata				= WB.WritetoRFdata;
 
 	//Data path across modules without registers
-	assign IF.Jump                          = ID.Jump;
-	assign IF.BranchD                       = ID.BranchD;
-	assign IF.EPC_sel                       = ID.EPC_sel;
-	assign IF.EPC                           = ID.EPC;
-	assign IF.Jump_reg                      = ID.PCSrc_reg;
-	assign IF.Jump_addr                     = ID.Jump_addr;
-	assign IF.beq_addr                      = ID.Branch_addr;
+	assign IF.Jump                          = EX.Jump;
+	assign IF.BranchD                       = EX.BranchD;
+	assign IF.EPC_sel                       = EX.EPC_sel;
+	assign IF.EPC                           = EX.EPC;
+	assign IF.Jump_reg                      = EX.PCSrc_reg;
+	assign IF.Jump_addr                     = EX.Jump_addr;
+	assign IF.beq_addr                      = EX.Branch_addr;
 	assign IF.StallF                        = Hazard.StallF;
 	assign ID.RegWriteW                     = WB.RegWrite;
 	assign ID.WriteRegW                     = WB.WritetoRFaddrout;
@@ -308,6 +308,64 @@ module mycpu_top(
 		.q(EX.PCin)
 	);
 
+	register #(1) ID_EX_Branch (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID.BranchD),
+		.q(EX.BranchD)
+	);
+	register #(1) ID_EX_Jump (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID.Jump),
+		.q(EX.JumpD)
+	);
+	register #(1) ID_EX_EPC_sel (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID.EPC_sel),
+		.q(EX.EPC_selD)
+	);
+	register #(32) ID_EX_Branch_addr (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID.Branch_addr),
+		.q(EX.Branch_addrD)
+	);
+	register #(32) ID_EX_Jump_addr (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID.Jump_addr),
+		.q(EX.Jump_addrD)
+	);
+	register #(32) ID_EX_PCSrc_reg (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID.PCSrc_reg),
+		.q(EX.PCSrc_regD)
+	);
+	register #(32) ID_EX_EPC (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID.EPC),
+		.q(EX.EPCD)
+	);
+
+
 	// EX/MEM registers
 	
 	register #(1) EX_MEM_HI_LO_write_enableM (
@@ -496,7 +554,7 @@ module mycpu_top(
 		.Jump_addr                  (IF.Jump_addr),
 		.beq_addr                   (IF.beq_addr),
 		// .StallF                     (IF.StallF),
-        .StallF                     ( IF.StallF | (IF.is_newPC && ID.EPC_sel && !ID.Jump && !ID.BranchD) ),
+        .StallF                     ( IF.StallF | (IF.is_newPC) ),
 		.PC_add_4                   (IF.PC_add_4),
 		.PCout						(IF.PCout),
         
@@ -600,7 +658,21 @@ module mycpu_top(
 		.MemData                    (EX.MemData),
 		.WriteRegister              (EX.WriteRegister),
 		.PCin						(EX.PCin),
-		.PCout						(EX.PCout)
+		.PCout						(EX.PCout),
+		.BranchD					(EX.BranchD),
+		.JumpD						(EX.JumpD),
+		.EPC_selD					(EX.EPC_selD),
+		.Branch_addrD				(EX.Branch_addrD),
+		.Jump_addrD					(EX.Jump_addrD),
+		.PCSrc_regD					(EX.PCSrc_regD),
+		.EPCD						(EX.EPCD),
+		.Branch						(EX.Branch),
+		.Jump						(EX.Jump),
+		.EPC_sel					(EX.EPC_sel),
+		.Branch_addr				(EX.Branch_addr),
+		.Jump_addr					(EX.Jump_addr),
+		.PCSrc_reg					(EX.PCSrc_reg),
+		.EPC						(EX.EPC)
 	);
 
 	MEM_module MEM_module(
@@ -714,7 +786,7 @@ module mycpu_top(
     	.Cause_IP					(Exception.enable),
     	.Status_IM					(Exception.Status_IM),
     	.ExcCode					(Exception.ExcCode)
-			);
+	);
 
 
 endmodule

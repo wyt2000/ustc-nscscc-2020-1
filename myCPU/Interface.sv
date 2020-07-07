@@ -105,6 +105,13 @@ typedef struct packed {
     logic [1:0] ForwardA;
     logic [1:0] ForwardB;
     logic [31:0] PCin;
+    logic BranchD;
+    logic JumpD;
+    logic EPC_selD;
+    logic [31:0] Branch_addrD;
+    logic [31:0] Jump_addrD;
+    logic [31:0] PCSrc_regD;
+    logic [31:0] EPCD;
     //output
     logic hiloWrite_o;
     logic [2:0] MemReadType_o;
@@ -122,6 +129,13 @@ typedef struct packed {
     logic [2:0] exception;
     logic stall;
     logic [31:0] PCout;
+    logic Branch;
+    logic Jump;
+    logic EPC_sel;
+    logic [31:0] Branch_addr;
+    logic [31:0] Jump_addr;
+    logic [31:0] PCSrc_reg;
+    logic [31:0] EPC;
 } EX_interface;
 
 typedef struct packed {

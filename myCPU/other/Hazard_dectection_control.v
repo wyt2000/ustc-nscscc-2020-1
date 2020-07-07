@@ -52,14 +52,15 @@ module Hazard_module(
     end
     always@(*)begin
         if(rst) next_state=4'b0000;
-        if(Exception_clean||Exception_Stall) next_state=4'b0001;//Exception situation (clean and Stall all the Registers)
-        if(MemReadE&&((WriteRegE==RsD)||(WriteRegE==RtD))&&RegWriteE&&isaBranchInstruction) next_state=4'b0100;//lw+use(Branch),WB-->>EX
-        if(MemReadM&&((WriteRegM==RsE)||(WriteRegM==RtE))&&RegWriteM) next_state=4'b1000;//lw+use,WB-->>EX
+        else if (Exception_clean||Exception_Stall) next_state = 4'b0001;//Exception situation (clean and Stall all the Registers)
+        else if (MemReadE&&((WriteRegE==RsD)||(WriteRegE==RtD))&&RegWriteE&&isaBranchInstruction) next_state = 4'b0100;//lw+use(Branch),WB-->>EX
+        else if (MemReadM&&((WriteRegM==RsE)||(WriteRegM==RtE))&&RegWriteM) next_state = 4'b1000;//lw+use,WB-->>EX
         else case (State)
             4'b0001: next_state=4'b0000;
             4'b0100: next_state=4'b0010;
             4'b0010: next_state=4'b0000;
             4'b1000: next_state=4'b0000;
+            4'b0000: next_state=4'b0000;
             default: next_state=4'b0000;
         endcase
     end

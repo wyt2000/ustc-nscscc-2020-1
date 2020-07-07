@@ -28,7 +28,15 @@ module ID_module(
     //from Hazard Unit
     input [1:0] ForwardAD,
     input [1:0] ForwardBD,
-
+    input       [31:0]  we,
+    input       [7:0]   interrupt_enable,
+    input       [4:0]   Exception_code,
+    input               EXL,
+    input       [5:0]   hardware_interruption,
+    input       [1:0]   software_interruption,
+    input       [31:0]  epc,
+    input       [31:0]  BADADDR,
+    input               Branch_delay,
     //to ID/EX reg
         output [5:0] ALUOp,
         //outputs from ctl_unit
@@ -67,16 +75,7 @@ module ID_module(
     //added by Gaoustcer
     output      [31:0]  Status_data,
     //output      [31:0]  ,
-    output      [31:0]  cause_data,
-    input       [31:0]  we,
-    input       [7:0]   interrupt_enable,
-    input       [4:0]   Exception_code,
-    input               EXL,
-    input       [5:0]   hardware_interruption,
-    input       [1:0]   software_interruption,
-    input       [31:0]  epc,
-    input       [31:0]  BADADDR,
-    input               Branch_delay
+    output      [31:0]  cause_data
     );
 
     wire Imm_sel, Branch_taken, RegWriteCD, RegWriteBD;
