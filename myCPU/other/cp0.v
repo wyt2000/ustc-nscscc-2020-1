@@ -93,7 +93,7 @@ module CP0
         if(rst)
             EPC<=0;
         else if(we[14])
-            EPC<=Branch_delay?epc-4:epc;
+            EPC<=epc;
         else if(waddr==14&&general_write_in)
             EPC<=epc;
 
@@ -114,7 +114,7 @@ module CP0
             BADVADDR<=0;
         else if(we[8])
             BADVADDR<=BADADDR; 
-        else if(waddr==8)
+        else if(waddr==8&&general_write_in)
             BADVADDR<=BADADDR;
     end
     always@(posedge clk or posedge rst) begin
@@ -209,45 +209,45 @@ module CP0
             cause[6:2]<=Exception_code;
         end
     end
-    always@(posedge clk or posedge rst) begin
+    always@(rst or raddr) begin
         if(rst) begin
-            Readdata<=32'h00000000;
+            Readdata=32'h00000000;
         end
         else begin
             case(raddr)
-            5'b00000:Readdata<=Index;
-            5'b00001:Readdata<=Random;
-            5'b00010:Readdata<=EntryLO0;
-            5'b00011:Readdata<=EntryLO1;
-            5'b00100:Readdata<=Context;
-            5'b00101:Readdata<=Pagemask;
-            5'b00101:Readdata<=Wired;
-            5'b00111:Readdata<=Reserved1;
-            5'b01000:Readdata<=BADVADDR;
-            5'b01001:Readdata<=count;
-            5'b01010:Readdata<=EntryHi;
-            5'b01011:Readdata<=compare;
-            5'b01100:Readdata<=Status;
-            5'b01101:Readdata<=cause;
-            5'b01110:Readdata<=EPC;
-            5'b01111:Readdata<=prid;
-            5'b10000:Readdata<=configure;
-            5'b10001:Readdata<=LLAddr;
-            5'b10010:Readdata<=WatchLo;
-            5'b10011:Readdata<=WatchHi;
-            5'b10100:Readdata<=Reserved2;
-            5'b10101:Readdata<=Reserved3;
-            5'b10101:Readdata<=Reserved4;
-            5'b10111:Readdata<=Debug;
-            5'b11000:Readdata<=DEPC;
-            5'b11001:Readdata<=Reserved5;
-            5'b11010:Readdata<=Errctrl;
-            5'b11011:Readdata<=Reserved6;
-            5'b11100:Readdata<=Taglo;
-            5'b11101:Readdata<=Reserved7;
-            5'b11110:Readdata<=ErrorEPC;
-            5'b11111:Readdata<=DESAVE;
-            default:Readdata<=32'hFFFFFFFF;
+            5'b00000:Readdata=Index;
+            5'b00001:Readdata=Random;
+            5'b00010:Readdata=EntryLO0;
+            5'b00011:Readdata=EntryLO1;
+            5'b00100:Readdata=Context;
+            5'b00101:Readdata=Pagemask;
+            5'b00101:Readdata=Wired;
+            5'b00111:Readdata=Reserved1;
+            5'b01000:Readdata=BADVADDR;
+            5'b01001:Readdata=count;
+            5'b01010:Readdata=EntryHi;
+            5'b01011:Readdata=compare;
+            5'b01100:Readdata=Status;
+            5'b01101:Readdata=cause;
+            5'b01110:Readdata=EPC;
+            5'b01111:Readdata=prid;
+            5'b10000:Readdata=configure;
+            5'b10001:Readdata=LLAddr;
+            5'b10010:Readdata=WatchLo;
+            5'b10011:Readdata=WatchHi;
+            5'b10100:Readdata=Reserved2;
+            5'b10101:Readdata=Reserved3;
+            5'b10101:Readdata=Reserved4;
+            5'b10111:Readdata=Debug;
+            5'b11000:Readdata=DEPC;
+            5'b11001:Readdata=Reserved5;
+            5'b11010:Readdata=Errctrl;
+            5'b11011:Readdata=Reserved6;
+            5'b11100:Readdata=Taglo;
+            5'b11101:Readdata=Reserved7;
+            5'b11110:Readdata=ErrorEPC;
+            5'b11111:Readdata=DESAVE;
+            default:Readdata=32'hFFFFFFFF;
             endcase
         end
     end
@@ -306,6 +306,9 @@ module cp0_up
     reg r_IE;
     reg r_Branch_delay;
     reg [4:0] r_Exception_code;
+    /*
+    assign r_Exception_code=we[13]?Exception_code:0;
+    */
     
 	CP0 cp0_pipeline(
         .clk(clk),.rst(rst),
@@ -339,7 +342,7 @@ module cp0_up
         .allow_interrupt(allow_interrupt),
         .state(state)//user mode:0 kernel mode:1
 );  
-        always@(waddr or we)
+        always@(*)
         if(we==0) begin
             case(waddr)
             5'b01000:r_BADADDR=writedata;
@@ -361,7 +364,7 @@ module cp0_up
             default :;
             endcase
         end
-        else begin
+        else if(we)begin
             //r_cause=we[13]?cause:0;
             r_hardware_interruption=we[13]?hardware_interruption:0;
             r_software_interruption=we[13]?software_interruption:0;

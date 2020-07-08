@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module Exception_module(
+/*module Exception_module(
 input clk,
 input address_error,
 input memread,
@@ -24,43 +24,90 @@ output new_Status_IE,//给Status寄存器赋新值
 output [7:0] Cause_IP,//给cause寄存器赋新值
 output [7:0] Status_IM,//给Status寄存器赋新值
 output reg [4:0] ExcCode//异常编码
+    );*/
+    
+module Exception_module(
+input clk,
+input address_error,
+input memread,
+input overflow_error,
+input syscall,
+input _break,
+input reversed,
+
+input [31:0] ADDR,
+input [31:0] Branch,
+input [31:0] Status,
+input [31:0] Cause,
+input [31:0] pc,
+input [5:0] hardware_abortion,
+input [1:0] software_abortion,
+input [7:0] Status_IM,
+output [7:0] Cause_IP,
+output [31:0] BadVAddr,
+output [31:0] EPC,
+output [31:0] NewPC,
+output [31:0] we,
+output new_Status_EXL,
+output new_Cause_BD1,
+output new_Status_IE,
+output exception_occur,
+output reg [4:0] ExcCode
     );
-    wire Status_EXL;
-    wire Cause_BD;
-    wire Status_IE;
+wire [31:0] Abortion_access;
+assign Abortion_access=32'HBFC00380;
+assign NewPC=Abortion_access;
 
-    assign we=0;
-    assign exception_occur=0;
-    assign NewPC=32'HBFC00380;
-    assign new_Status_IE=1'b1;
-    assign Status_EXL = Status[1];
-    assign Cause_BD=Cause[31];
-    assign Status_IE=Status[0];
-    assign EPC= (Cause_BD==1) ? pc-4:pc;
-    assign Cause_IP = 0;
-    assign Status_IM = 0;
-    assign new_Status_EXL = 0;
-    assign new_Cause_BD1 = 0;
+wire Status_EXL;
+assign Status_EXL = Status[1];
+wire Cause_BD;
+assign Cause_BD=Cause[31];
+wire Status_IE;
+assign Status_IE=Status[0];
+//assign ExcCode=Cause[6:2];
+//assign EPC=(pc==Branch) ? pc-4:pc;
+assign EPC=pc;//non-Branch_delay
+assign exception_occur=(!Status_EXL)
+                       &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);
 
-    /*assign exception_occur=(!Status_EXL)
-                       &((|(Cause_IP&&Status_IM))|address_error|overflow_error|syscall|break|reversed);*/
-    assign Write_EPC=(!Status_EXL)
-                       &((|(Cause_IP&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);
-    assign Write_Cause=(!Status_EXL)
-                       &((|(Cause_IP&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);
-    assign WriteExcCode=(!Status_EXL)
-                       &((|(Cause_IP&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);
+assign we[7:0]=8'h00;
+assign we[11:9]=3'b000;
+assign we[31:15]=0;
+assign we[8]=(!Status_EXL)&address_error;
+/*assign we[12]=(!Status_EXL)
+             &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);
+assign we[13]=(!Status_EXL)
+             &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);
 
-    assign BadVAddr=32'h0000000;
-    always@(*)
-    begin
-        if (|(Cause_IP&&Status_IM)) ExcCode = 5'h00;
-        else if (address_error && memread) ExcCode = 5'h04;
-        else if (reversed) ExcCode = 5'h0a;
-        else if (overflow_error) ExcCode = 5'h0c;
-        else if (syscall) ExcCode = 5'h08;
-        else if (_break) ExcCode = 5'h09;
-        else if (address_error && !memread) ExcCode = 5'h05;
-        else ExcCode = Cause[6:2];
-    end
+assign we[14]=(!Status_EXL)
+             &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);*/
+assign we[12] = (syscall | _break/* | overflow_error | address_error*/) ? 1'b1 : 1'b0;
+assign we[13] = (syscall | _break/* | overflow_error | address_error*/) ? 1'b1 : 1'b0;
+assign we[14] = (syscall | _break/* | overflow_error | address_error*/) ? 1'b1 : 1'b0;
+assign Cause_IP = (syscall | _break/* | overflow_error | address_error*/) ? 8'b00000000 : 8'b11111111;
+assign new_Status_EXL = (syscall | _break/* | overflow_error | address_error*/) ? 1'b1 : 1'b0;
+
+assign new_Cause_BD1=(pc==Branch);
+
+//IE的赋值值得商榷
+assign new_Status_IE = (syscall | _break/* | overflow_error | address_error*/) ? 1'b0 : 1'b1;
+
+//中断例外需要再讨论一下
+
+assign BadVAddr=ADDR;
+//reg [4:0] ExcCodereg;
+always@(*)
+begin
+    if (|(Cause_IP&&Status_IM)) ExcCode=5'b00000;
+    else if (address_error && memread) ExcCode=5'b00100;
+    else if (reversed) ExcCode=5'b01010;
+    else if (overflow_error) ExcCode=5'b01100;
+    else if (syscall) ExcCode=5'b01000;
+    else if (_break) ExcCode=5'b01001;
+    else if (address_error && !memread) ExcCode=5'b00101;
+    //else ExcCode=5'b11111;
+end
+//assign ExcCode=ExcCodereg;
+
+
 endmodule

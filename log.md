@@ -1,5 +1,31 @@
 [toc]
 
+## 7.8
+
+**发现的问题：**
+
+1.ERET写PC时EPC未正确传递，未修改CP0.Status.EXL位，未flush流水线
+
+2.CPU未响应第二个syscall，ERET指令置Status.EXL位失败
+
+3.break指令没有写入EPC
+
+**解决方案：**
+
+1.ERET等效为ADDIU	$CP0.Status	$CP0.Status	-2，通过ID段的译码模块实现
+
+2.改变了读Status的端口
+
+3.Exception_deal_module中增加了对_break信号的判断
+
+**结果：**
+
+1.ERET指令通过，仍未通过65号测试点
+
+2.通过65号测试点，未通过66号
+
+3.通过66号测试点，未通过67号
+
 ## 7.7
 
 **发现的问题：**

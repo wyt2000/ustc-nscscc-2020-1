@@ -23,7 +23,16 @@ output [6:0] WriteRegisterW,
 output reg [3:0] calWE,
 output [31:0] PCout,
 output [2:0] MemReadTypeW,
-output reg [31:0] TrueRamData
+output reg [31:0] TrueRamData,
+//syscall
+input syscallin,
+output syscallout,
+//break
+input _breakin,
+output _breakout,
+//exception
+input [2:0] exception_in,
+output [2:0] exception_out
     );
 
 always@(*)
@@ -103,5 +112,8 @@ assign HI_LO_dataW=HI_LO_dataM;
 assign PCout = PCin;
 assign ALUoutW = ALUout;
 assign MemReadTypeW = MemReadType;
+assign syscallout = syscallin;
+assign _breakout = _breakin;
+assign exception_out = exception_in;
 
 endmodule

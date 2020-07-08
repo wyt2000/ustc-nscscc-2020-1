@@ -58,6 +58,7 @@ typedef struct packed {
     logic Jump;
     logic [31:0] PCSrc_reg;
     logic [31:0] EPC;
+    logic IE;
     logic [31:0] Jump_addr;
     logic [31:0] Branch_addr;
     logic CLR_EN;
@@ -67,7 +68,7 @@ typedef struct packed {
     //added by Gaoustcer
     //logic Exception_EXL;
     logic [31:0]  Status;
-    logic [31:0]  EPC_data;
+    //logic [31:0]  EPC_data;
     logic [31:0]  cause;
     logic [7:0]    Exception_enable;
     logic [31:0]  we;
@@ -79,6 +80,8 @@ typedef struct packed {
     logic [31:0]  epc;
     logic [31:0]  BADADDR;
     logic Branch_delay;
+    logic syscall;
+    logic _break;
 } ID_interface;
 
 typedef struct packed {
@@ -137,6 +140,10 @@ typedef struct packed {
     logic [31:0] Jump_addr;
     logic [31:0] PCSrc_reg;
     logic [31:0] EPC;
+    logic syscallin;
+    logic syscallout;
+    logic _breakin;
+    logic _breakout;
 } EX_interface;
 
 typedef struct packed {
@@ -165,6 +172,12 @@ typedef struct packed {
     logic [31:0] PCout;
     logic [2:0] MemReadTypeW;
     logic [31:0] TrueRamData;
+    logic syscallin;
+    logic syscallout;
+    logic _breakin;
+    logic _breakout;
+    logic [2:0] exception_in;
+    logic [2:0] exception_out;
 } MEM_interface;
 
 typedef struct packed {
@@ -190,6 +203,12 @@ typedef struct packed {
     logic [63:0] WriteinRF_HI_LO_data;
     logic RegWrite;
     logic [31:0] PCout;
+    logic syscallin;
+    logic syscall;
+    logic _breakin;
+    logic _break;
+    logic [2:0] exception_in;
+    logic [2:0] exception_out;
 } WB_interface;
 
 typedef struct packed {
@@ -249,6 +268,7 @@ typedef struct packed{
     //output
     logic [31:0] BadVAddr;//输出置BadVaddr
     logic [31:0] EPC;//输出置EPC
+    //epc
     logic [31:0] NewPc;//PC跳转
     logic [31:0] we;//写使能字
     logic Branch_delay;//给cause寄存器赋新值
@@ -256,6 +276,7 @@ typedef struct packed{
     logic clean;
     logic EXL;
     logic enable;
+    logic [31:0] epc;
     //logic EXL;//给Status寄存器赋新值
     logic new_Status_IE;//给Status寄存器赋新值
     logic [7:0] Cause_IP;//给cause寄存器赋新值

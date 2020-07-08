@@ -55,7 +55,13 @@ module EX_module(
     output [31:0] Branch_addr,
     output [31:0] Jump_addr,
     output [31:0] PCSrc_reg,
-    output [31:0] EPC
+    output [31:0] EPC,
+    //syscall pass
+    input syscallin,
+    output syscallout,
+    //break
+    input _breakin,
+    output _breakout
     );
     wire [31:0] imm_o;
     wire [31:0] A_o;
@@ -81,6 +87,7 @@ module EX_module(
     assign Jump_addr = Jump_addrD;
     assign EPC = EPCD;
     assign PCSrc_reg = PCSrc_regD;
+    assign syscallout = syscallin;
 
     //mux
     assign imm_o = immSel ? PCplus8 : imm;
@@ -89,6 +96,7 @@ module EX_module(
     assign B_o = ForwardB[1] ? ForwardMEM : (ForwardB[0] ? ForwardWB : B);
     assign a = ALUSrcA ? imm_o : A_o;
     assign b = ALUSrcB ? imm_o : B_o;
+    assign _breakout = _breakin;
 
     //ALU
     alu alu(

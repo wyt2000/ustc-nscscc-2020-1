@@ -139,7 +139,8 @@ module Control_Unit(
            (Op == `OP_ZERO && func == `FUNC_SRA) ||
            (Op == `OP_ZERO && func == `FUNC_SRL) ||
            (Op == `OP_ZERO && func == `FUNC_JALR)||
-           (Op == `OP_BELSE))
+           (Op == `OP_BELSE) ||
+           (Op == `OP_PRIV && func == `ERET_LAST))  //changed byjbz 7.8.2020
            ALUSrcDA = 1;
     end
 
@@ -191,7 +192,7 @@ module Control_Unit(
     //EPC_sel
     always@(*) begin
         EPC_sel = 0;
-        if(Op == `OP_PRIV && func == `ERET_LAST)
+        if(Op == `OP_PRIV && func == `ERET_LAST )
             EPC_sel = 1;
     end
 

@@ -19,7 +19,16 @@ module WB_module
 		output HI_LO_writeenableout,
 		output [WIDTH-1:0] WritetoRFdata,
 		output RegWrite,
-		output [31:0] PCout
+		output [31:0] PCout,
+        //syscall
+        input syscallin,
+        output syscall,
+        //break
+        input _breakin,
+        output _break,
+        //exception
+        input [2:0] exception_in,
+        output [2:0] exception_out
 	);
 	reg [31:0] TrueMemData;
 	assign HI_LO_writeenableout=HI_LO_writeenablein;
@@ -30,6 +39,9 @@ module WB_module
 	assign WriteinRF_HI_LO_data = HILO_data;
 	assign RegWrite = RegWriteW; //in order to pass test
 	assign PCout = PCin;
+    assign syscall = syscallin;
+    assign _break = _breakin;
+    assign exception_out = exception_in;
 
 always@(*)
 begin

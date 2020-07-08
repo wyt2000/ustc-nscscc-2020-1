@@ -23,7 +23,10 @@ module decoder(
     assign rd = ins[15:11];
     assign sa = ins[10:6];
     assign func = ins[5:0]; 
-    assign imm = ins[15:0];
+    // assign imm = ins[15:0];
+    //==changed by jbz 7.8.2020==
+    assign imm = (op == `OP_PRIV && rs == `FUNC_ERET) ? 16'hfffffffe : ins[15:0];
+    //===========================
 
     always_comb begin : set_ALUop
         ALUop = `ALU_NOP;
@@ -56,7 +59,11 @@ module decoder(
                     `FUNC_MFHI,`FUNC_MFLO,
                     `FUNC_MTHI,`FUNC_MTLO:  ALUop = `ALU_ADD;
                 endcase
-            `OP_PRIV:                       ALUop = `ALU_ADD;
+            `OP_PRIV:                       begin   //changed by jbz 7.8.2020
+                                            ALUop = `ALU_ADD; 
+                                            if(rs == `FUNC_ERET)
+                                                ALUop = `ALU_ADDIU;
+                                            end
             `OP_ADDI:                       ALUop = `ALU_ADDI;
             `OP_ADDIU:                      ALUop = `ALU_ADDIU;
             `OP_SLTI:                       ALUop = `ALU_SLTI;
@@ -173,6 +180,13 @@ module decoder(
                         Rd = {2'b01, rd};
                         Rs = 0;
                     end
+                    //==added by jbz 7.8.2020==
+                    `FUNC_ERET: begin
+                        Rt = {2'b01, 5'b01100};
+                        Rs = 0;
+                        Rd = {2'b01, 5'b01100};
+                    end
+                    //=========================
                 endcase
         endcase
     end

@@ -37,6 +37,8 @@ module ID_module(
     input       [31:0]  epc,
     input       [31:0]  BADADDR,
     input               Branch_delay,
+    //modify the CP0 register
+    input IE,
     //to ID/EX reg
         output [5:0] ALUOp,
         //outputs from ctl_unit
@@ -71,6 +73,8 @@ module ID_module(
     output [31:0] Jump_addr,
     //to Exception_module
     output exception,
+    output syscall,
+    output _break,
     //to Harzard unit
     output isBranch,
     //epc
@@ -90,11 +94,15 @@ module ID_module(
     assign RegWriteD = RegWriteBD | RegWriteCD;
     assign PCSrc_reg = RsValue;
     assign PCout = PCin;
-    assign EPC = epc;
+    //assign EPC = EPC_data;
 
     //mux
     assign RsValue = ForwardAD[1] ?  ALUoutM : (ForwardAD[0] ? ALUoutE : Read_data_1);
     assign RtValue = ForwardBD[1] ?  ALUoutM : (ForwardBD[0] ? ALUoutE : Read_data_2);
+    //syscall
+    assign syscall = ((instr[31:26]==6'b000000)&&(instr[5:0]==6'b001100))? 1'b1 : 1'b0;
+    //break
+    assign _break = ((instr[31:26]==6'b000000)&&(instr[5:0]==6'b001101)) ? 1'b1 : 1'b0;
 
     Control_Unit CPU_CTL(.Op(instr[31:26]),
                         .func(instr[5:0]),
@@ -125,9 +133,11 @@ module ID_module(
                            .read_data_1(Read_data_1),
                            .read_data_2(Read_data_2),
                            .Status_data(Status_data),
-                           .EPC_data(EPC_data),
+                           //.EPC_data(EPC_data),
+                           .EPC_data(EPC),
                            .cause_data(cause_data),
                            .we(we),
+                           .IE(IE),
                            .interrupt_enable(interrupt_enable),
                            .Exception_code(Exception_code),
                            .EXL(EXL),

@@ -102,11 +102,21 @@ module mycpu_top(
 	assign ID.Exception_code				= Exception.ExcCode;
 	assign ID.we							= Exception.we;
 	assign ID.Branch_delay					= Exception.Branch_delay;
-	assign ID.EPC							= Exception.EPC;
+	//assign ID.EPC							= Exception.EPC;
 	assign Exception.Status					= ID.Status;
 	assign Exception.Cause					= ID.cause;
 	assign IF.Error_happend					= Exception.Stall;
 
+
+	assign Exception.syscall				=WB.syscall;
+	assign Exception._break					=WB._break;
+    //==added by jbz 7.8.2020==
+    assign Exception.overflow_error         =(WB.exception_out == `EXP_OVERFLOW)    ? 1 : 0;
+    assign Exception.address_error          =(WB.exception_out == `EXP_ADDRERR)     ? 1 : 0;
+    //=========================
+	assign ID.epc							=Exception.EPC;
+	assign ID.IE   							=Exception.new_Status_IE;
+	//assign IF.Error_happend					=Exception.Stall;
 
 	register #(32) IF_ID_pc_plus_4 (
 		.clk(clk),
@@ -364,6 +374,23 @@ module mycpu_top(
 		.d(ID.EPC),
 		.q(EX.EPCD)
 	);
+	register #(1) ID_EX_syscall (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID.syscall),
+		.q(EX.syscallin)
+	);
+
+	register #(1) ID_EX_break (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID._break),
+		.q(EX._breakin)
+	);
 
 
 	// EX/MEM registers
@@ -461,12 +488,38 @@ module mycpu_top(
 	register #(32) EX_MEM_PCout (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushE),
-		.en(~Hazard.StallE),
+        .Flush(Hazard.FlushM),
+		.en(~Hazard.StallM),
 		.d(EX.PCout),
 		.q(MEM.PCin)
 	);
 
+	register #(1) EX_MEM_syscall (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushM),
+		.en(~Hazard.StallM),
+		.d(EX.syscallout),
+		.q(MEM.syscallin)
+	);
+
+	register #(1) EX_MEM_break (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushM),
+		.en(~Hazard.StallM),
+		.d(EX._breakin),
+		.q(MEM._breakout)
+	);
+
+    register #(3) EX_MEM_exception (
+        .clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushM),
+		.en(~Hazard.StallM),
+        .d(EX.exception),
+        .q(MEM.exception_in)
+    );
 
 	// MEM/WB registers
 
@@ -542,6 +595,32 @@ module mycpu_top(
 		.q(WB.MemReadTypeW)
 	);
 
+	register #(1) MEM_WB_syscall (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushW),
+		.en(~Hazard.StallW),
+		.d(MEM.syscallout),
+		.q(WB.syscallin)
+	);
+	register #(1) MEM_WB_break (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushW),
+		.en(~Hazard.StallW),
+		.d(MEM._breakout),
+		.q(WB._breakin)
+	);
+
+    register #(3) MEM_WB_exception (
+        .clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushW),
+		.en(~Hazard.StallW),
+        .d(MEM.exception_out),
+        .q(WB.exception_in)
+    );
+
 
 	IF_module IF_module(
 		.clk                        (clk),
@@ -557,7 +636,7 @@ module mycpu_top(
         .StallF                     (IF.StallF | IF.is_newPC),
 		.PC_add_4                   (IF.PC_add_4),
 		.PCout						(IF.PCout),
-        
+        .Error_happend				(IF.Error_happend),
         .is_newPC                   (IF.is_newPC)
 	);
 	
@@ -607,15 +686,18 @@ module mycpu_top(
 		.we							(ID.we),
     	.interrupt_enable			(ID.Exception_enable),
     	.Exception_code				(ID.Exception_code),
+		.IE							(ID.IE),
     	.EXL						(ID.Exception_EXL),
-    	.epc						(32'h00000000),
+    	.epc						(ID.epc),
     	.BADADDR					(32'h00000000),
-    	.Branch_delay				(ID.Branch_delay),
+    	.Branch_delay				(1'b0),
     	.hardware_interruption		(ext_int),
     	.software_interruption		(2'b00),
 		.Status_data				(ID.Status),
     	.cause_data					(ID.cause),
-		.isBranch					(ID.isBranch)
+		.isBranch					(ID.isBranch),
+		.syscall					(ID.syscall),
+		._break						(ID._break)
 	);
 
 	EX_module EX_module(
@@ -673,7 +755,11 @@ module mycpu_top(
 		.Branch_addr				(EX.Branch_addr),
 		.Jump_addr					(EX.Jump_addr),
 		.PCSrc_reg					(EX.PCSrc_reg),
-		.EPC						(EX.EPC)
+		.EPC						(EX.EPC),
+		.syscallin					(EX.syscallin),
+		.syscallout					(EX.syscallout),
+		._breakin					(EX._breakin),
+		._breakout					(EX._breakout)
 	);
 
 	MEM_module MEM_module(
@@ -699,7 +785,13 @@ module mycpu_top(
 		.PCin						(MEM.PCin),
 		.PCout						(MEM.PCout),
 		.MemReadTypeW				(MEM.MemReadTypeW),
-		.TrueRamData				(MEM.TrueRamData)
+		.TrueRamData				(MEM.TrueRamData),
+		.syscallin					(MEM.syscallin),
+		.syscallout					(MEM.syscallout),
+		._breakin					(MEM._breakin),
+		._breakout					(MEM._breakout),
+        .exception_in               (MEM.exception_in),
+        .exception_out              (MEM.exception_out)
 	);
 
 	WB_module WB_module(
@@ -721,7 +813,13 @@ module mycpu_top(
 		.RegWrite                   (WB.RegWrite),
 		.PCin						(WB.PCin),
 		.PCout						(WB.PCout),
-		.MemReadTypeW				(WB.MemReadTypeW)
+		.MemReadTypeW				(WB.MemReadTypeW),
+		.syscallin					(WB.syscallin),
+		.syscall					(WB.syscall),
+		._breakin					(WB._breakin),
+		._break						(WB._break),
+        .exception_in               (WB.exception_in),
+        .exception_out              (WB.exception_out)
 	);
 
 	Hazard_module Hazard_module(
@@ -766,11 +864,11 @@ module mycpu_top(
 
 	Exception_module Exception_module(
 		.clk						(clk),
-    	.address_error				(1'b0),
+    	.address_error				(Exception.address_error),
     	.memread					(1'b0),					
-    	.overflow_error				(1'b0),
-    	.syscall					(1'b0),
-    	._break						(1'b0),
+    	.overflow_error				(Exception.overflow_error),
+    	.syscall					(Exception.syscall),
+    	._break						(Exception._break),
     	.reversed					(1'b0),
     	.hardware_abortion			(ext_int),
     	.software_abortion			(2'b00),
