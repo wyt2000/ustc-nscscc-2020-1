@@ -57,12 +57,12 @@ module decoder(
                     `FUNC_SYSCALL:          ALUop = `ALU_SYSCALL;
                     `FUNC_JR,`FUNC_JALR,
                     `FUNC_MFHI,`FUNC_MFLO,
-                    `FUNC_MTHI,`FUNC_MTLO:  ALUop = `ALU_ADD;
+                    `FUNC_MTHI,`FUNC_MTLO:  ALUop = `ALU_ADDU;
                 endcase
             `OP_PRIV:                       begin   //changed by jbz 7.8.2020
                                             ALUop = `ALU_ADD; 
                                             if(rs == `FUNC_ERET)
-                                                ALUop = `ALU_ADDIU;
+                                                ALUop = `ALU_ERET;
                                             end
             `OP_ADDI:                       ALUop = `ALU_ADDI;
             `OP_ADDIU:                      ALUop = `ALU_ADDIU;
@@ -83,7 +83,7 @@ module decoder(
             `OP_J,`OP_JAL,
             `OP_BEQ,`OP_BNE,
             `OP_BGTZ,`OP_BLEZ,
-            `OP_BELSE:                      ALUop = `ALU_ADD;
+            `OP_BELSE:                      ALUop = `ALU_ADDU;
         endcase
     end
 

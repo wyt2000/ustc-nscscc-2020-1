@@ -32,14 +32,16 @@ input _breakin,
 output _breakout,
 //exception
 input [2:0] exception_in,
-output [2:0] exception_out
+output [2:0] exception_out,
+output MemWriteW
     );
 
 always@(*)
 begin
     calWE = 0;
     TrueRamData = 0;
-    if (MemReadType[1:0]==2'b00)
+    if (exception_in != 0 || PCin[1:0] != 2'b00) calWE = 0;
+    else if (MemReadType[1:0]==2'b00)
     begin
         if (ALUout[1:0]==2'b00)
         begin
@@ -115,5 +117,6 @@ assign MemReadTypeW = MemReadType;
 assign syscallout = syscallin;
 assign _breakout = _breakin;
 assign exception_out = exception_in;
+assign MemWriteW = MemWriteM;
 
 endmodule

@@ -56,6 +56,7 @@ module mycpu_top(
 	assign IF.Jump_addr                     = EX.Jump_addr;
 	assign IF.beq_addr                      = EX.Branch_addr;
 	assign IF.StallF                        = Hazard.StallF;
+	assign IF.Error_happend					= Exception.Stall;
 	assign ID.RegWriteW                     = WB.RegWrite;
 	assign ID.WriteRegW                     = WB.WritetoRFaddrout;
 	assign ID.ResultW                       = WB.WritetoRFdata;
@@ -102,21 +103,24 @@ module mycpu_top(
 	assign ID.Exception_code				= Exception.ExcCode;
 	assign ID.we							= Exception.we;
 	assign ID.Branch_delay					= Exception.Branch_delay;
+	assign ID.epc							=Exception.EPC;
+	assign ID.IE   							=Exception.new_Status_IE;
+
 	//assign ID.EPC							= Exception.EPC;
 	assign Exception.Status					= ID.Status;
 	assign Exception.Cause					= ID.cause;
-	assign IF.Error_happend					= Exception.Stall;
 
 
 	assign Exception.syscall				=WB.syscall;
 	assign Exception._break					=WB._break;
     //==added by jbz 7.8.2020==
-    assign Exception.overflow_error         =(WB.exception_out == `EXP_OVERFLOW)    ? 1 : 0;
-    assign Exception.address_error          =(WB.exception_out == `EXP_ADDRERR)     ? 1 : 0;
+    assign Exception.overflow_error         = (WB.exception_out == 1)   ? 1 : 0;
+    assign Exception.address_error          = (WB.exception_out == 5)   ? 1 : 0;
     //=========================
-	assign ID.epc							=Exception.EPC;
-	assign ID.IE   							=Exception.new_Status_IE;
 	//assign IF.Error_happend					=Exception.Stall;
+	assign Exception.MemWrite 				= WB.MemWrite;
+	assign Exception.ErrorAddr				= (WB.exception_out == 5)	? WB.aluout : 0;
+	assign Exception.isERET 				= (WB.exception_out == 6)   ? 1 : 0;
 
 	register #(32) IF_ID_pc_plus_4 (
 		.clk(clk),
@@ -621,6 +625,15 @@ module mycpu_top(
         .q(WB.exception_in)
     );
 
+	register #(3) MEM_WB_MemWriteW (
+        .clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushW),
+		.en(~Hazard.StallW),
+        .d(MEM.MemWriteW),
+        .q(WB.MemWriteW)
+    );
+
 
 	IF_module IF_module(
 		.clk                        (clk),
@@ -689,7 +702,7 @@ module mycpu_top(
 		.IE							(ID.IE),
     	.EXL						(ID.Exception_EXL),
     	.epc						(ID.epc),
-    	.BADADDR					(32'h00000000),
+    	.BADADDR					(Exception.BadVAddr),
     	.Branch_delay				(1'b0),
     	.hardware_interruption		(ext_int),
     	.software_interruption		(2'b00),
@@ -791,7 +804,8 @@ module mycpu_top(
 		._breakin					(MEM._breakin),
 		._breakout					(MEM._breakout),
         .exception_in               (MEM.exception_in),
-        .exception_out              (MEM.exception_out)
+        .exception_out              (MEM.exception_out),
+		.MemWriteW					(MEM.MemWriteW)
 	);
 
 	WB_module WB_module(
@@ -819,7 +833,10 @@ module mycpu_top(
 		._breakin					(WB._breakin),
 		._break						(WB._break),
         .exception_in               (WB.exception_in),
-        .exception_out              (WB.exception_out)
+        .exception_out              (WB.exception_out),
+		.MemWriteW					(WB.MemWriteW),
+		.MemWrite					(WB.MemWrite),
+		.EPCD						(ID.EPC)
 	);
 
 	Hazard_module Hazard_module(
@@ -865,7 +882,7 @@ module mycpu_top(
 	Exception_module Exception_module(
 		.clk						(clk),
     	.address_error				(Exception.address_error),
-    	.memread					(1'b0),					
+    	.MemWrite					(Exception.MemWrite),					
     	.overflow_error				(Exception.overflow_error),
     	.syscall					(Exception.syscall),
     	._break						(Exception._break),
@@ -885,7 +902,10 @@ module mycpu_top(
     	.new_Status_IE				(Exception.new_Status_IE),
     	.Cause_IP					(Exception.enable),
     	.Status_IM					(Exception.Status_IM),
-    	.ExcCode					(Exception.ExcCode)
+    	.ExcCode					(Exception.ExcCode),
+		.ErrorAddr					(Exception.ErrorAddr),
+		.EPCD						(ID.EPC),
+		.isERET						(Exception.isERET)
 	);
 
 

@@ -178,6 +178,7 @@ typedef struct packed {
     logic _breakout;
     logic [2:0] exception_in;
     logic [2:0] exception_out;
+    logic MemWriteW;
 } MEM_interface;
 
 typedef struct packed {
@@ -209,6 +210,8 @@ typedef struct packed {
     logic _break;
     logic [2:0] exception_in;
     logic [2:0] exception_out;
+    logic MemWrite;
+    logic MemWriteW;
 } WB_interface;
 
 typedef struct packed {
@@ -255,7 +258,7 @@ typedef struct packed{
     //input
     logic clk;
     logic address_error;
-    logic memread;
+    logic MemWrite;
     logic overflow_error;
     logic syscall;
     logic _break;
@@ -282,5 +285,6 @@ typedef struct packed{
     logic [7:0] Cause_IP;//给cause寄存器赋新值
     logic [7:0] Status_IM;//给Status寄存器赋新值
     logic [4:0] ExcCode;//异常编码
-
+    logic [31:0] ErrorAddr;
+    logic isERET;
 } Exception_interface;

@@ -10,13 +10,45 @@
 
 3.break指令没有写入EPC
 
+4.*branch 等指令被等效成 ADD ，导致了不该有的溢出
+
+*有异常写回段仍写回了错误结果
+
+5.*判断是 load 还是 store 地址错的条件错
+
+*地址错异常不能存数据
+
+6.没有设置 BadVAddr 寄存器
+
+7.没有处理取指 PC 不对齐于字边界产生的异常
+
+8.没考虑 EPC 也有可能没对齐
+
+9.EPC 什么时候修改？
+
 **解决方案：**
 
-1.ERET等效为ADDIU	$CP0.Status	$CP0.Status	-2，通过ID段的译码模块实现
+1.ERET等效为ADDIU	CP0.Status	​CP0.Status	-2，通过ID段的译码模块实现
 
 2.改变了读Status的端口
 
 3.Exception_deal_module中增加了对_break信号的判断
+
+4.*改成 ADDU
+
+*添加 RegWrite 的判断条件
+
+5.*应为 MemWrite
+
+*修改 calWE
+
+6.从 WB 段把 aluout 连到 Exception 单元，同时连接 ID 段与 CP0 的 BadVAddr
+
+7.考虑到优先级问题，添加 PCError 异常
+
+8.*修改 ID 段译码器，增加 ALU_ERET  ERET_EXP ，使 WB 段和 Exception 单元能够知道当前的指令是 ERET 
+
+*将 ID 段的 EPC 接到 Exception 单元，用于判断是否对齐
 
 **结果：**
 
@@ -25,6 +57,16 @@
 2.通过65号测试点，未通过66号
 
 3.通过66号测试点，未通过67号
+
+4.通过67号测试点，未通过70号
+
+5.通过之前的出错地址，仍未通过70号
+
+6.通过70号测试点，未通过75号
+
+7.通过之前的出错地址，仍未通过75号
+
+8.通过之前的出错地址，仍未通过75号
 
 ## 7.7
 

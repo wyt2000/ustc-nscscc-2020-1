@@ -80,7 +80,6 @@ module ID_module(
     //epc
     //added by Gaoustcer
     output      [31:0]  Status_data,
-    //output      [31:0]  ,
     output      [31:0]  cause_data
     );
 
@@ -90,11 +89,9 @@ module ID_module(
     assign pc_plus_8 = pc_plus_4 + 4;
     assign Branch_addr = pc_plus_4 + {{14{imm[15]}},imm,2'b00};
     assign Jump_addr = {pc_plus_4[31:28], instr[25:0], 2'b00};
-    //assign Imm_sel_and_Branch_taken = Imm_sel;// & Branch_taken;
     assign RegWriteD = RegWriteBD | RegWriteCD;
     assign PCSrc_reg = RsValue;
     assign PCout = PCin;
-    //assign EPC = EPC_data;
 
     //mux
     assign RsValue = ForwardAD[1] ?  ALUoutM : (ForwardAD[0] ? ALUoutE : Read_data_1);

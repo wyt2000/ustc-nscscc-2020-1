@@ -13,6 +13,7 @@ module WB_module
 		input [63:0] HILO_data,
 		input [31:0] PCin,
 		input [2:0] MemReadTypeW,
+        input [31:0] EPCD,
 		output [63:0] WriteinRF_HI_LO_data,
 		input HI_LO_writeenablein,
 		output [6:0] WritetoRFaddrout,
@@ -28,7 +29,9 @@ module WB_module
         output _break,
         //exception
         input [2:0] exception_in,
-        output [2:0] exception_out
+        output [2:0] exception_out,
+        input MemWriteW,
+        output MemWrite
 	);
 	reg [31:0] TrueMemData;
 	assign HI_LO_writeenableout=HI_LO_writeenablein;
@@ -37,12 +40,12 @@ module WB_module
 	assign WritetoRFdata = Exception_Write_data_sel?Exceptiondata:WritetoRFtemp;
 	assign WritetoRFaddrout = Exception_Write_addr_sel?Exception_RF_addr:WritetoRFaddrin;
 	assign WriteinRF_HI_LO_data = HILO_data;
-	assign RegWrite = RegWriteW; //in order to pass test
+	assign RegWrite = (exception_in == 0 || (exception_in == 6 && EPCD[1:0] == 2'b00) )? RegWriteW : 0;
 	assign PCout = PCin;
     assign syscall = syscallin;
     assign _break = _breakin;
     assign exception_out = exception_in;
-
+    assign MemWrite = MemWriteW;
 always@(*)
 begin
     TrueMemData = Memdata;

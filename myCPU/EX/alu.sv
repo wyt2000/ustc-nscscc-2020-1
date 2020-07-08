@@ -70,7 +70,7 @@ module alu(
                 result = a + b;
             `ALU_ADDI:
                 result = a + signed_extend;
-            `ALU_ADDIU:
+            `ALU_ADDIU, `ALU_ERET:
                 result = a + signed_extend;
             `ALU_SUB, `ALU_SUBU:
                 result = a - b;
@@ -169,6 +169,8 @@ module alu(
                     exception = `EXP_ADDRERR;
             `ALU_NOP:
                 exception = `EXP_NOP;
+            `ALU_ERET:
+                exception = `EXP_ERET;
         endcase
     end
 
