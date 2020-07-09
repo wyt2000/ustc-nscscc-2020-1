@@ -3,8 +3,8 @@
 module Branch_judge(
     input [5:0] Op,
     input [4:0] rt,
-    input [31:0] RsValue,
-    input [31:0] RtValue,
+    input signed [31:0] RsValue,
+    input signed [31:0] RtValue,
     output reg RegWriteBD,
     output reg BranchD,
     output reg branch_taken
@@ -47,18 +47,18 @@ module Branch_judge(
             end
             5'b10001: begin
                 //bgezal
+                    RegWriteBD = 1;
                 if(RsValue >= 0) begin
                     BranchD = 1;
                     branch_taken = 1;
-                    RegWriteBD = 1;
                 end
             end
             5'b10000: begin
                 //bltzal
+                    RegWriteBD = 1;
                 if(RsValue < 0) begin
                     BranchD = 1;
                     branch_taken = 1;
-                    RegWriteBD = 1;
                 end
             end
             default: ;

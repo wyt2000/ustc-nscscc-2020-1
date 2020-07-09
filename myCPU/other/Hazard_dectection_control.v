@@ -42,7 +42,8 @@ module Hazard_module(
     	else ForwardAE=2'b00;
     always@(*)
         if(rst || RtE == 0) ForwardBE=2'b00;
-        else if(WriteRegW&&WriteRegW==RtE&&RtE) ForwardBE=2'b01;
+        // else if(WriteRegW&&WriteRegW==RtE&&RtE) ForwardBE=2'b01;
+        else if(RegWriteW&&WriteRegW==RtE&&RtE) ForwardBE=2'b01;
     	else if(RegWriteM&&WriteRegM==RtE&&MemtoRegM&&RtE) ForwardBE=2'b10;
     	else ForwardBE=2'b00;
     reg [3:0] State;

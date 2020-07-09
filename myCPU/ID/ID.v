@@ -80,7 +80,9 @@ module ID_module(
     //epc
     //added by Gaoustcer
     output      [31:0]  Status_data,
-    output      [31:0]  cause_data
+    output      [31:0]  cause_data,
+    //is_ds
+    output reg is_ds
     );
 
     wire Branch_taken, RegWriteCD, RegWriteBD;
@@ -159,5 +161,19 @@ module ID_module(
                .Rd(Rd),
                .imm(imm),
                .exception(exception));
+
+    reg is_ds_tmp;
+    always@(posedge clk) begin
+        if(isBranch)
+            is_ds_tmp <= 1;
+        else
+            is_ds_tmp <= 0;
+    end
+    always@(posedge clk) begin
+        if(is_ds_tmp)
+            is_ds <= 1;
+        else
+            is_ds <= 0;
+    end
     
 endmodule

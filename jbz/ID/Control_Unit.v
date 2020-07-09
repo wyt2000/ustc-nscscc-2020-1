@@ -4,7 +4,7 @@
 
 module Control_Unit(
     input [5:0] Op,
-    input [4:0] func,
+    input [5:0] func,
 
     output reg EPC_sel,
     output reg HI_LO_write_enableD,
@@ -17,7 +17,8 @@ module Control_Unit(
     output reg ALUSrcDA,
     output reg ALUSrcDB,
     output reg RegDstD,
-    output reg Imm_sel
+    output reg Imm_sel,
+    output reg isBranch
 );
 
     //HI_LO_write_enableD
@@ -137,15 +138,17 @@ module Control_Unit(
         if((Op == `OP_ZERO && func == `FUNC_SLL) ||
            (Op == `OP_ZERO && func == `FUNC_SRA) ||
            (Op == `OP_ZERO && func == `FUNC_SRL) ||
-           (Op == `OP_ZERO && func == `FUNC_JALR))
+           (Op == `OP_ZERO && func == `FUNC_JALR)||
+           (Op == `OP_BELSE) ||
+           (Op == `OP_PRIV && func == `ERET_LAST))  //changed byjbz 7.8.2020
            ALUSrcDA = 1;
     end
 
     //ALUSrcDB
     always@(*) begin
         ALUSrcDB = 0;
-        if((Op == `OP_BELSE && (func == `FUNC_BGEZAL ||
-                                 func == `FUNC_BLTZAL)) ||
+         if(//(Op == `OP_BELSE && (func == `FUNC_BGEZAL ||
+            //                          func == `FUNC_BLTZAL)) ||
             Op == `OP_ADDI ||
             Op == `OP_ADDIU ||
             Op == `OP_SLTI ||
@@ -170,7 +173,11 @@ module Control_Unit(
     always@(*) begin
         RegDstD = ~ALUSrcDB;
         if(Op == `OP_ZERO && func == `FUNC_JALR)
-            RegDstD = 0;
+            //RegDstD = 0;
+            RegDstD = 1;
+        if(Op == `OP_BELSE ||
+           Op == `OP_JAL)
+            RegDstD = 1;
     end
 
     //Imm_sel
@@ -184,9 +191,26 @@ module Control_Unit(
 
     //EPC_sel
     always@(*) begin
-        EPC_sel = 1;
-        if(Op == `OP_PRIV && func == `FUNC_ERET)
-            EPC_sel = 0;
+        EPC_sel = 0;
+        if(Op == `OP_PRIV && func == `ERET_LAST )
+            EPC_sel = 1;
+    end
+
+    //isBranch
+    always @(*) begin
+        isBranch = 0;
+        case(Op)
+            `OP_BEQ,`OP_BNE,
+            `OP_BGTZ,`OP_BLEZ,
+            `OP_BELSE, `OP_J,
+            `OP_JAL:
+            isBranch = 1;
+        endcase
+        if(Op == `OP_ZERO && (
+           func == `FUNC_JR ||
+           func == `FUNC_JALR
+        ))
+            isBranch = 1;
     end
 
 endmodule

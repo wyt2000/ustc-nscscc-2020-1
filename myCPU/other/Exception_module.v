@@ -37,7 +37,7 @@ input reserved,
 input isERET,
 
 input [31:0] ErrorAddr,
-input [31:0] Branch,
+input is_ds,//is a delay slot instr
 input [31:0] Status,
 input [31:0] Cause,
 input [31:0] pc,
@@ -54,7 +54,8 @@ output new_Status_EXL,
 output new_Cause_BD1,
 output new_Status_IE,
 output exception_occur,
-output reg [4:0] ExcCode
+output reg [4:0] ExcCode,
+output [7:0] new_Status_IM
     );
 wire PCError;
 assign PCError = (pc[1:0]!=2'b00 | (isERET && EPCD[1:0]!=2'b00)) ? 1 : 0;
@@ -70,9 +71,19 @@ wire Status_IE;
 assign Status_IE=Status[0];
 //assign ExcCode=Cause[6:2];
 //assign EPC=(pc==Branch) ? pc-4:pc;
-assign EPC = (PCError && isERET) ? EPCD : pc;//non-Branch_delay
+
+reg [31:0] pc_old;
+always@(posedge clk) begin
+    pc_old <= pc;
+end
+
+// assign EPC = (PCError && isERET) ? EPCD : pc;//non-Branch_delay
+assign EPC = (is_ds) ? ((PCError && isERET) ? EPCD : 
+                       ((|software_abortion) ? pc_old : pc - 4)) :
+                       ((PCError && isERET) ? EPCD : 
+                       ((|software_abortion) ? pc_old + 4 : pc));
 assign exception_occur=(!Status_EXL)
-                       &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reserved|PCError);
+                       &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reserved|PCError | (|software_abortion));
 
 assign we[7:0]=8'h00;
 assign we[11:9]=3'b000;
@@ -86,16 +97,17 @@ assign we[13]=(!Status_EXL)
 assign we[14]=(!Status_EXL)
              &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reserved);*/
 assign we[8]  = (address_error | PCError) ? 1'b1 : 1'b0; //write BadVAddr
-assign we[12] = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 1'b1 : 1'b0;
-assign we[13] = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 1'b1 : 1'b0;
-assign we[14] = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 1'b1 : 1'b0;
-assign Cause_IP = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 8'b00000000 : 8'b11111111;
-assign new_Status_EXL = (syscall | _break | overflow_error | address_error| PCError | reserved) ? 1'b1 : 1'b0;
-
-assign new_Cause_BD1=(pc==Branch);
+assign we[12] = ((!Status_EXL) & (syscall | _break | overflow_error | address_error | PCError | reserved | (|software_abortion))) ? 1'b1 : 1'b0;
+assign we[13] = ((!Status_EXL) & (syscall | _break | overflow_error | address_error | PCError | reserved | (|software_abortion))) ? 1'b1 : 1'b0;
+assign we[14] = ((!Status_EXL) & (syscall | _break | overflow_error | address_error | PCError | reserved | (|software_abortion))) ? 1'b1 : 1'b0;
+assign Cause_IP = (/*syscall | _break | overflow_error | address_error | PCError | reserved | */(|software_abortion)) ? {6'b000000, software_abortion} : 8'b00000000;
+assign new_Status_EXL = (syscall | _break | overflow_error | address_error| PCError | reserved | (|software_abortion)) ? 1'b1 : 1'b0;
+assign new_Status_IM = (|software_abortion) ? 8'b1111_1111 : 8'b0000_0000;
+ assign new_Cause_BD1 = is_ds;
 
 //IE的赋值值得商榷
-assign new_Status_IE = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 1'b0 : 1'b1;
+assign new_Status_IE = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 1'b0 : 
+                       ((|software_abortion) ? 1'b1 : 1'b0);
 
 //中断例外需要再讨论一下
 

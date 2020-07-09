@@ -33,7 +33,10 @@ output _breakout,
 //exception
 input [3:0] exception_in,
 output [3:0] exception_out,
-output MemWriteW
+output MemWriteW,
+//is_ds
+input is_ds_in,
+output is_ds_out
     );
 
 always@(*)
@@ -118,5 +121,6 @@ assign syscallout = syscallin;
 assign _breakout = _breakin;
 assign exception_out = exception_in;
 assign MemWriteW = MemWriteM;
+assign is_ds_out = is_ds_in;
 
 endmodule

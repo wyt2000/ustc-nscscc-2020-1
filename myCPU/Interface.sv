@@ -82,6 +82,7 @@ typedef struct packed {
     logic Branch_delay;
     logic syscall;
     logic _break;
+    logic is_ds;
 } ID_interface;
 
 typedef struct packed {
@@ -145,6 +146,8 @@ typedef struct packed {
     logic _breakin;
     logic _breakout;
     logic exceptionD;
+    logic is_ds_in;
+    logic is_ds_out;
 } EX_interface;
 
 typedef struct packed {
@@ -180,6 +183,8 @@ typedef struct packed {
     logic [3:0] exception_in;
     logic [3:0] exception_out;
     logic MemWriteW;
+    logic is_ds_in;
+    logic is_ds_out;
 } MEM_interface;
 
 typedef struct packed {
@@ -213,6 +218,8 @@ typedef struct packed {
     logic [3:0] exception_out;
     logic MemWrite;
     logic MemWriteW;
+    logic is_ds_in;
+    logic is_ds_out;
 } WB_interface;
 
 typedef struct packed {
@@ -288,4 +295,6 @@ typedef struct packed{
     logic [4:0] ExcCode;//异常编码
     logic [31:0] ErrorAddr;
     logic isERET;
+    logic [7:0] new_Status_IM;
+    logic is_ds;
 } Exception_interface;

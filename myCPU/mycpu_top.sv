@@ -97,9 +97,9 @@ module mycpu_top(
 	assign Hazard.Exception_Stall			= Exception.Stall;
 	assign Hazard.Exception_clean			= Exception.Stall;
 	assign ID.Exception_EXL					= Exception.EXL;
-	assign ID.Exception_enable				= Exception.enable;
-	assign ID.hardware_interruption			= Exception.Status_IM[7:2];
-	assign ID.software_interruption			= Exception.Status_IM[1:0];
+	assign ID.Exception_enable				= Exception.new_Status_IM;
+	//assign ID.hardware_interruption			= Exception.Status_IM[7:2];
+	assign ID.software_interruption         = Exception.software_abortion;
 	assign ID.Exception_code				= Exception.ExcCode;
 	assign ID.we							= Exception.we;
 	assign ID.Branch_delay					= Exception.Branch_delay;
@@ -123,6 +123,10 @@ module mycpu_top(
 	assign Exception.isERET 				= (WB.exception_out == 6)   ? 1 : 0;
 	assign Exception.reserved				= (WB.exception_out == 8)	? 1 : 0;
 
+    assign Exception.software_abortion      = {2{ID.Status[0]}} & ID.Status[9:8] & ID.cause[9:8];
+    assign Exception.Status_IM              = ID.Status[15:8];
+    assign Exception.is_ds                  = WB.is_ds_out;
+    
 	register #(32) IF_ID_pc_plus_4 (
 		.clk(clk),
 		.rst(rst),
@@ -406,6 +410,14 @@ module mycpu_top(
 		.q(EX.exceptionD)
 	);
 
+    register #(1) ID_EX_is_ds (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+        .d(ID.is_ds),
+        .q(EX.is_ds_in)
+    );
 
 	// EX/MEM registers
 	
@@ -535,6 +547,15 @@ module mycpu_top(
         .q(MEM.exception_in)
     );
 
+    register #(4) EX_MEM_is_ds (
+        .clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushM),
+		.en(~Hazard.StallM),
+        .d(EX.is_ds_out),
+        .q(MEM.is_ds_in)
+    );
+
 	// MEM/WB registers
 
 	register #(1) MEM_WB_MemtoRegW (
@@ -644,6 +665,15 @@ module mycpu_top(
         .q(WB.MemWriteW)
     );
 
+    register #(1) MEM_WB_is_ds (
+        .clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushW),
+		.en(~Hazard.StallW),
+        .d(MEM.is_ds_out),
+        .q(WB.is_ds_in)
+    );
+
 
 	IF_module IF_module(
 		.clk                        (clk),
@@ -713,14 +743,15 @@ module mycpu_top(
     	.EXL						(ID.Exception_EXL),
     	.epc						(ID.epc),
     	.BADADDR					(Exception.BadVAddr),
-    	.Branch_delay				(1'b0),
+    	.Branch_delay				(ID.Branch_delay),
     	.hardware_interruption		(ext_int),
-    	.software_interruption		(2'b00),
+    	.software_interruption		(ID.software_interruption),
 		.Status_data				(ID.Status),
     	.cause_data					(ID.cause),
 		.isBranch					(ID.isBranch),
 		.syscall					(ID.syscall),
-		._break						(ID._break)
+		._break						(ID._break),
+        .is_ds                      (ID.is_ds)
 	);
 
 	EX_module EX_module(
@@ -783,7 +814,9 @@ module mycpu_top(
 		.syscallout					(EX.syscallout),
 		._breakin					(EX._breakin),
 		._breakout					(EX._breakout),
-		.exceptionD					(EX.exceptionD)
+		.exceptionD					(EX.exceptionD),
+        .is_ds_in                   (EX.is_ds_in),
+        .is_ds_out                  (EX.is_ds_out)
 	);
 
 	MEM_module MEM_module(
@@ -816,7 +849,9 @@ module mycpu_top(
 		._breakout					(MEM._breakout),
         .exception_in               (MEM.exception_in),
         .exception_out              (MEM.exception_out),
-		.MemWriteW					(MEM.MemWriteW)
+		.MemWriteW					(MEM.MemWriteW),
+        .is_ds_in                   (MEM.is_ds_in),
+        .is_ds_out                  (MEM.is_ds_out)
 	);
 
 	WB_module WB_module(
@@ -847,7 +882,9 @@ module mycpu_top(
         .exception_out              (WB.exception_out),
 		.MemWriteW					(WB.MemWriteW),
 		.MemWrite					(WB.MemWrite),
-		.EPCD						(ID.EPC)
+		.EPCD						(ID.EPC),
+        .is_ds_in                   (WB.is_ds_in),
+        .is_ds_out                  (WB.is_ds_out)
 	);
 
 	Hazard_module Hazard_module(
@@ -899,7 +936,7 @@ module mycpu_top(
     	._break						(Exception._break),
     	.reserved					(Exception.reserved),
     	.hardware_abortion			(ext_int),
-    	.software_abortion			(2'b00),
+    	.software_abortion			(Exception.software_abortion),
     	.Status						(Exception.Status),
     	.Cause						(Exception.Cause),
     	.pc							(WB.PCout),
@@ -916,7 +953,9 @@ module mycpu_top(
     	.ExcCode					(Exception.ExcCode),
 		.ErrorAddr					(Exception.ErrorAddr),
 		.EPCD						(ID.EPC),
-		.isERET						(Exception.isERET)
+		.isERET						(Exception.isERET),
+        .new_Status_IM              (Exception.new_Status_IM),
+        .is_ds                      (Exception.is_ds)
 	);
 
 

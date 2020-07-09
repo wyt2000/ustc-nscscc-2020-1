@@ -31,7 +31,10 @@ module WB_module
         input [3:0] exception_in,
         output [3:0] exception_out,
         input MemWriteW,
-        output MemWrite
+        output MemWrite,
+        //is_ds
+        input is_ds_in,
+        output is_ds_out
 	);
 	reg [31:0] TrueMemData;
 	assign HI_LO_writeenableout=HI_LO_writeenablein;
@@ -46,6 +49,8 @@ module WB_module
     assign _break = _breakin;
     assign exception_out = exception_in;
     assign MemWrite = MemWriteW;
+    assign is_ds_out = is_ds_in;
+
 always@(*)
 begin
     TrueMemData = Memdata;

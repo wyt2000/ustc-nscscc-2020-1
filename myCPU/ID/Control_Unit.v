@@ -202,9 +202,15 @@ module Control_Unit(
         case(Op)
             `OP_BEQ,`OP_BNE,
             `OP_BGTZ,`OP_BLEZ,
-            `OP_BELSE:
+            `OP_BELSE, `OP_J,
+            `OP_JAL:
             isBranch = 1;
         endcase
+        if(Op == `OP_ZERO && (
+           func == `FUNC_JR ||
+           func == `FUNC_JALR
+        ))
+            isBranch = 1;
     end
 
 endmodule

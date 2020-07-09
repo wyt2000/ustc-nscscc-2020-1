@@ -183,7 +183,7 @@ module CP0
         if(rst)
             cause<=0;
         else if(we[13])begin
-            cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
+            //cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
             cause[31]<=Branch_delay;
             cause[15]<=(Status[0]&&Status[15]&&(Status[1]==0))?hardware_interruption[5]:1'b0;
             cause[14]<=(Status[0]&&Status[14]&&(Status[1]==0))?hardware_interruption[4]:1'b0;
@@ -196,7 +196,7 @@ module CP0
             cause[6:2]<=Exception_code;
         end 
         else if(waddr==13&&general_write_in)begin
-            cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
+            //cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
             cause[31]<=Branch_delay;
             cause[15]<=hardware_interruption[5];
             cause[14]<=hardware_interruption[4];
@@ -356,7 +356,7 @@ module cp0_up
                 r_IE=writedata[0];
             end
             5'b01101:begin
-                r_hardware_interruption=writedata[15:10];
+                //r_hardware_interruption=writedata[15:10];
                 r_software_interruption=writedata[9:8];
                 //r_cause=writedata[9:8];
                 r_Exception_code=writedata[6:2];

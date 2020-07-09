@@ -62,7 +62,10 @@ module EX_module(
     //break
     input _breakin,
     output _breakout,
-    input exceptionD
+    input exceptionD,
+    //is_ds
+    input is_ds_in,
+    output is_ds_out
     );
     wire [31:0] imm_o;
     wire [31:0] A_o;
@@ -89,6 +92,7 @@ module EX_module(
     assign EPC = EPCD;
     assign PCSrc_reg = PCSrc_regD;
     assign syscallout = syscallin;
+    assign is_ds_out = is_ds_in;
 
     //mux
     assign imm_o = immSel ? PCplus8 : imm;
