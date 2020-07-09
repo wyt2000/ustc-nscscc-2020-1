@@ -5,9 +5,10 @@ module alu(
     input clk,
     input rst,
     input [31:0] a, b,
-    input [5:0] op,					
+    input [5:0] op,
+    input exceptionD,					
     output logic [31:0] result,
-    output logic [2:0]  exception,
+    output logic [3:0]  exception,
     output logic [63:0] hilo,
     output logic stall,	
     output logic done		
@@ -143,14 +144,15 @@ module alu(
     end
     
     always_comb begin : set_exception
-        exception = 0;
-        case (op)
+        if(exceptionD) exception = 8;
+        else begin
+            case (op)
             `ALU_ADD:
                 if((a[31] ~^ b[31]) & (a[31] ^ result[31])) 
                     exception = `EXP_OVERFLOW;
             `ALU_ADDI:
                 if((a[31] ~^ signed_extend[31]) & (a[31] ^ result[31])) 
-                exception = `EXP_OVERFLOW;
+                    exception = `EXP_OVERFLOW;
             `ALU_SUB:
                 if((a[31] ^ b[31]) & (a[31] ^ result[31]))
                     exception = `EXP_OVERFLOW; 
@@ -171,7 +173,11 @@ module alu(
                 exception = `EXP_NOP;
             `ALU_ERET:
                 exception = `EXP_ERET;
-        endcase
+            default:
+                exception = 0;
+            endcase
+        end
+        
     end
 
     always_comb begin : set_hilo

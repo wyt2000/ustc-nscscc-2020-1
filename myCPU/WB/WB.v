@@ -28,8 +28,8 @@ module WB_module
         input _breakin,
         output _break,
         //exception
-        input [2:0] exception_in,
-        output [2:0] exception_out,
+        input [3:0] exception_in,
+        output [3:0] exception_out,
         input MemWriteW,
         output MemWrite
 	);

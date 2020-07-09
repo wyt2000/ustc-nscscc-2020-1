@@ -98,7 +98,8 @@ module decoder(
                     `FUNC_SLT,`FUNC_SLTU,
                     `FUNC_AND,`FUNC_NOR,
                     `FUNC_OR,`FUNC_XOR,
-                    `FUNC_SLLV,`FUNC_SRAV:
+                    `FUNC_SLLV,`FUNC_SRAV,
+                    `FUNC_SRLV:
                         if(sa == 0) exception = 0;
                     `FUNC_DIV,`FUNC_DIVU,
                     `FUNC_MULT,`FUNC_MULTU:
@@ -139,6 +140,7 @@ module decoder(
             `OP_BELSE:
                 if(ins[19:17] == 0) exception = 0;                
         endcase
+        if(ins == 32'b0) exception = 0;
     end
 
     always_comb begin : set_Register

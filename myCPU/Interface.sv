@@ -130,7 +130,7 @@ typedef struct packed {
     logic [6:0] Rs_o;
     logic [6:0] Rt_o;
     logic done;
-    logic [2:0] exception;
+    logic [3:0] exception;
     logic stall;
     logic [31:0] PCout;
     logic Branch;
@@ -144,6 +144,7 @@ typedef struct packed {
     logic syscallout;
     logic _breakin;
     logic _breakout;
+    logic exceptionD;
 } EX_interface;
 
 typedef struct packed {
@@ -176,8 +177,8 @@ typedef struct packed {
     logic syscallout;
     logic _breakin;
     logic _breakout;
-    logic [2:0] exception_in;
-    logic [2:0] exception_out;
+    logic [3:0] exception_in;
+    logic [3:0] exception_out;
     logic MemWriteW;
 } MEM_interface;
 
@@ -208,8 +209,8 @@ typedef struct packed {
     logic syscall;
     logic _breakin;
     logic _break;
-    logic [2:0] exception_in;
-    logic [2:0] exception_out;
+    logic [3:0] exception_in;
+    logic [3:0] exception_out;
     logic MemWrite;
     logic MemWriteW;
 } WB_interface;
@@ -224,7 +225,7 @@ typedef struct packed {
     logic [6:0] RtE;
     logic MemReadE;
     logic MemtoRegE;
-    logic [2:0] EX_exception;
+    logic [3:0] EX_exception;
     logic stall;
     logic done;
     logic Exception_Stall;
@@ -262,7 +263,7 @@ typedef struct packed{
     logic overflow_error;
     logic syscall;
     logic _break;
-    logic reversed;
+    logic reserved;
     logic [5:0] hardware_abortion;//硬件中断
     logic [1:0] software_abortion;//软件中断
     logic [31:0] Status;//Status寄存器当前的值

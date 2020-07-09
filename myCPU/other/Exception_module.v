@@ -7,7 +7,7 @@ input memread,
 input overflow_error,
 input syscall,
 input _break,
-input reversed,
+input reserved,
 input [5:0] hardware_abortion,//硬件中断
 input [1:0] software_abortion,//软件中断
 input [31:0] Status,//Status寄存器当前的值
@@ -33,7 +33,7 @@ input MemWrite,
 input overflow_error,
 input syscall,
 input _break,
-input reversed,
+input reserved,
 input isERET,
 
 input [31:0] ErrorAddr,
@@ -70,32 +70,32 @@ wire Status_IE;
 assign Status_IE=Status[0];
 //assign ExcCode=Cause[6:2];
 //assign EPC=(pc==Branch) ? pc-4:pc;
-assign EPC=pc;//non-Branch_delay
+assign EPC = (PCError && isERET) ? EPCD : pc;//non-Branch_delay
 assign exception_occur=(!Status_EXL)
-                       &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reversed|PCError);
+                       &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reserved|PCError);
 
 assign we[7:0]=8'h00;
 assign we[11:9]=3'b000;
 assign we[31:15]=0;
 //assign we[8]=(!Status_EXL)&address_error;
 /*assign we[12]=(!Status_EXL)
-             &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);
+             &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reserved);
 assign we[13]=(!Status_EXL)
-             &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);
+             &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reserved);
 
 assign we[14]=(!Status_EXL)
-             &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reversed);*/
+             &((|(hardware_abortion&&Status_IM))|address_error|overflow_error|syscall|_break|reserved);*/
 assign we[8]  = (address_error | PCError) ? 1'b1 : 1'b0; //write BadVAddr
-assign we[12] = (syscall | _break | overflow_error | address_error | PCError) ? 1'b1 : 1'b0;
-assign we[13] = (syscall | _break | overflow_error | address_error | PCError) ? 1'b1 : 1'b0;
-assign we[14] = (syscall | _break | overflow_error | address_error | PCError) ? 1'b1 : 1'b0;
-assign Cause_IP = (syscall | _break | overflow_error | address_error | PCError) ? 8'b00000000 : 8'b11111111;
-assign new_Status_EXL = (syscall | _break | overflow_error | address_error| PCError) ? 1'b1 : 1'b0;
+assign we[12] = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 1'b1 : 1'b0;
+assign we[13] = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 1'b1 : 1'b0;
+assign we[14] = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 1'b1 : 1'b0;
+assign Cause_IP = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 8'b00000000 : 8'b11111111;
+assign new_Status_EXL = (syscall | _break | overflow_error | address_error| PCError | reserved) ? 1'b1 : 1'b0;
 
 assign new_Cause_BD1=(pc==Branch);
 
 //IE的赋值值得商榷
-assign new_Status_IE = (syscall | _break | overflow_error | address_error | PCError) ? 1'b0 : 1'b1;
+assign new_Status_IE = (syscall | _break | overflow_error | address_error | PCError | reserved) ? 1'b0 : 1'b1;
 
 //中断例外需要再讨论一下
 
@@ -105,7 +105,7 @@ always@(*)
 begin
     if (|(Cause_IP&&Status_IM)) ExcCode=5'b00000;
     else if (PCError) ExcCode=5'b00100;
-    else if (reversed) ExcCode=5'b01010;
+    else if (reserved) ExcCode=5'b01010;
     else if (overflow_error) ExcCode=5'b01100;
     else if (syscall) ExcCode=5'b01000;
     else if (_break) ExcCode=5'b01001;

@@ -121,6 +121,7 @@ module mycpu_top(
 	assign Exception.MemWrite 				= WB.MemWrite;
 	assign Exception.ErrorAddr				= (WB.exception_out == 5)	? WB.aluout : 0;
 	assign Exception.isERET 				= (WB.exception_out == 6)   ? 1 : 0;
+	assign Exception.reserved				= (WB.exception_out == 8)	? 1 : 0;
 
 	register #(32) IF_ID_pc_plus_4 (
 		.clk(clk),
@@ -396,6 +397,15 @@ module mycpu_top(
 		.q(EX._breakin)
 	);
 
+	register #(1) ID_EX_exception (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+		.d(ID.exception),
+		.q(EX.exceptionD)
+	);
+
 
 	// EX/MEM registers
 	
@@ -516,7 +526,7 @@ module mycpu_top(
 		.q(MEM._breakout)
 	);
 
-    register #(3) EX_MEM_exception (
+    register #(4) EX_MEM_exception (
         .clk(clk),
 		.rst(rst),
         .Flush(Hazard.FlushM),
@@ -616,7 +626,7 @@ module mycpu_top(
 		.q(WB._breakin)
 	);
 
-    register #(3) MEM_WB_exception (
+    register #(4) MEM_WB_exception(
         .clk(clk),
 		.rst(rst),
         .Flush(Hazard.FlushW),
@@ -625,7 +635,7 @@ module mycpu_top(
         .q(WB.exception_in)
     );
 
-	register #(3) MEM_WB_MemWriteW (
+	register #(1) MEM_WB_MemWriteW (
         .clk(clk),
 		.rst(rst),
         .Flush(Hazard.FlushW),
@@ -772,7 +782,8 @@ module mycpu_top(
 		.syscallin					(EX.syscallin),
 		.syscallout					(EX.syscallout),
 		._breakin					(EX._breakin),
-		._breakout					(EX._breakout)
+		._breakout					(EX._breakout),
+		.exceptionD					(EX.exceptionD)
 	);
 
 	MEM_module MEM_module(
@@ -886,7 +897,7 @@ module mycpu_top(
     	.overflow_error				(Exception.overflow_error),
     	.syscall					(Exception.syscall),
     	._break						(Exception._break),
-    	.reversed					(1'b0),
+    	.reserved					(Exception.reserved),
     	.hardware_abortion			(ext_int),
     	.software_abortion			(2'b00),
     	.Status						(Exception.Status),

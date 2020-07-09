@@ -43,7 +43,7 @@ module EX_module(
     output [63:0] hiloData,
     output [31:0] ALUResult,
     output done,
-    output [2:0] exception,
+    output [3:0] exception,
     output stall,
     output [31:0] MemData,
     output [6:0] WriteRegister,
@@ -61,7 +61,8 @@ module EX_module(
     output syscallout,
     //break
     input _breakin,
-    output _breakout
+    output _breakout,
+    input exceptionD
     );
     wire [31:0] imm_o;
     wire [31:0] A_o;
@@ -106,6 +107,7 @@ module EX_module(
         .b          (b),
         .op         (ALUControl),
         .result     (ALUResult),
+        .exceptionD (exceptionD),
         .exception  (exception),
         .hilo       (hiloData),
         .stall      (stall),
