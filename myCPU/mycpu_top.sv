@@ -1,5 +1,306 @@
 `timescale 1ns / 1ps
-`include "interface.sv"
+
+typedef struct packed {
+    //Input
+    logic Jump;
+    logic BranchD;
+    logic EPC_sel;
+    logic [31:0] EPC;
+    logic [31:0] Jump_reg;
+    logic [31:0] Jump_addr;
+    logic [31:0] beq_addr;
+    logic StallF;
+    logic [31:0] Instruction_in;
+    logic Error_happend;
+    //output
+    logic [31:0] Instruction;
+    logic [31:0] PC_add_4;
+    logic [31:0] PCout;
+
+    logic is_newPC;
+} IF_interface;
+
+typedef struct packed {
+    //input
+    logic [31:0] instr;
+    logic [31:0] pc_plus_4;
+    logic RegWriteW;
+    logic [6:0] WriteRegW;
+    logic [31:0] ResultW;
+    logic HI_LO_write_enable_from_WB;
+    logic [63:0] HI_LO_data;
+    logic [31:0] ALUoutE;
+    logic [31:0] ALUoutM;
+    logic [31:0] RAMoutM;
+    logic [1:0] ForwardAD;
+    logic [1:0] ForwardBD;
+    logic [31:0] PCin;
+    //output
+    logic [5:0] ALUOp;
+    logic ALUSrcDA;
+    logic ALUSrcDB;
+    logic RegDstD;
+    logic MemReadD;
+    logic [2:0] MemReadType;
+    logic MemWriteD;
+    logic MemtoRegD;
+    logic HI_LO_write_enableD;
+    logic RegWriteD;
+    //logic Imm_sel_and_Branch_taken;
+    logic Imm_sel;
+    logic [31:0] RsValue;
+    logic [31:0] RtValue;
+    logic [31:0] pc_plus_8;
+    logic [6:0] Rs;
+    logic [6:0] Rt;
+    logic [6:0] Rd;
+    logic [15:0] imm;
+    logic EPC_sel;
+    logic BranchD;
+    logic Jump;
+    logic [31:0] PCSrc_reg;
+    logic [31:0] EPC;
+    logic IE;
+    logic [31:0] Jump_addr;
+    logic [31:0] Branch_addr;
+    logic CLR_EN;
+    logic exception;
+    logic isBranch;
+    logic [31:0] PCout;
+    //added by Gaoustcer
+    //logic Exception_EXL;
+    logic [31:0]  Status;
+    //logic [31:0]  EPC_data;
+    logic [31:0]  cause;
+    logic [7:0]    Exception_enable;
+    logic [31:0]  we;
+    logic [7:0]   interrupt_enable;
+    logic [4:0]   Exception_code;
+    logic Exception_EXL;
+    logic [5:0]   hardware_interruption;
+    logic [1:0]   software_interruption;
+    logic [31:0]  epc;
+    logic [31:0]  BADADDR;
+    logic Branch_delay;
+    logic syscall;
+    logic _break;
+    logic is_ds;
+} ID_interface;
+
+typedef struct packed {
+    //input
+    logic hiloWrite_i;
+    logic [2:0] MemReadType_i;
+    logic MemRead_i;
+    logic RegWrite_i;
+    logic MemtoReg_i;
+    logic MemWrite_i;
+    logic [5:0] ALUControl;
+    logic ALUSrcA;
+    logic ALUSrcB;
+    logic RegDst;
+    logic immSel;
+    logic [31:0] A;
+    logic [31:0] B;
+    logic [31:0] PCplus8;
+    logic [6:0] Rs;
+    logic [6:0] Rt;
+    logic [6:0] Rd;
+    logic [31:0] imm;
+    logic [31:0] ForwardMEM;
+    logic [31:0] ForwardWB;
+    logic [1:0] ForwardA;
+    logic [1:0] ForwardB;
+    logic [31:0] PCin;
+    logic BranchD;
+    logic JumpD;
+    logic EPC_selD;
+    logic [31:0] Branch_addrD;
+    logic [31:0] Jump_addrD;
+    logic [31:0] PCSrc_regD;
+    logic [31:0] EPCD;
+    //output
+    logic hiloWrite_o;
+    logic [2:0] MemReadType_o;
+    logic MemRead_o;
+    logic RegWrite_o;
+    logic MemtoReg_o;
+    logic MemWrite_o;
+    logic [63:0] hiloData;
+    logic [31:0] ALUResult;
+    logic [31:0] MemData;
+    logic [6:0] WriteRegister;
+    logic [6:0] Rs_o;
+    logic [6:0] Rt_o;
+    logic done;
+    logic [3:0] exception;
+    logic stall;
+    logic [31:0] PCout;
+    logic Branch;
+    logic Jump;
+    logic EPC_sel;
+    logic [31:0] Branch_addr;
+    logic [31:0] Jump_addr;
+    logic [31:0] PCSrc_reg;
+    logic [31:0] EPC;
+    logic syscallin;
+    logic syscallout;
+    logic _breakin;
+    logic _breakout;
+    logic exceptionD;
+    logic is_ds_in;
+    logic is_ds_out;
+} EX_interface;
+
+typedef struct packed {
+    //input
+    logic HI_LO_write_enableM;
+    logic [63:0] HI_LO_dataM;
+    logic MemtoRegM;
+    logic RegWriteM;
+    logic MemReadM;
+    logic MemWriteM;
+    logic [31:0] ALUout;
+    logic [31:0] RamData;
+    logic [6:0] WriteRegister;
+    logic [2:0] MemReadType;
+    logic [31:0] RAMtmp;
+    logic [31:0] PCin;
+    //output
+    logic MemtoRegW;
+    logic RegWriteW;
+    logic HI_LO_write_enableW;
+    logic [63:0] HI_LO_dataW;
+    logic [31:0] RAMout;
+    logic [31:0] ALUoutW;
+    logic [6:0] WriteRegisterW;
+    logic [3:0] calWE;
+    logic [31:0] PCout;
+    logic [2:0] MemReadTypeW;
+    logic [31:0] TrueRamData;
+    logic syscallin;
+    logic syscallout;
+    logic _breakin;
+    logic _breakout;
+    logic [3:0] exception_in;
+    logic [3:0] exception_out;
+    logic MemWriteW;
+    logic is_ds_in;
+    logic is_ds_out;
+} MEM_interface;
+
+typedef struct packed {
+    //input
+    logic [31:0] aluout;
+    logic [31:0] Memdata;
+    logic MemtoRegW;
+    logic RegWriteW;
+    logic [6:0] WritetoRFaddrin;
+    logic HI_LO_write_enablein;
+    logic [63:0] HILO_data;
+    logic Exception_Write_addr_sel;
+    logic Exception_Write_data_sel;
+    logic HI_LO_writeenablein;
+    logic [6:0] Exception_RF_addr;
+    logic [31:0] Exceptiondata;
+    logic [31:0] PCin;
+    logic [2:0] MemReadTypeW;
+    //output
+    logic [6:0] WritetoRFaddrout;
+    logic [31:0] WritetoRFdata;
+    logic HI_LO_writeenableout;
+    logic [63:0] WriteinRF_HI_LO_data;
+    logic RegWrite;
+    logic [31:0] PCout;
+    logic syscallin;
+    logic syscall;
+    logic _breakin;
+    logic _break;
+    logic [3:0] exception_in;
+    logic [3:0] exception_out;
+    logic MemWrite;
+    logic MemWriteW;
+    logic is_ds_in;
+    logic is_ds_out;
+} WB_interface;
+
+typedef struct packed {
+    //input
+    logic BranchD;
+    logic [6:0] RsD;
+    logic [6:0] RtD;
+    logic ID_exception;
+    logic [6:0] RsE;
+    logic [6:0] RtE;
+    logic MemReadE;
+    logic MemtoRegE;
+    logic [3:0] EX_exception;
+    logic stall;
+    logic done;
+    logic Exception_Stall;
+    logic Exception_clean;
+    logic RegWriteM;
+    logic [6:0] WriteRegM;
+    logic MemReadM;
+    logic MemtoRegM;
+    logic RegWriteW;
+    logic [6:0] WriteRegW;
+    logic isaBranchInstruction;
+    logic [6:0] WriteRegE;
+    logic RegWriteE;
+    //output
+    logic StallF;
+    logic StallD;
+    logic StallE;
+    logic StallM;
+    logic StallW;
+    logic FlushD;
+    logic FlushE;
+    logic FlushM;
+    logic FlushW;
+    logic [1:0] ForwardAD;
+    logic [1:0] ForwardBD;
+    logic [1:0] ForwardAE;
+    logic [1:0] ForwardBE;
+} Hazard_interface;
+
+typedef struct packed{
+    //input
+    logic clk;
+    logic address_error;
+    logic MemWrite;
+    logic overflow_error;
+    logic syscall;
+    logic _break;
+    logic reserved;
+    logic [5:0] hardware_abortion;//硬件中断
+    logic [1:0] software_abortion;//软件中断
+    logic [31:0] Status;//Status寄存器当前的值
+    logic [31:0] Cause;//Cause寄存器当前的值
+    logic [31:0] pc;//错误指令pc
+    //output
+    logic [31:0] BadVAddr;//输出置BadVaddr
+    logic [31:0] EPC;//输出置EPC
+    //epc
+    logic [31:0] NewPc;//PC跳转
+    logic [31:0] we;//写使能字
+    logic Branch_delay;//给cause寄存器赋新值
+    logic Stall;//异常发生（Stall，Clear）
+    logic clean;
+    logic EXL;
+    logic enable;
+    logic [31:0] epc;
+    //logic EXL;//给Status寄存器赋新值
+    logic new_Status_IE;//给Status寄存器赋新值
+    logic [7:0] Cause_IP;//给cause寄存器赋新值
+    logic [7:0] Status_IM;//给Status寄存器赋新值
+    logic [4:0] ExcCode;//异常编码
+    logic [31:0] ErrorAddr;
+    logic isERET;
+    logic [7:0] new_Status_IM;
+    logic is_ds;
+} Exception_interface;
+
 
 module mycpu_top(
 	input clk,
@@ -57,6 +358,7 @@ module mycpu_top(
 	assign IF.beq_addr                      = EX.Branch_addr;
 	assign IF.StallF                        = Hazard.StallF;
 	assign IF.Error_happend					= Exception.Stall;
+
 	assign ID.RegWriteW                     = WB.RegWrite;
 	assign ID.WriteRegW                     = WB.WritetoRFaddrout;
 	assign ID.ResultW                       = WB.WritetoRFdata;
@@ -66,10 +368,22 @@ module mycpu_top(
 	assign ID.ALUoutM                       = MEM.ALUoutW;
 	assign ID.ForwardAD                     = Hazard.ForwardAD;
 	assign ID.ForwardBD                     = Hazard.ForwardBD;
+	assign ID.Exception_EXL					= Exception.EXL;
+	assign ID.Exception_enable				= Exception.new_Status_IM;
+	assign ID.software_interruption         = Exception.software_abortion;
+	assign ID.Exception_code				= Exception.ExcCode;
+	assign ID.we							= Exception.we;
+	assign ID.Branch_delay					= Exception.Branch_delay;
+	assign ID.epc							= Exception.EPC;
+	assign ID.IE   							= Exception.new_Status_IE;
+	assign ID.hardware_interruption			= ext_int;
+	assign ID.BADADDR						= Exception.BadVAddr;
+
 	assign EX.ForwardMEM                    = MEM.ALUout;
 	assign EX.ForwardWB                     = WB.WritetoRFdata;
 	assign EX.ForwardA                      = Hazard.ForwardAE;
 	assign EX.ForwardB                      = Hazard.ForwardBE;
+
 	assign Hazard.BranchD                   = ID.BranchD;
 	assign Hazard.RsD                       = ID.Rs;
 	assign Hazard.RtD                       = ID.Rt;
@@ -92,41 +406,27 @@ module mycpu_top(
 	assign Hazard.WriteRegE					= EX.WriteRegister;
 	assign Hazard.RegWriteE					= EX.RegWrite_o;
 	assign Hazard.isaBranchInstruction		= ID.isBranch;
-
-	// IF/ID registers	
 	assign Hazard.Exception_Stall			= Exception.Stall;
 	assign Hazard.Exception_clean			= Exception.Stall;
-	assign ID.Exception_EXL					= Exception.EXL;
-	assign ID.Exception_enable				= Exception.new_Status_IM;
-	//assign ID.hardware_interruption			= Exception.Status_IM[7:2];
-	assign ID.software_interruption         = Exception.software_abortion;
-	assign ID.Exception_code				= Exception.ExcCode;
-	assign ID.we							= Exception.we;
-	assign ID.Branch_delay					= Exception.Branch_delay;
-	assign ID.epc							=Exception.EPC;
-	assign ID.IE   							=Exception.new_Status_IE;
 
-	//assign ID.EPC							= Exception.EPC;
 	assign Exception.Status					= ID.Status;
 	assign Exception.Cause					= ID.cause;
-
-
-	assign Exception.syscall				=WB.syscall;
-	assign Exception._break					=WB._break;
-    //==added by jbz 7.8.2020==
+	assign Exception.syscall				= WB.syscall;
+	assign Exception._break					= WB._break;
     assign Exception.overflow_error         = (WB.exception_out == 1)   ? 1 : 0;
     assign Exception.address_error          = (WB.exception_out == 5)   ? 1 : 0;
-    //=========================
-	//assign IF.Error_happend					=Exception.Stall;
 	assign Exception.MemWrite 				= WB.MemWrite;
 	assign Exception.ErrorAddr				= (WB.exception_out == 5)	? WB.aluout : 0;
 	assign Exception.isERET 				= (WB.exception_out == 6)   ? 1 : 0;
 	assign Exception.reserved				= (WB.exception_out == 8)	? 1 : 0;
-
+	assign Exception.hardware_abortion		= ext_int;
     assign Exception.software_abortion      = {2{ID.Status[0]}} & ID.Status[9:8] & ID.cause[9:8];
-    assign Exception.Status_IM              = ID.Status[15:8];
+	assign Exception.Status_IM              = ID.Status[15:8];
     assign Exception.is_ds                  = WB.is_ds_out;
-    
+
+
+	// IF/ID registers
+
 	register #(32) IF_ID_pc_plus_4 (
 		.clk(clk),
 		.rst(rst),
@@ -685,7 +985,6 @@ module mycpu_top(
 		.Jump_reg                   (IF.Jump_reg),
 		.Jump_addr                  (IF.Jump_addr),
 		.beq_addr                   (IF.beq_addr),
-		// .StallF                     (IF.StallF),
         .StallF                     (IF.StallF | IF.is_newPC),
 		.PC_add_4                   (IF.PC_add_4),
 		.PCout						(IF.PCout),
@@ -717,7 +1016,6 @@ module mycpu_top(
 		.ALUSrcDA                   (ID.ALUSrcDA),
 		.ALUSrcDB                   (ID.ALUSrcDB),
 		.RegDstD                    (ID.RegDstD),
-		//.Imm_sel_and_Branch_taken   (ID.Imm_sel_and_Branch_taken),
         .Imm_sel                    (ID.Imm_sel),
 		.RsValue                    (ID.RsValue),
 		.RtValue                    (ID.RtValue),
@@ -742,9 +1040,9 @@ module mycpu_top(
 		.IE							(ID.IE),
     	.EXL						(ID.Exception_EXL),
     	.epc						(ID.epc),
-    	.BADADDR					(Exception.BadVAddr),
+    	.BADADDR					(ID.BADADDR),
     	.Branch_delay				(ID.Branch_delay),
-    	.hardware_interruption		(ext_int),
+    	.hardware_interruption		(ID.hardware_interruption),
     	.software_interruption		(ID.software_interruption),
 		.Status_data				(ID.Status),
     	.cause_data					(ID.cause),
@@ -935,7 +1233,7 @@ module mycpu_top(
     	.syscall					(Exception.syscall),
     	._break						(Exception._break),
     	.reserved					(Exception.reserved),
-    	.hardware_abortion			(ext_int),
+    	.hardware_abortion			(Exception.hardware_abortion),
     	.software_abortion			(Exception.software_abortion),
     	.Status						(Exception.Status),
     	.Cause						(Exception.Cause),
@@ -957,6 +1255,4 @@ module mycpu_top(
         .new_Status_IM              (Exception.new_Status_IM),
         .is_ds                      (Exception.is_ds)
 	);
-
-
 endmodule
