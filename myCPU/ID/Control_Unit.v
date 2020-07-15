@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-`include "instruction.vh"
+`include "../other/instruction.vh"
 
 module Control_Unit(
     input [5:0] Op,

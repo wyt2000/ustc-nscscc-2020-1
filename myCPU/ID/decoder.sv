@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
-`include "aluop.vh"
-`include "instruction.vh"
+`include "../other/aluop.vh"
+`include "../other/instruction.vh"
 module decoder(
     input [31:0] ins,
     output logic [5:0] ALUop,
@@ -23,10 +23,7 @@ module decoder(
     assign rd = ins[15:11];
     assign sa = ins[10:6];
     assign func = ins[5:0]; 
-    // assign imm = ins[15:0];
-    //==changed by jbz 7.8.2020==
     assign imm = (op == `OP_PRIV && rs == `FUNC_ERET) ? 16'hfffffffe : ins[15:0];
-    //===========================
 
     always_comb begin : set_ALUop
         ALUop = `ALU_NOP;
@@ -182,13 +179,11 @@ module decoder(
                         Rd = {2'b01, rd};
                         Rs = 0;
                     end
-                    //==added by jbz 7.8.2020==
                     `FUNC_ERET: begin
                         Rt = {2'b01, 5'b01100};
                         Rs = 0;
                         Rd = {2'b01, 5'b01100};
                     end
-                    //=========================
                 endcase
         endcase
     end

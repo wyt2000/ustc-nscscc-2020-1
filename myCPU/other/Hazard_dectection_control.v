@@ -18,22 +18,15 @@ module Hazard_module(
     output reg FlushD,FlushE,FlushM,FlushW,
     output reg [1:0] ForwardAD,ForwardBD,ForwardAE,ForwardBE
 );
-
-    //reg StallF_reg, StallD_reg, StallM_reg, StallW_reg;
-
     always@(*)
         if(rst || RsD == 0) ForwardAD=2'b00;
     	else if(RegWriteE&&WriteRegE==RsD&&MemtoRegE&&RsD) ForwardAD=2'b01;//add+use,forwardtoID
-    	else if(RegWriteM&&WriteRegM==RsD&&MemtoRegM&&
-                //isaBranchInstruction&&
-                RsD) ForwardAD=2'b10;//add+nop+Branch
+    	else if(RegWriteM&&WriteRegM==RsD&&MemtoRegM&&RsD) ForwardAD=2'b10;//add+nop+Branch
     	else ForwardAD=2'b00;
     always@(*)
     	if(rst || RtD == 0) ForwardBD=2'b00;
         else if(RegWriteE&&WriteRegE==RtD&&MemtoRegE&&RtD) ForwardBD=2'b01;
-    	else if(RegWriteM&&WriteRegM==RtD&&MemtoRegM&&
-                //isaBranchInstruction&&
-                RtD) ForwardBD=2'b10;//add+nop+Branch
+    	else if(RegWriteM&&WriteRegM==RtD&&MemtoRegM&&RtD) ForwardBD=2'b10;//add+nop+Branch
     	else ForwardBD=2'b00;
     always@(*)
         if(rst || RsE == 0) ForwardAE=2'b00;
@@ -42,7 +35,6 @@ module Hazard_module(
     	else ForwardAE=2'b00;
     always@(*)
         if(rst || RtE == 0) ForwardBE=2'b00;
-        // else if(WriteRegW&&WriteRegW==RtE&&RtE) ForwardBE=2'b01;
         else if(RegWriteW&&WriteRegW==RtE&&RtE) ForwardBE=2'b01;
     	else if(RegWriteM&&WriteRegM==RtE&&MemtoRegM&&RtE) ForwardBE=2'b10;
     	else ForwardBE=2'b00;

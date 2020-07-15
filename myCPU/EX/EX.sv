@@ -33,6 +33,8 @@ module EX_module(
     input [31:0] Jump_addrD,
     input [31:0] PCSrc_regD,
     input [31:0] EPCD,
+    input exceptionD,
+    input is_ds_in,
     output hiloWrite_o,
     output [2:0] MemReadType_o,
     output RegWrite_o,
@@ -56,17 +58,9 @@ module EX_module(
     output [31:0] Jump_addr,
     output [31:0] PCSrc_reg,
     output [31:0] EPC,
-    //syscall pass
-    input syscallin,
-    output syscallout,
-    //break
-    input _breakin,
-    output _breakout,
-    input exceptionD,
-    //is_ds
-    input is_ds_in,
     output is_ds_out
     );
+    
     wire [31:0] imm_o;
     wire [31:0] A_o;
     wire [31:0] B_o;
@@ -91,7 +85,6 @@ module EX_module(
     assign Jump_addr = Jump_addrD;
     assign EPC = EPCD;
     assign PCSrc_reg = PCSrc_regD;
-    assign syscallout = syscallin;
     assign is_ds_out = is_ds_in;
 
     //mux
@@ -101,7 +94,6 @@ module EX_module(
     assign B_o = ForwardB[1] ? ForwardMEM : (ForwardB[0] ? ForwardWB : B);
     assign a = ALUSrcA ? imm_o : A_o;
     assign b = ALUSrcB ? imm_o : B_o;
-    assign _breakout = _breakin;
 
     //ALU
     alu alu(

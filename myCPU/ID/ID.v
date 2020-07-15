@@ -34,7 +34,7 @@ module ID_module(
     input               EXL,
     input       [5:0]   hardware_interruption,
     input       [1:0]   software_interruption,
-    input       [31:0]  epc,
+    input       [31:0]  EPCin,
     input       [31:0]  BADADDR,
     input               Branch_delay,
     //modify the CP0 register
@@ -68,17 +68,14 @@ module ID_module(
     output BranchD,
     output Jump,
     output [31:0] PCSrc_reg,
-    output [31:0] EPC,
+    output [31:0] EPCout,
     output [31:0] Branch_addr,
     output [31:0] Jump_addr,
     //to Exception_module
     output exception,
-    output syscall,
-    output _break,
     //to Harzard unit
     output isBranch,
     //epc
-    //added by Gaoustcer
     output      [31:0]  Status_data,
     output      [31:0]  cause_data,
     //is_ds
@@ -98,10 +95,6 @@ module ID_module(
     //mux
     assign RsValue = ForwardAD[1] ?  ALUoutM : (ForwardAD[0] ? ALUoutE : Read_data_1);
     assign RtValue = ForwardBD[1] ?  ALUoutM : (ForwardBD[0] ? ALUoutE : Read_data_2);
-    //syscall
-    assign syscall = ((instr[31:26]==6'b000000)&&(instr[5:0]==6'b001100))? 1'b1 : 1'b0;
-    //break
-    assign _break = ((instr[31:26]==6'b000000)&&(instr[5:0]==6'b001101)) ? 1'b1 : 1'b0;
 
     Control_Unit CPU_CTL(.Op(instr[31:26]),
                         .func(instr[5:0]),
@@ -132,8 +125,7 @@ module ID_module(
                            .read_data_1(Read_data_1),
                            .read_data_2(Read_data_2),
                            .Status_data(Status_data),
-                           //.EPC_data(EPC_data),
-                           .EPC_data(EPC),
+                           .EPC_data(EPCout),
                            .cause_data(cause_data),
                            .we(we),
                            .IE(IE),
@@ -142,7 +134,7 @@ module ID_module(
                            .EXL(EXL),
                            .hardware_interruption(hardware_interruption),
                            .software_interruption(software_interruption),
-                           .epc(epc),
+                           .epc(EPCin),
                            .BADADDR(BADADDR),
                            .Branch_delay(Branch_delay));
 
@@ -164,13 +156,17 @@ module ID_module(
 
     reg is_ds_tmp;
     always@(posedge clk) begin
-        if(isBranch)
+        if(rst)
+            is_ds_tmp <= 0;
+        else if(isBranch)
             is_ds_tmp <= 1;
         else
             is_ds_tmp <= 0;
     end
     always@(posedge clk) begin
-        if(is_ds_tmp)
+        if(rst)
+            is_ds <= 0;
+        else if(is_ds_tmp)
             is_ds <= 1;
         else
             is_ds <= 0;

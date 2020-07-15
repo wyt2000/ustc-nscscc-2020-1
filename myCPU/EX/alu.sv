@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "aluop.vh"
+`include "../other/aluop.vh"
 
 module alu(
     input clk,
