@@ -146,6 +146,7 @@ module alu(
     always_comb begin : set_exception
         if(exceptionD) exception = 8;
         else begin
+            exception = 0;
             case (op)
             `ALU_ADD:
                 if((a[31] ~^ b[31]) & (a[31] ^ result[31])) 
@@ -187,6 +188,7 @@ module alu(
         else if(div_done) begin
             hilo = {div_remainder, div_quotient};
         end
+        else hilo = 64'b0;
     end
 
 endmodule

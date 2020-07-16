@@ -28,45 +28,42 @@ module CP0
         output [WIDTH-1:0] prid_data,
         output [WIDTH-1:0] BADVADDR_data,
         output [WIDTH-1:0] Random_data,
-        output timer_int_data,//when compare==count, create a break
+        //output reg timer_int_data,//when compare==count, create a break
         output allow_interrupt,
         output state//user mode:0 kernel mode:1
-
-
 );  
     reg [WIDTH-1:0] Readdata;
-    reg [WIDTH-1:0] Index;//0
     reg [WIDTH-1:0] Random;//1 Random number producer
-    reg [WIDTH-1:0] EntryLO0;//2
-    reg [WIDTH-1:0] EntryLO1;//3
-    reg [WIDTH-1:0] Context;//4
-    reg [WIDTH-1:0] Pagemask;//5
-    reg [WIDTH-1:0] Wired;//6
-    reg [WIDTH-1:0] Reserved1;//7
+    //reg [WIDTH-1:0] EntryLO0;//2
+    //reg [WIDTH-1:0] EntryLO1;//3
+    //reg [WIDTH-1:0] Context;//4
+    //reg [WIDTH-1:0] Pagemask;//5
+    //reg [WIDTH-1:0] Wired;//6
+    //reg [WIDTH-1:0] Reserved1;//7
     reg [WIDTH-1:0] BADVADDR;//8 deal with the exception such as TLB miss and address error
     reg [WIDTH-1:0] count;//9 +1 every two clock cycles
-    reg [WIDTH-1:0] EntryHi;//10
-    reg [WIDTH-1:0] compare;//11 create the time interrupt after a certain period of time 
+    //reg [WIDTH-1:0] EntryHi;//10
+    //reg [WIDTH-1:0] compare;//11 create the time interrupt after a certain period of time 
     reg [WIDTH-1:0] Status;//12 The Status of the processor
     reg [WIDTH-1:0] cause;//13 The cause of the last Interrupt
     reg [WIDTH-1:0] EPC;//14 exception address 
     reg [WIDTH-1:0] prid;//15 The information of the processor
     reg [WIDTH-1:0] configure;//16  config some information of the processor 
-    reg [WIDTH-1:0] LLAddr;//17
-    reg [WIDTH-1:0] WatchLo;//18
-    reg [WIDTH-1:0] WatchHi;//19
-    reg [WIDTH-1:0] Reserved2;//20
-    reg [WIDTH-1:0] Reserved3;//21
-    reg [WIDTH-1:0] Reserved4;//22
-    reg [WIDTH-1:0] Debug;//23
-    reg [WIDTH-1:0] DEPC;//24
-    reg [WIDTH-1:0] Reserved5;//25
-    reg [WIDTH-1:0] Errctrl;//26
-    reg [WIDTH-1:0] Reserved6;//27
-    reg [WIDTH-1:0] Taglo;//28
-    reg [WIDTH-1:0] Reserved7;//29
-    reg [WIDTH-1:0] ErrorEPC;//30
-    reg [WIDTH-1:0] DESAVE;//31
+    //reg [WIDTH-1:0] LLAddr;//17
+    //reg [WIDTH-1:0] WatchLo;//18
+    //reg [WIDTH-1:0] WatchHi;//19
+    //reg [WIDTH-1:0] Reserved2;//20
+    //reg [WIDTH-1:0] Reserved3;//21
+    //reg [WIDTH-1:0] Reserved4;//22
+    //reg [WIDTH-1:0] Debug;//23
+    //reg [WIDTH-1:0] DEPC;//24
+    //reg [WIDTH-1:0] Reserved5;//25
+    //reg [WIDTH-1:0] Errctrl;//26
+    //reg [WIDTH-1:0] Reserved6;//27
+    //reg [WIDTH-1:0] Taglo;//28
+    //reg [WIDTH-1:0] Reserved7;//29
+    //reg [WIDTH-1:0] ErrorEPC;//30
+    //reg [WIDTH-1:0] DESAVE;//31
     assign CP0_data = Readdata;
 
     assign EPC_data=EPC;
@@ -82,12 +79,10 @@ module CP0
 
     assign prid_data=prid;
 
-    assign compare_data=compare;
+    assign compare_data=0;
     assign Random_data=Random;
     reg temp;
     assign state=Status[1]?1'b0:1;
-    reg reg_time_int;
-    assign timer_int_data=reg_time_int;
     assign allow_interrupt=Status[0];
     always@(posedge clk or posedge rst)begin
         if(rst)
@@ -104,7 +99,7 @@ module CP0
         else 
             temp<=~temp;
     end
-    always@(temp) begin
+    always@(*) begin
         if(rst) 
             count=0;
         else count=count+temp;
@@ -126,19 +121,20 @@ module CP0
             prid<=pridin;
         else prid<=prid;
     end
+/*
     always@(posedge clk or posedge rst) begin
         if(rst)
             compare<=0;
         else if(we[11]) begin
             compare<=comparedata;
-            reg_time_int<=(compare==count)?((compare!=1'b0)?1:0):0;
+            timer_int_data<=(compare==count)?((compare!=1'b0)?1:0):0;
         end
         else if(waddr==11&&general_write_in) begin
             compare<=comparedata;
-            reg_time_int<=(compare==count)?((compare!=1'b0)?1:0):0;
+            timer_int_data<=(compare==count)?((compare!=1'b0)?1:0):0;
         end
-            
     end
+*/
     always@(posedge clk or posedge rst) begin
         if(rst) begin
             Status[31:23]<=9'b000000000;//read only can't be modified 
@@ -209,44 +205,43 @@ module CP0
             cause[6:2]<=Exception_code;
         end
     end
-    always@(rst or raddr) begin
+    always@(*) begin
         if(rst) begin
             Readdata=32'h00000000;
         end
         else begin
             case(raddr)
-            5'b00000:Readdata=Index;
             5'b00001:Readdata=Random;
-            5'b00010:Readdata=EntryLO0;
-            5'b00011:Readdata=EntryLO1;
-            5'b00100:Readdata=Context;
-            5'b00101:Readdata=Pagemask;
-            5'b00101:Readdata=Wired;
-            5'b00111:Readdata=Reserved1;
+            //5'b00010:Readdata=EntryLO0;
+            //5'b00011:Readdata=EntryLO1;
+            //5'b00100:Readdata=Context;
+            //5'b00101:Readdata=Pagemask;
+            //5'b00110:Readdata=Wired;
+            //5'b00111:Readdata=Reserved1;
             5'b01000:Readdata=BADVADDR;
             5'b01001:Readdata=count;
-            5'b01010:Readdata=EntryHi;
-            5'b01011:Readdata=compare;
+            //5'b01010:Readdata=EntryHi;
+            //5'b01011:Readdata=compare;
             5'b01100:Readdata=Status;
             5'b01101:Readdata=cause;
             5'b01110:Readdata=EPC;
             5'b01111:Readdata=prid;
             5'b10000:Readdata=configure;
-            5'b10001:Readdata=LLAddr;
-            5'b10010:Readdata=WatchLo;
-            5'b10011:Readdata=WatchHi;
-            5'b10100:Readdata=Reserved2;
-            5'b10101:Readdata=Reserved3;
-            5'b10101:Readdata=Reserved4;
-            5'b10111:Readdata=Debug;
-            5'b11000:Readdata=DEPC;
-            5'b11001:Readdata=Reserved5;
-            5'b11010:Readdata=Errctrl;
-            5'b11011:Readdata=Reserved6;
-            5'b11100:Readdata=Taglo;
-            5'b11101:Readdata=Reserved7;
-            5'b11110:Readdata=ErrorEPC;
-            5'b11111:Readdata=DESAVE;
+            //5'b10001:Readdata=LLAddr;
+            //5'b10010:Readdata=WatchLo;
+            //5'b10011:Readdata=WatchHi;
+            //5'b10100:Readdata=Reserved2;
+            //5'b10101:Readdata=Reserved3;
+            //5'b10110:Readdata=Reserved4;
+            //5'b10111:Readdata=Debug;
+            //5'b11000:Readdata=DEPC;
+            //5'b11001:Readdata=Reserved5;
+            //5'b11010:Readdata=Errctrl;
+            //5'b11011:Readdata=Reserved6;
+            //5'b11100:Readdata=Taglo;
+            //5'b11101:Readdata=Reserved7;
+            //5'b11110:Readdata=ErrorEPC;
+            //5'b11111:Readdata=DESAVE;
             default:Readdata=32'hFFFFFFFF;
             endcase
         end
@@ -287,7 +282,7 @@ module cp0_up
         output [WIDTH-1:0] prid_data,
         output [WIDTH-1:0] BADVADDR_data,
         output [WIDTH-1:0] Random_data,
-        output timer_int_data,//when compare==count, create a break
+        //output timer_int_data,//when compare==count, create a break
         output allow_interrupt,
         output state//user mode:0 kernel mode:1
 
@@ -305,12 +300,42 @@ module cp0_up
     reg r_EXL;
     reg r_IE;
     reg r_Branch_delay;
-    reg [4:0] r_Exception_code;
-    /*
-    assign r_Exception_code=we[13]?Exception_code:0;
-    */
-    
-	CP0 cp0_pipeline(
+    reg [4:0] r_Exception_code; 
+
+    always@(*) begin
+        r_hardware_interruption              = we[13] ? hardware_interruption : 0;
+        r_software_interruption              = we[13] ? software_interruption : 0;
+        r_BADADDR                            = we[8] ? BADADDR : 0;
+        r_comparedata                        = we[11] ? comparedata : 0;
+        r_configuredata                      = we[16] ? configuredata : 0;
+        r_epc                                = we[14] ? epc : 0;
+        r_pridin                             = we[15] ? pridin : 0;
+        r_interrupt_enable                   = we[12] ? interrupt_enable : 0;
+        r_EXL                                = we[12] ? EXL : 0;
+        r_IE                                 = we[12] ? IE : 0;
+        r_Branch_delay                       = we[13] ? Branch_delay : 0;
+        r_Exception_code                     = we[13] ? Exception_code : 0;
+        if(we == 0) begin
+            case(waddr)
+                5'b01000: r_BADADDR                      = writedata;
+                5'b01110: r_epc                          = writedata;
+                5'b01111: r_pridin                       = writedata;
+                5'b10000: r_configuredata                = writedata;
+                5'b01011: r_comparedata                  = writedata;
+                5'b01100:begin
+                    r_interrupt_enable                   = writedata[15:8];
+                    r_EXL                                = writedata[1];
+                    r_IE                                 = writedata[0];
+                end
+                5'b01101:begin
+                    r_software_interruption              = writedata[9:8];
+                    r_Exception_code                     = writedata[6:2];
+                end
+            endcase
+        end
+    end
+	
+    CP0 cp0_pipeline(
         .clk(clk),.rst(rst),
         .hardware_interruption(r_hardware_interruption),//6 hardware break
         .software_interruption(r_software_interruption),//2 software interruption
@@ -338,47 +363,9 @@ module cp0_up
         .prid_data(prid_data),
         .BADVADDR_data(BADVADDR_data),
         .Random_data(Random_data),
-        .timer_int_data(timer_int_data),//when compare==count, create a break
+        //.timer_int_data(timer_int_data),//when compare==count, create a break
         .allow_interrupt(allow_interrupt),
         .state(state)//user mode:0 kernel mode:1
-);  
-        always@(*)
-        if(we==0) begin
-            case(waddr)
-            5'b01000:r_BADADDR=writedata;
-            5'b01110:r_epc=writedata;
-            5'b01111:r_pridin=writedata;
-            5'b10000:r_configuredata=writedata;
-            5'b01011:r_comparedata=writedata;
-            5'b01100:begin
-                r_interrupt_enable=writedata[15:8];
-                r_EXL=writedata[1];
-                r_IE=writedata[0];
-            end
-            5'b01101:begin
-                //r_hardware_interruption=writedata[15:10];
-                r_software_interruption=writedata[9:8];
-                //r_cause=writedata[9:8];
-                r_Exception_code=writedata[6:2];
-            end
-            default :;
-            endcase
-        end
-        else if(we)begin
-            //r_cause=we[13]?cause:0;
-            r_hardware_interruption=we[13]?hardware_interruption:0;
-            r_software_interruption=we[13]?software_interruption:0;
-            r_BADADDR=we[8]?BADADDR:0;
-            r_comparedata=we[11]?comparedata:0;
-            r_configuredata=we[16]?configuredata:0;
-            r_epc=we[14]?epc:0;
-            r_pridin=we[15]?pridin:0;
-            r_interrupt_enable=we[12]?interrupt_enable:0;
-            r_EXL=we[12]?EXL:0;
-            r_IE=we[12]?IE:0;
-            r_Branch_delay=we[13]?Branch_delay:0;
-            r_Exception_code=we[13]?Exception_code:0;
-        end
-
+    );  
 
 endmodule

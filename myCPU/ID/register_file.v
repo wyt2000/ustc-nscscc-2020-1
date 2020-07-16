@@ -106,6 +106,7 @@ module register_file(
     Random_data;
     //CP0
     assign reg_cp0_we = regwrite & ~write_addr[6] & write_addr[5];
+    assign timer_int_data = 0;
     cp0_up #(32) reg_cp0(.clk(clk),
                       .rst(rst),
                       .waddr(write_addr[4:0]),
@@ -131,10 +132,10 @@ module register_file(
                       .cause_data(cause_data),//output
                       .EPC_data(EPC_data),//output
                       .configure_data(configure_data),
+                      .pridin(32'b0),
                       .prid_data(prid_data),
-                      .BADVADDR_data(BADVADDR_data),//output
                       .Random_data(Random_data),
-                      .timer_int_data(timer_int_data),//output  
+                      .BADVADDR_data(BADVADDR_data),//output
                       .allow_interrupt(allow_interrupt),//output    
                       .state(STATE)//output
                     );

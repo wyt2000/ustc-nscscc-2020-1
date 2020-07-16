@@ -63,7 +63,7 @@ module Exception_module(
         else if (_break)                        ExcCode = 5'b01001;
         else if (address_error && !MemWrite)    ExcCode = 5'b00100; // mem load_ex
         else if (address_error && MemWrite)     ExcCode = 5'b00101; // store_ex
-        else ExcCode=5'b00000;
+        else                                    ExcCode = 5'b00000;
     end
 
     always @(*) begin

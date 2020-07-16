@@ -23,7 +23,7 @@ module decoder(
     assign rd = ins[15:11];
     assign sa = ins[10:6];
     assign func = ins[5:0]; 
-    assign imm = (op == `OP_PRIV && rs == `FUNC_ERET) ? 16'hfffffffe : ins[15:0];
+    assign imm = (op == `OP_PRIV && rs == `FUNC_ERET) ? 32'hfffffffe : ins[15:0];
 
     always_comb begin : set_ALUop
         ALUop = `ALU_NOP;
@@ -91,7 +91,6 @@ module decoder(
                 case (func)
                     `FUNC_ADD,`FUNC_ADDU,
                     `FUNC_SUB,`FUNC_SUBU,
-                    `FUNC_SUBU,`FUNC_SLT,
                     `FUNC_SLT,`FUNC_SLTU,
                     `FUNC_AND,`FUNC_NOR,
                     `FUNC_OR,`FUNC_XOR,

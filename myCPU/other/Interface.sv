@@ -265,9 +265,8 @@ typedef struct packed{
     logic [31:0] we;//写使能字
     logic Branch_delay;//给cause寄存器赋新值
     logic Stall;//异常发生（Stall，Clear）
-    logic clean;
     logic EXL;
-    logic enable;
+    logic [7:0] enable;
     logic [31:0] epc;
     logic new_Status_IE;//给Status寄存器赋新值
     logic [7:0] Cause_IP;//给cause寄存器赋新值

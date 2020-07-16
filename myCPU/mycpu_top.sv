@@ -98,7 +98,7 @@ module mycpu_top(
 	assign Hazard.stall                     = EX.stall;
 	assign Hazard.done                      = EX.done;
 	assign Hazard.Exception_Stall           = Exception.Stall;
-	assign Hazard.Exception_clean           = Exception.clean;
+	assign Hazard.Exception_clean           = Exception.Stall;
 	assign Hazard.RegWriteM                 = MEM.RegWriteM;
 	assign Hazard.WriteRegM                 = MEM.WriteRegister;
 	assign Hazard.MemReadM                  = MEM.MemReadM;
@@ -515,7 +515,7 @@ module mycpu_top(
         .q(MEM.exception_in)
     );
 
-    register #(4) EX_MEM_is_ds (
+    register #(1) EX_MEM_is_ds (
         .clk(clk),
 		.rst(rst),
         .Flush(Hazard.FlushM),
@@ -832,7 +832,6 @@ module mycpu_top(
 		.MemtoRegE                  (Hazard.MemtoRegE),
 		.WriteRegE					(Hazard.WriteRegE),
 		.RegWriteE					(Hazard.RegWriteE),
-		.EX_exception               (Hazard.EX_exception),
 		.stall                      (Hazard.stall),
 		.done                       (Hazard.done),
 		.Exception_Stall            (Hazard.Exception_Stall),
