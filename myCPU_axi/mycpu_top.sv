@@ -134,8 +134,8 @@ module mycpu_top(
 	assign Hazard.WriteRegE					= EX.WriteRegister;
 	assign Hazard.RegWriteE					= EX.RegWrite_o;
 	assign Hazard.isaBranchInstruction		= ID.isBranch;
-	assign Hazard.Exception_Stall			= Exception.Stall;
-	assign Hazard.Exception_clean			= Exception.Stall;
+	// assign Hazard.Exception_Stall			= Exception.Stall;
+	// assign Hazard.Exception_clean			= Exception.Stall;
     assign Hazard.IF_stall                  = IF.stall;
     assign Hazard.MEM_stall                 = MEM.stall;
 
@@ -155,6 +155,8 @@ module mycpu_top(
     assign Exception.is_ds                  = WB.is_ds_out;
 	assign Exception.pc						= WB.PCout;
 	assign Exception.EPCD					= ID.EPCout;
+    assign Exception.StallW                 = Hazard.StallW;
+    assign Exception.FlushW                 = Hazard.FlushW;
 
     assign axi.inst_req                     = IF.inst_req;
     assign axi.inst_wr                      = IF.inst_wr;
@@ -990,7 +992,9 @@ module mycpu_top(
 		.EPCD						(Exception.EPCD),
 		.isERET						(Exception.isERET),
         .new_Status_IM              (Exception.new_Status_IM),
-        .is_ds                      (Exception.is_ds)
+        .is_ds                      (Exception.is_ds),
+        .StallW                     (Exception.StallW),
+        .FlushW                     (Exception.FlushW)
 	);
 
     cpu_axi_interface cpu_axi_interface(

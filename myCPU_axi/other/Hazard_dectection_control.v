@@ -50,10 +50,11 @@ module Hazard_module(
     
     always@(*) begin
         if(rst)                                                                                                 next_state = 4'b0000;
+        else if ((Exception_clean || Exception_Stall) && (IF_stall || MEM_stall))                               next_state = 4'b1110;
         else if (Exception_clean || Exception_Stall)                                                            next_state = 4'b0001;//Exception situation (clean and Stall all the Registers)
-        else if (MemReadM && ((WriteRegM == RsD) || (WriteRegM == RtD)) && RegWriteM && isaBranchInstruction)   next_state = 4'b0100;//lw+use(Branch),WB-->>EX
         else if (!IF_stall && MEM_stall)                                                                        next_state = 4'b1101;//MEM operates RAM
-        else if (IF_stall && MEM_stall)                                                                         next_state = 4'b1110;//RAM busy 
+        else if (IF_stall && MEM_stall)                                                                         next_state = 4'b1101;//RAM busy 
+        else if (MemReadM && ((WriteRegM == RsD) || (WriteRegM == RtD)) && RegWriteM && isaBranchInstruction)   next_state = 4'b0100;//lw+use(Branch),WB-->>EX
         else if (ALU_stall && !ALU_done)                                                                        next_state = 4'b1000; //stall requested by alu
         else if (State == 4'b1000)                                                                              next_state = 4'b1001; //mul/div stall 1
         else if (State == 4'b1001)                                                                              next_state = 4'b1010; //mul/div stall 2
@@ -70,7 +71,7 @@ module Hazard_module(
             4'b1010: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b110000100;
             4'b1100: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b110000100;
             4'b1101: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111100001;
-            4'b1110: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111100001;
+            4'b1110: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111111110;
             default: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b000000000;
         endcase
     end

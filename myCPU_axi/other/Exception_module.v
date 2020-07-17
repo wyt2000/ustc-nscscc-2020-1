@@ -27,7 +27,9 @@ module Exception_module(
     output new_Status_IE,
     output reg exception_occur,
     output reg [4:0] ExcCode,
-    output [7:0] new_Status_IM
+    output [7:0] new_Status_IM,
+    input StallW,
+    input FlushW
     );
 
     wire PCError;
@@ -35,7 +37,10 @@ module Exception_module(
     reg [31:0] pc_old;
 
     always@(posedge clk) begin
-        pc_old <= pc;
+        if(!StallW && !FlushW)
+            pc_old <= pc;
+        else
+            pc_old <= pc_old;
     end
 
     assign PCError                          = (pc[1:0]!=2'b00 || (isERET && EPCD[1:0]!=2'b00)) ? 1 : 0;
@@ -43,10 +48,10 @@ module Exception_module(
     assign we[7:0]                          = 0;
     assign we[11:9]                         = 0;
     assign we[31:15]                        = 0;
-    assign we[8]                            = address_error | PCError ;
-    assign we[12]                           = exception_occur;
-    assign we[13]                           = exception_occur;
-    assign we[14]                           = exception_occur;
+    assign we[8]                            = (StallW && !FlushW) ? 0 : address_error | PCError ;
+    assign we[12]                           = (StallW && !FlushW) ? 0 : exception_occur;
+    assign we[13]                           = (StallW && !FlushW) ? 0 : exception_occur;
+    assign we[14]                           = (StallW && !FlushW) ? 0 : exception_occur;
     assign Cause_IP                         = ((|software_abortion)) ? {6'b000000, software_abortion} : 8'b00000000;
     assign new_Status_EXL                   = exception_occur;
     assign new_Status_IM                    = (|software_abortion) ? 8'b1111_1111 : 8'b0000_0000;

@@ -311,6 +311,8 @@ typedef struct packed{
 	logic [31:0] EPCD;
 	logic syscall;
 	logic _break;
+    logic StallW;
+    logic FlushW;
 } Exception_interface;
 
 typedef struct packed{

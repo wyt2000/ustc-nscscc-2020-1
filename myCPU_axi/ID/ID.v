@@ -154,19 +154,24 @@ module ID_module(
                .imm(imm),
                .exception(exception));
 
-    reg is_ds_tmp;
+    reg isBranch_old;
+    reg [31:0] pc_old;
     always@(posedge clk) begin
-        if(rst)
-            is_ds_tmp <= 0;
-        else if(isBranch)
-            is_ds_tmp <= 1;
-        else
-            is_ds_tmp <= 0;
+        if(rst) begin
+            isBranch_old <= 0;
+            pc_old <= 0;
+        end
+        else begin
+            isBranch_old <= isBranch;
+            pc_old <= PCin;
+        end
     end
     always@(posedge clk) begin
         if(rst)
             is_ds <= 0;
-        else if(is_ds_tmp)
+        else if(pc_old == PCin)
+            is_ds <= is_ds;
+        else if(isBranch_old && (pc_old != PCin))
             is_ds <= 1;
         else
             is_ds <= 0;

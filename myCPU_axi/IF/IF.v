@@ -33,7 +33,7 @@ module IF_module
     assign PC_add_4 = PCout + 4;
     always@(posedge clk) begin
         if(rst) PCout <= 32'hbfc0_0000;
-        else if(Error_happend) PCout <= 32'hbfc0_0380;
+        else if(Error_happend && !stall) PCout <= 32'hbfc0_0380;
         else if(StallF) PCout <= PCout;
         else if(EPC_sel == 1)             PCout <= EPC;
         else if({Jump,BranchD} == 2'b11)  PCout <= Jump_addr;
