@@ -60,7 +60,7 @@ module cpu_axi_interface
     //ar
     output [3 :0] arid         ,
     output [31:0] araddr       ,
-    output [7 :0] arlen        ,
+    output [3 :0] arlen        ,
     output [2 :0] arsize       ,
     output [1 :0] arburst      ,
     output [1 :0] arlock        ,
@@ -78,7 +78,7 @@ module cpu_axi_interface
     //aw          
     output [3 :0] awid         ,
     output [31:0] awaddr       ,
-    output [7 :0] awlen        ,
+    output [3 :0] awlen        ,
     output [2 :0] awsize       ,
     output [1 :0] awburst      ,
     output [1 :0] awlock       ,
@@ -152,7 +152,7 @@ end
 //ar
 assign arid    = 4'd0;
 assign araddr  = do_addr_r;
-assign arlen   = 8'd0;
+assign arlen   = 4'd0;
 assign arsize  = do_size_r;
 assign arburst = 2'd0;
 assign arlock  = 2'd0;
@@ -165,7 +165,7 @@ assign rready  = 1'b1;
 //aw
 assign awid    = 4'd0;
 assign awaddr  = do_addr_r;
-assign awlen   = 8'd0;
+assign awlen   = 4'd0;
 assign awsize  = do_size_r;
 assign awburst = 2'd0;
 assign awlock  = 2'd0;

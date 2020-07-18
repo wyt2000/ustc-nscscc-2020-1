@@ -48,6 +48,11 @@ module data_sram
             reg_wdata <= wdata;
             reg_MemWrite <= MemWrite;
         end
+        else begin
+            reg_addr <= reg_addr;
+            reg_wdata <= reg_wdata;
+            reg_MemWrite <= reg_MemWrite;
+        end
     end
 
     always@(posedge clk) begin
@@ -82,10 +87,6 @@ module data_sram
                     next_state = WAIT;
             end
 
-            // RECV: begin
-            //     next_state = IDLE;
-            // end
-
             default: next_state = IDLE;
         endcase
     end
@@ -94,7 +95,10 @@ module data_sram
         data_req    = 0;
         CLR         = 0;
         stall       = 0;
-        data_wr = 0;
+        data_wr     = 0;
+        data_size   = 0;
+        data_addr   = 0;
+        data_wdata  = 0;
         case (current_state)
             IDLE: begin
                 if(MemRead || (|MemWrite)) begin
@@ -104,69 +108,68 @@ module data_sram
                     if(MemRead) begin
                         data_size   =  2'b10;
                         data_addr[1:0]  =  2'b00;
-                        data_addr[31:2] =  addr[31:2];
+                        data_addr[28:2] =  addr[28:2];
                         data_wr = 0;
                     end
-                    case(MemWrite)
-                        4'b0000:    ;
-
-                        4'b0001: begin
-                                data_size       =  2'b00;
-                                data_addr[1:0]  =  2'b00;
-                                data_addr[31:2] =  addr[31:2];
-                                data_wdata      =  wdata;
-                                data_wr         =  1;
+                    else begin
+                        case(MemWrite)
+                                4'b0001: begin
+                                    data_size       =  2'b00;
+                                    data_addr[1:0]  =  2'b00;
+                                    data_addr[28:2] =  addr[28:2];
+                                    data_wdata      =  wdata;
+                                    data_wr         =  1;
                                 end
 
-                        4'b0010: begin
-                                data_size       =  2'b00;
-                                data_addr[1:0]  =  2'b01;
-                                data_addr[31:2] =  addr[31:2];
-                                data_wdata      =  wdata;
-                                data_wr         =  1;
-                        end
+                                4'b0010: begin
+                                    data_size       =  2'b00;
+                                    data_addr[1:0]  =  2'b01;
+                                    data_addr[28:2] =  addr[28:2];
+                                    data_wdata      =  wdata;
+                                    data_wr         =  1;
+                                end
 
-                        4'b0100: begin
-                                data_size       =  2'b00;
-                                data_addr[1:0]  =  2'b10;
-                                data_addr[31:2] =  addr[31:2];
-                                data_wdata      =  wdata;
-                                data_wr         =  1;
-                        end
+                                4'b0100: begin
+                                    data_size       =  2'b00;
+                                    data_addr[1:0]  =  2'b10;
+                                    data_addr[28:2] =  addr[28:2];
+                                    data_wdata      =  wdata;
+                                    data_wr         =  1;
+                                end
 
-                        4'b1000: begin
-                                data_size       =  2'b00;
-                                data_addr[1:0]  =  2'b11;
-                                data_addr[31:2] =  addr[31:2];
-                                data_wdata      =  wdata;
-                                data_wr         =  1;
-                        end
+                                4'b1000: begin
+                                    data_size       =  2'b00;
+                                    data_addr[1:0]  =  2'b11;
+                                    data_addr[28:2] =  addr[28:2];
+                                    data_wdata      =  wdata;
+                                    data_wr         =  1;
+                                end
 
-                        4'b0011: begin
-                                data_size       =  2'b01;
-                                data_addr[1:0]  =  2'b00;
-                                data_addr[31:2] =  addr[31:2];
-                                data_wdata      =  wdata;
-                                data_wr         =  1;
-                        end
+                                4'b0011: begin
+                                    data_size       =  2'b01;
+                                    data_addr[1:0]  =  2'b00;
+                                    data_addr[28:2] =  addr[28:2];
+                                    data_wdata      =  wdata;
+                                    data_wr         =  1;
+                                end
 
-                        4'b1100: begin
-                                data_size       =  2'b01;
-                                data_addr[1:0]  =  2'b10;
-                                data_addr[31:2] =  addr[31:2];
-                                data_wdata      =  wdata;
-                                data_wr         =  1;
-                        end
+                                4'b1100: begin
+                                    data_size       =  2'b01;
+                                    data_addr[1:0]  =  2'b10;
+                                    data_addr[28:2] =  addr[28:2];
+                                    data_wdata      =  wdata;
+                                    data_wr         =  1;
+                                end
 
-                        4'b1111: begin
-                                data_size       =  2'b10;
-                                data_addr[1:0]  =  2'b00;
-                                data_addr[31:2] =  addr[31:2];
-                                data_wdata      =  wdata;
-                                data_wr         =  1;
-                        end
-                        default:    ;
-                    endcase
+                                4'b1111: begin
+                                    data_size       =  2'b10;
+                                    data_addr[1:0]  =  2'b00;
+                                    data_addr[28:2] =  addr[28:2];
+                                    data_wdata      =  wdata;
+                                    data_wr         =  1;
+                                end
+                        endcase
+                    end
                 end
             end
 
@@ -178,78 +181,75 @@ module data_sram
                 if(MemRead) begin
                     data_size   =  2'b10;
                     data_addr[1:0]  =  2'b00;
-                    data_addr[31:2] =  reg_addr[31:2];
+                    data_addr[28:2] =  reg_addr[28:2];
                     data_wr = 0;
                 end
-                case(reg_MemWrite)
-                    4'b0000:    ;
-                    4'b0001: begin
-                            data_size       =  2'b00;
-                            data_addr[1:0]  =  2'b00;
-                            data_addr[31:2] =  reg_addr[31:2];
-                            data_wdata      =  reg_wdata;
-                            data_wr         =  1;
-                            end
-                     4'b0010: begin
-                            data_size       =  2'b00;
-                            data_addr[1:0]  =  2'b01;
-                            data_addr[31:2] =  reg_addr[31:2];
-                            data_wdata      =  reg_wdata;
-                            data_wr         =  1;
-                    end
-                    4'b0100: begin
-                            data_size       =  2'b00;
-                            data_addr[1:0]  =  2'b10;
-                            data_addr[31:2] =  reg_addr[31:2];
-                            data_wdata      =  reg_wdata;
-                            data_wr         =  1;
-                    end
-                    4'b1000: begin
-                            data_size       =  2'b00;
-                            data_addr[1:0]  =  2'b11;
-                            data_addr[31:2] =  reg_addr[31:2];
-                            data_wdata      =  reg_wdata;
-                            data_wr         =  1;
-                    end
-                    4'b0011: begin
-                            data_size       =  2'b01;
-                            data_addr[1:0]  =  2'b00;
-                            data_addr[31:2] =  reg_addr[31:2];
-                            data_wdata      =  reg_wdata;
-                            data_wr         =  1;
-                    end
-                    4'b1100: begin
-                            data_size       =  2'b01;
-                            data_addr[1:0]  =  2'b10;
-                            data_addr[31:2] =  reg_addr[31:2];
-                            data_wdata      =  reg_wdata;
-                            data_wr         =  1;
-                    end
-                    4'b1111: begin
-                            data_size       =  2'b10;
-                            data_addr[1:0]  =  2'b00;
-                            data_addr[31:2] =  reg_addr[31:2];
-                            data_wdata      =  reg_wdata;
-                            data_wr         =  1;
-                    end
-                    default:    ;
-                endcase
+                else begin
+                    case(reg_MemWrite)
+                        4'b0001: begin
+                                data_size       =  2'b00;
+                                data_addr[1:0]  =  2'b00;
+                                data_addr[28:2] =  reg_addr[28:2];
+                                data_wdata      =  reg_wdata;
+                                data_wr         =  1;
+                        end
+                        4'b0010: begin
+                                data_size       =  2'b00;
+                                data_addr[1:0]  =  2'b01;
+                                data_addr[28:2] =  reg_addr[28:2];
+                                data_wdata      =  reg_wdata;
+                                data_wr         =  1;
+                        end
+                        4'b0100: begin
+                                data_size       =  2'b00;
+                                data_addr[1:0]  =  2'b10;
+                                data_addr[28:2] =  reg_addr[28:2];
+                                data_wdata      =  reg_wdata;
+                                data_wr         =  1;
+                        end
+                        4'b1000: begin
+                                data_size       =  2'b00;
+                                data_addr[1:0]  =  2'b11;
+                                data_addr[28:2] =  reg_addr[28:2];
+                                data_wdata      =  reg_wdata;
+                                data_wr         =  1;
+                        end
+                        4'b0011: begin
+                                data_size       =  2'b01;
+                                data_addr[1:0]  =  2'b00;
+                                data_addr[28:2] =  reg_addr[28:2];
+                                data_wdata      =  reg_wdata;
+                                data_wr         =  1;
+                        end
+                        4'b1100: begin
+                                data_size       =  2'b01;
+                                data_addr[1:0]  =  2'b10;
+                                data_addr[28:2] =  reg_addr[28:2];
+                                data_wdata      =  reg_wdata;
+                                data_wr         =  1;
+                        end
+                        4'b1111: begin
+                                data_size       =  2'b10;
+                                data_addr[1:0]  =  2'b00;
+                                data_addr[28:2] =  reg_addr[28:2];
+                                data_wdata      =  reg_wdata;
+                                data_wr         =  1;
+                        end
+                    endcase
+                end
             end
 
             WAIT: begin
-                CLR         = 1;
-                stall       = 1;
                 if(data_data_ok) begin
                     CLR     = 0;
                     stall   = 0;
                 end
+                else begin
+                    CLR     = 1;
+                    stall   = 1;
+                end
             end
-
-            // RECV: ;
-            default: ;
         endcase
-
-        data_addr[31:29] = 3'b000;
     end
 
 endmodule

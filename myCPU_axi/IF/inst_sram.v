@@ -74,10 +74,6 @@ module inst_sram
                     next_state = WAIT;
             end
 
-            // RECV: begin
-            //     next_state = IDLE;
-            // end
-
             default: next_state = IDLE;
         endcase
     end
@@ -105,16 +101,16 @@ module inst_sram
             end
 
             WAIT: begin
-                CLR         = 1;
-                stall       = 1;
                 if(inst_data_ok) begin
                     CLR = 0;
                     stall = 0;
                 end
+                else begin
+                    CLR      = 1;
+                    stall    = 1;
+                end
             end
 
-            // RECV: ;
-            default: ;
         endcase
     end
 
