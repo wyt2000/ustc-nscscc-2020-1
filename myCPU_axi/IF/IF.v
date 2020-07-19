@@ -51,8 +51,15 @@ module IF_module
     assign is_newPC = (PCout == old_PC) ? 0 : 1;
     reg [31:0] reg_instr;
     always@(posedge clk) begin
-        if(inst_data_ok)
+        if(rst) begin
+            reg_instr <= 0;
+        end
+        else if(inst_data_ok) begin
             reg_instr <= inst_rdata;
+        end
+        else begin
+            reg_instr <= reg_instr;
+        end
     end
     assign instr = inst_data_ok ? inst_rdata : reg_instr;
 

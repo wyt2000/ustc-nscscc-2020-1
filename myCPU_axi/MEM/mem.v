@@ -130,8 +130,15 @@ module MEM_module (
     
     reg [31:0] reg_Memdata;
     always@(posedge clk) begin
-    if(data_data_ok)
-        reg_Memdata <= data_rdata;
+        if(rst) begin
+            reg_Memdata <= 0;
+        end
+        else if(data_data_ok) begin
+            reg_Memdata <= data_rdata;
+        end
+        else begin
+            reg_Memdata <= reg_Memdata;
+        end
     end
     assign Memdata = data_data_ok ? data_rdata : reg_Memdata;
 
