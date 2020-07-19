@@ -1,6 +1,20 @@
 //AXI 请求模块
 
-module axi(
+module axi
+#(
+    parameter                   LINE_ADDR_LEN = 3           ,
+    parameter                   ADDR_LEN      = 8           
+)
+(
+//requests from cache
+    output  reg                 gnt                         ,
+    input      [ADDR_LEN-1: 0]  addr                        ,
+    input                       rd_req                      ,
+    output  reg        [31: 0]  rd_line[1<<LINE_ADDR_LEN]   , 
+    input                       wr_req                      ,
+    input              [31: 0]  wr_line[1<<LINE_ADDR_LEN]   , 
+
+//AXI
     //global
     input         aclk         ,
     input         aresetn      ,
@@ -47,163 +61,167 @@ module axi(
     output  reg   bready       
 );
 
-//以下读写暂时默认字对齐，如有非对齐访问需要可以另行修改
-//=================================================//
-//需要适配的寄存器/堆
-reg read_en, write_en;
-reg [31:0] read_addr, read_length, write_addr, write_length, addr;
-reg [31:0] cache [0:31];
-//=================================================//
-    //read
-    //假设cache需要读read_addr处的地址，读read_length个字节，存放在cache缓存write_addr地址中，读的时候read_en有效，按字节寻址
-    reg [1:0] rcs, rns;
-    always@(posedge aclk) begin
-        if(aresetn)
-            rcs <= 0;
-        else 
-            rcs <= rns;
-    end
-    always@(*) begin
-        case(rcs)
-        0: begin
-            if(read_en)
-                rns = 1;
-            else
-                rns = 0;
-        end
-        1: begin
-            if(arready)
-                rns = 2;
-            else
-                rns = 1;
-        end
-        2: begin
-            if(rlast)
-                rns = 0;
-            else 
-                rns = 2;
-        end
-        default: ;
-        endcase
-    end
-    always@(*)begin
-        case(rcs)
-        0: begin
-            araddr = 0;
-            arvalid = 0;
+    //AXI info
+    localparam  NUMBER_BYTES    =   4;
+    localparam  DATA_BUS_BYTES  =   4;
+    localparam  BURST_LENGTH    =   (1<<LINE_ADDR_LEN);
+    localparam  LOWER_BYTE_LANE =   0;
+    localparam  UPPER_BYTE_LANE =   3;
+    localparam  BURST_TYPE_FIXED=   2'B00;
+    localparam  BURST_TYPE_INCR =   2'B01;
+    localparam  BURST_TYPE_WRAP =   2'B10;
 
-            rready = 0;
-        end
-        1: begin
-            araddr = read_addr;
-            arlen = read_length - 1;
-            arvalid = 1;
-        end
-        2: begin
-            rready = 1;
-        end
-        default: ;
-        endcase
-    end
-    always@(posedge aclk) begin
-        if(rvalid && rready)
-            cache[write_addr] <= rdata;
-        write_addr <= write_addr + 32'd4;
-    end
+    //stage machine parameters
+    localparam  IDLE            =   0;
+    localparam  HDSK            =   1;
+    localparam  TRANS           =   2;
+    localparam  WR              =   1;
+    localparam  RD              =   0;
 
-    //write
-    //假设将cache的addr写入mem的write_addr中，write_en有效，写write_length个字节
-    reg [1:0] wcs, wns;
+    reg [31 :0] Start_Address;
+    reg [31 :0] write_data[BURST_LENGTH];
+    reg         request_type;
+    reg [2  :0] count;
+    reg [1  :0] current_state,  next_state;
+    
+    //save request information
     always@(posedge aclk) begin
-        if(aresetn)
-            wcs <= 0;
-        else 
-            wcs <= wns;
-    end
-    always@(*) begin
-        case(wcs)
-        0: begin
-            if(write_en)
-                wns = 1;
-            else 
-                wns = 0;
+        if(!aresetn) begin
+            request_type    <=  0;
+            Start_Address   <=  0;
+            write_data      <=  0;
         end
-        1: begin
-            if(awready)
-                wns = 2;
-            else 
-                wns = 1;
-        end
-        2: begin
-            if(wlast)
-                wns = 3;
+        else if((rd_req || wr_req) && gnt) begin
+            Start_Address   <=  addr;
+            write_data      <=  wr_line;
+            if(wr_req)
+                request_type<=  WR;
             else
-                wns = 2;
-        end
-        3: begin
-            if(bresp && bvalid && bready)
-                wns = 0;
-            else
-                wns = 3;
-        end
-        default: ;
-        endcase
-    end
-    always@(*) begin
-        case(wcs)
-        0: begin
-            awvalid = 0;
-            wvalid = 0;
-            bready = 0;
-        end
-        1: begin
-            awaddr = write_addr;
-            awvalid = 1;
-            awlen = write_length - 1;
-        end
-        2: begin
-            wdata = cache[addr];
-            wvalid = 1;
-            bready = 1;
-        end
-        3: begin
-            awvalid = 0;
-            wvalid = 0;
-            bready = 0;
-        end
-        default: ;
-        endcase
-    end
-    always@(posedge aclk) begin
-        if(wready && wvalid && bready)
-            addr <= addr + 32'd4;
-        if(wready && wvalid && bready && write_length >= 1) 
-            write_length <= write_length - 1;
-        else if(wready && wvalid && bready && write_length == 1) begin
-            write_length <= write_length - 1;
-            wlast <= 1;
+                request_type<=  RD;
         end
         else begin
-            write_length <= write_length;
-            wlast <= 0;
+            Start_Address   <=  Start_Address;
+            write_data      <=  write_data;
+            request_type    <=  request_type;
         end
     end
 
-
-    //常量赋值，一般用不到
-    always@(*) begin
-         arid = 4'd0;
-         arburst = 2'd01;
-         arlock = 2'd0;
-         arcache = 4'd0;
-         arprot = 3'd0;
-         awid = 4'd1;
-         awburst = 2'd1;
-         awlock = 2'd0;
-         awcache = 4'd0;
-         awprot = 3'd0;
-         wid = 4'd1;
-         wstrb = 4'b1111;
+    //stage machine
+    always@(posedge aclk) begin
+        if(aresetn) 
+            current_state   <=  IDLE;
+        else
+            current_state   <=  next_state;
     end
-    
+
+    always@(*) begin
+        case(current_state)
+        IDLE:   begin
+            if((rd_req || wr_req) && !gnt)
+                next_state  =   HDSK;
+            else
+                next_state  =   IDLE;
+        end
+        HDSK:   begin
+            if((arvalid && arready) || (awvalid && awready))
+                next_state  =   TRANS;
+            else
+                next_state  =   HDSK;
+        end
+        TRANS:  begin
+            if(/*(rvalid && rlast && rready) || (wvalid && wlast && wready)*/count == BURST_LENGTH)
+                next_state  =   IDLE;
+            else
+                next_state  =   TRANS;
+        end
+        default:    begin
+            next_state = IDLE;
+        end
+        endcase
+    end
+
+    always@(*) begin
+        gnt     =   0;
+        arvalid =   0;
+        rready  =   0;
+        awvalid =   0;
+        wvalid  =   0;
+        wlast   =   0;
+        case(current_state)
+        HDSK: begin
+            if(request_type == RD)
+                arvalid     =   1;
+            else
+                awvalid     =   1;
+        end
+        TRANS:begin
+            if(request_type == RD) begin
+                rready      =   1;
+                if(count == BURST_LENGTH)
+                    gnt     =   1;
+            end
+            else begin
+                wvalid      =   1;
+                if(count == BURST_LENGTH) begin
+                    wlast   =   1;
+                    gnt     =   1;
+                end
+            end
+        end
+        default:    ;
+        end
+        endcase 
+    end
+
+    //count control and data control
+    always@(posedge aclk) begin
+        if(aresetn)
+            count   <=  0;
+        else if(current_state == TRANS) begin
+            if(request_type == RD) begin
+                if(rvalid && rready) begin
+                    rd_line[count]  <=  rdata;
+                    count           <=  count + 1;
+                end
+                else
+                    count           <=  count;
+            end
+            else begin
+                if(wvalid && wready)
+                    count           <=  count + 1;
+                else
+                    count           <=  count;
+            end
+        end
+    end
+    always@(*) begin
+        wdata = write_data[count];
+    end
+
+    //constants
+    always@(*) begin
+        arid        =   0;
+        araddr      =   addr;
+        arlen       =   BURST_LENGTH;
+        arsize      =   NUMBER_BYTES;
+        arburst     =   BURST_TYPE_INCR;
+        arlock      =   0;
+        arcache     =   0;
+        arprot      =   0;
+
+        awid        =   0;
+        awaddr      =   addr;
+        awlen       =   BURST_LENGTH;
+        awsize      =   NUMBER_BYTES;
+        awburst     =   BURST_TYPE_INCR;
+        awlock      =   0;
+        awcache     =   0;
+        awprot      =   0;
+
+        wid         =   0;
+        wstrb       =   4'b1111;
+        
+        bready      =   1;
+    end
+
 endmodule
