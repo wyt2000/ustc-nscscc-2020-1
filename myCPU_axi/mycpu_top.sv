@@ -589,7 +589,7 @@ module mycpu_top(
     assign wstrb                            = axi.wstrb;
     assign wlast                            = axi.wlast;
     assign wvalid                           = axi.wvalid;
-    assign axi.wready                       = axi.wready;
+    assign axi.wready                       = wready;
     assign axi.bid                          = bid;
     assign axi.bresp                        = bresp;
     assign axi.bvalid                       = bvalid;
@@ -1189,7 +1189,6 @@ module mycpu_top(
 		.MemReadM                   (MEM.MemReadM),
 		.MemtoRegM                  (MEM.MemtoRegM),
 		.MemWriteM                  (MEM.MemWriteM),
-		.calWE						(MEM.calWE),
 		.ALUout                     (MEM.ALUout),
 		.RamData                    (MEM.RamData),
 		.WriteRegister              (MEM.WriteRegister),
@@ -1202,7 +1201,6 @@ module mycpu_top(
 		.PCin						(MEM.PCin),
 		.PCout						(MEM.PCout),
 		.MemReadTypeW				(MEM.MemReadTypeW),
-		.TrueRamData				(MEM.TrueRamData),
         .exception_in               (MEM.exception_in),
         .exception_out              (MEM.exception_out),
 		.MemWriteW					(MEM.MemWriteW),

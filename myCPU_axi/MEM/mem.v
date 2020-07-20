@@ -20,10 +20,8 @@ module MEM_module (
     output [63:0] HI_LO_dataW,
     output [31:0] ALUoutW,
     output [6:0] WriteRegisterW,
-    output reg [3:0] calWE,
     output [31:0] PCout,
     output [2:0] MemReadTypeW,
-    output reg [31:0] TrueRamData,
     //exception
     input [3:0] exception_in,
     output [3:0] exception_out,
@@ -47,72 +45,52 @@ module MEM_module (
     output          stall
     );
 
+    reg [3:0] calWE;
+    reg [31:0] TrueRamData;
+    reg [31:0] reg_Memdata;
+
     always@(*)
     begin
         calWE = 0;
         TrueRamData = 0;
         if (exception_in != 0 || PCin[1:0] != 2'b00) calWE = 0;
-        else if (MemReadType[1:0]==2'b00)
-        begin
-            if (ALUout[1:0]==2'b00)
-            begin
-                if (MemWriteM==1) begin
-                    calWE[3:0] = 4'b0001;
-                    TrueRamData[7:0] = RamData[7:0];
+        else if(MemWriteM) begin
+            case (MemReadType[1:0])
+                2'b00:
+                    case (ALUout[1:0])
+                        2'b00: begin
+                            calWE = 4'b0001;
+                            TrueRamData[7:0] = RamData[7:0];
+                        end
+                        2'b01: begin
+                            calWE = 4'b0010;
+                            TrueRamData[15:8] = RamData[7:0];
+                        end
+                        2'b10: begin
+                            calWE = 4'b0100;
+                            TrueRamData[23:16] = RamData[7:0];
+                        end
+                        2'b11: begin
+                            calWE = 4'b1000;
+                            TrueRamData[31:24] = RamData[7:0];
+                        end
+                    endcase
+                2'b01:
+                    case (ALUout[1:0])
+                        2'b00: begin
+                            calWE = 4'b0011;
+                            TrueRamData[15:0] = RamData[15:0];
+                        end
+                        2'b10: begin
+                            calWE = 4'b1100;
+                            TrueRamData[31:16] = RamData[15:0];
+                        end
+                    endcase
+                2'b10: begin
+                    calWE = 4'b1111;
+                    TrueRamData = RamData; 
                 end
-                else calWE[3:0]=4'b0000;
-            end
-            else if (ALUout[1:0]==2'b01) 
-            begin
-                if (MemWriteM==1) begin
-                    calWE[3:0] = 4'b0010;
-                    TrueRamData[15:8] = RamData[7:0];
-                end
-                else calWE[3:0]=4'b0000;
-            end
-            else if (ALUout[1:0]==2'b10)
-            begin
-                if (MemWriteM==1) begin
-                    calWE[3:0] = 4'b0100;
-                    TrueRamData[23:16] = RamData[7:0];
-                end
-                else calWE[3:0]=4'b0000;
-            end
-            else if (ALUout[1:0]==2'b11)
-            begin
-                if (MemWriteM==1) begin
-                    calWE[3:0] = 4'b1000;
-                    TrueRamData[31:24] = RamData[7:0];
-                end
-                else calWE[3:0]=4'b0000;
-            end
-        end
-        else if (MemReadType[1:0]==2'b01)
-        begin
-            if (ALUout[1:0]==2'b00)
-            begin
-                if (MemWriteM==1) begin
-                    calWE[3:0]=4'b0011;
-                    TrueRamData[15:0] = RamData[15:0];
-                end 
-                else calWE[3:0]=4'b0000;
-            end
-            else if (ALUout[1:0]==2'b10)
-            begin
-                if (MemWriteM==1) begin
-                    calWE[3:0]=4'b1100;
-                    TrueRamData[31:16] = RamData[15:0];
-                end
-                else calWE[3:0]=4'b0000;
-            end
-        end
-        else if (MemReadType[1:0]==2'b10)
-        begin
-            if (MemWriteM==1) begin
-                calWE[3:0]=4'b1111;
-                TrueRamData = RamData;
-            end
-            else calWE[3:0]=4'b0000;
+            endcase
         end
     end
 
@@ -128,7 +106,6 @@ module MEM_module (
     assign MemWriteW = MemWriteM;
     assign is_ds_out = is_ds_in;
     
-    reg [31:0] reg_Memdata;
     always@(posedge clk) begin
         if(rst) begin
             reg_Memdata <= 0;
@@ -140,6 +117,7 @@ module MEM_module (
             reg_Memdata <= reg_Memdata;
         end
     end
+
     assign Memdata = data_data_ok ? data_rdata : reg_Memdata;
 
     data_sram   d_sram( .clk            (clk)   ,
@@ -156,8 +134,9 @@ module MEM_module (
                     
                         .MemRead        (MemReadM)      ,
                         .MemWrite       (calWE)         ,
-                        .addr           (ALUout)        ,
+                        .addr           (ALUout)       ,
                         .wdata          (TrueRamData)   ,
                         .CLR            (CLR)           ,
-                        .stall          (stall)         );
+                        .stall          (stall)         
+                        );
 endmodule

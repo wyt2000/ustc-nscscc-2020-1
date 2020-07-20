@@ -38,8 +38,6 @@ module inst_sram
             addr <= 0;
         else if(is_newPC)
             addr <= PC;
-        else
-            addr <= addr;
     end
 
     always@(posedge clk) begin
@@ -52,12 +50,17 @@ module inst_sram
     always@(*) begin
         case(current_state)
             IDLE: begin
-                if(is_newPC && inst_addr_ok)
-                    next_state = WAIT;
-                else if(is_newPC)
-                    next_state = HDSK;
-                else
+                if (is_newPC) begin
+                    if (inst_addr_ok) begin
+                        next_state = WAIT;
+                    end
+                    else begin
+                        next_state = HDSK; 
+                    end
+                end
+                else begin
                     next_state = IDLE;
+                end
             end
 
             HDSK: begin

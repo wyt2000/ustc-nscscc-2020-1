@@ -26,34 +26,41 @@ module data_sram
     parameter IDLE  =   2'b00;
     parameter HDSK  =   2'b01;
     parameter WAIT  =   2'b10;
-    parameter RECV  =   2'b11;
 
     reg     [1:0]   current_state, next_state;
-    reg     [31:0]  reg_addr, reg_wdata;
-    reg     [3:0]   reg_MemWrite;
+    reg     Flush;
+    wire     [31:0]  reg_addr, reg_wdata;
+    wire     [3:0]   reg_MemWrite;
+    wire     en;
 
-    always@(posedge clk) begin
-        if(rst) begin
-            reg_addr <= 0;
-            reg_wdata <= 0;
-            reg_MemWrite <= 0;
-        end
-        else if(MemRead) begin
-            reg_addr <= addr;
-            reg_wdata <= 0;
-            reg_MemWrite <= 0;
-        end
-        else if(|MemWrite) begin
-            reg_addr <= addr;
-            reg_wdata <= wdata;
-            reg_MemWrite <= MemWrite;
-        end
-        else begin
-            reg_addr <= reg_addr;
-            reg_wdata <= reg_wdata;
-            reg_MemWrite <= reg_MemWrite;
-        end
-    end
+    assign en = MemWrite[0] | MemWrite[1] | MemWrite[2] | MemWrite[3] | MemRead;
+
+    register #(32) _reg_addr (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Flush),
+		.en(en),
+		.d(addr),
+		.q(reg_addr)
+	);
+
+    register #(32) _reg_wdata (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Flush),
+		.en(en),
+		.d(wdata),
+		.q(reg_wdata)
+	);
+
+    register #(4) _reg_MemWrite (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Flush),
+		.en(en),
+		.d(MemWrite),
+		.q(reg_MemWrite)
+	);
 
     always@(posedge clk) begin
         if(rst)
@@ -65,12 +72,17 @@ module data_sram
     always@(*) begin
         case(current_state)
             IDLE: begin
-                if(((|MemWrite) || MemRead) && data_addr_ok)
-                    next_state = WAIT;
-                else if((|MemWrite) || MemRead)
-                    next_state = HDSK;
-                else
+                if(en) begin
+                    if(data_addr_ok) begin
+                        next_state = WAIT;
+                    end
+                    else begin
+                        next_state = HDSK;
+                    end
+                end
+                else begin
                     next_state = IDLE;
+                end
             end
 
             HDSK: begin
@@ -99,9 +111,10 @@ module data_sram
         data_size   = 0;
         data_addr   = 0;
         data_wdata  = 0;
+        Flush       = 0;
         case (current_state)
             IDLE: begin
-                if(MemRead || (|MemWrite)) begin
+                if(en) begin
                     data_req = 1;
                     CLR = 1;
                     stall = 1;
@@ -170,6 +183,9 @@ module data_sram
                                 end
                         endcase
                     end
+                end
+                else begin
+                    Flush = 1;
                 end
             end
 
@@ -240,11 +256,8 @@ module data_sram
             end
 
             WAIT: begin
-                if(data_data_ok) begin
-                    CLR     = 0;
-                    stall   = 0;
-                end
-                else begin
+                Flush   = 1;
+                if (!data_data_ok) begin
                     CLR     = 1;
                     stall   = 1;
                 end
