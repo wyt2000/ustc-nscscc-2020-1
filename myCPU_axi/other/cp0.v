@@ -41,7 +41,7 @@ module CP0
     //reg [WIDTH-1:0] Wired;//6
     //reg [WIDTH-1:0] Reserved1;//7
     reg [WIDTH-1:0] BADVADDR;//8 deal with the exception such as TLB miss and address error
-    //reg [WIDTH-1:0] count;//9 +1 every two clock cycles
+    reg [WIDTH-1:0] count;//9 +1 every two clock cycles
     //reg [WIDTH-1:0] EntryHi;//10
     //reg [WIDTH-1:0] compare;//11 create the time interrupt after a certain period of time 
     reg [WIDTH-1:0] Status;//12 The Status of the processor
@@ -105,6 +105,15 @@ module CP0
         else count=count+temp;
     end
     */
+    always@(posedge clk) begin
+        if(rst) begin
+            count <= 0;
+        end
+        else begin
+            count <= count + 1;
+        end
+    end
+
     always@(posedge clk or posedge rst) begin
         if(rst)
             BADVADDR<=0;
@@ -222,7 +231,7 @@ module CP0
             //5'b00110:Readdata=Wired;
             //5'b00111:Readdata=Reserved1;
             5'b01000:Readdata=BADVADDR;
-            //5'b01001:Readdata=count;
+            5'b01001:Readdata=count;
             //5'b01010:Readdata=EntryHi;
             //5'b01011:Readdata=compare;
             5'b01100:Readdata=Status;

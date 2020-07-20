@@ -129,8 +129,6 @@ module register_file(
     always@(posedge clk) begin
         if(reg_file_we && (|write_addr))
                 reg_file[write_addr[4:0]] <= write_data;
-    end
-    always@(posedge clk) begin
         reg_file[0] <=  0;
     end
 
