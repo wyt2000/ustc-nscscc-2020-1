@@ -10,6 +10,7 @@
 //cause：存储异常发生原因，如异常指令是否位于延迟槽内，软硬件中断编号，异常种类等 add=13
 
 //接口说明
+/*
 module CP0
     #(parameter WIDTH=32)
 (
@@ -41,6 +42,7 @@ module CP0
         output allow_interrupt,
         output state//user mode:0 kernel mode:1
 );
+*/
 //pridin,configuredata,comparedata,BADADDR,epc是相应寄存器单独的输入
 //timer_int_data为时钟中断，1代表时钟中断有效
 //state为处理器状态输出，0为普通态，1为用户态
