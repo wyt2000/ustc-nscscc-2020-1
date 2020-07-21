@@ -19,7 +19,7 @@ module CP0
         input IE,
         input Branch_delay,
         input [4:0] Exception_code,
-        //output [WIDTH-1:0] count_data,
+        output [WIDTH-1:0] count_data,
         output [WIDTH-1:0] compare_data,
         output [WIDTH-1:0] Status_data,
         output [WIDTH-1:0] cause_data,
@@ -69,7 +69,7 @@ module CP0
     assign EPC_data=EPC;
     assign BADVADDR_data=BADVADDR;
     
-    //assign count_data=count;
+    assign count_data=count;
     
     assign Status_data=Status;
 
@@ -80,7 +80,7 @@ module CP0
     assign prid_data=prid;
 
     assign compare_data=0;
-    //reg temp;
+    reg temp;
     assign state=Status[1]?1'b0:1;
     assign allow_interrupt=Status[0];
     always@(posedge clk or posedge rst)begin
@@ -92,29 +92,19 @@ module CP0
             EPC<=epc;
 
     end
-    /*
-    always@(posedge clk or posedge rst) begin
+    
+    always@(posedge clk) begin
         if(rst)
             temp<=0;
         else 
             temp<=~temp;
     end
-    always@(*) begin
-        if(rst) 
-            count=0;
-        else count=count+temp;
-    end
-    */
     always@(posedge clk) begin
-        if(rst) begin
-            count <= 0;
-        end
-        else begin
-            count <= count + 1;
-        end
+        if(rst) 
+            count<=0;
+        else count<=count+temp;
     end
-
-    always@(posedge clk or posedge rst) begin
+    always@(posedge clk) begin
         if(rst)
             BADVADDR<=0;
         else if(we[8])
@@ -122,7 +112,7 @@ module CP0
         else if(waddr==8&&general_write_in)
             BADVADDR<=BADADDR;
     end
-    always@(posedge clk or posedge rst) begin
+    always@(posedge clk) begin
         if(rst)
             prid<=0;
         else if(we[15]) 
@@ -145,7 +135,7 @@ module CP0
         end
     end
 */
-    always@(posedge clk or posedge rst) begin
+    always@(posedge clk) begin
         if(rst) begin
             Status[31:23]<=9'b000000000;//read only can't be modified 
             Status[22]<=1'b1;//read only can't be modified
@@ -174,7 +164,7 @@ module CP0
             Random<=count; 
     end
     */
-    always@(posedge clk or posedge rst)begin
+    always@(posedge clk)begin
         if(rst)begin
             configure[15]<=1'b1;
             configure[31:16]<=0;
@@ -187,13 +177,13 @@ module CP0
             configure<=configuredata;
         end
     end
-    always@(posedge clk or posedge rst)begin
+    always@(posedge clk)begin
         if(rst)
             cause<=0;
         else if(we[13])begin
             //cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
             cause[31]<=Branch_delay;
-            cause[15]<=(Status[0]&&Status[15]&&(Status[1]==0))?hardware_interruption[5]:1'b0;
+            cause[15]<=(Status[0]&&Status[15]&&(Status[1]==0))?(count==compare_data):1'b0;
             cause[14]<=(Status[0]&&Status[14]&&(Status[1]==0))?hardware_interruption[4]:1'b0;
             cause[13]<=(Status[0]&&Status[13]&&(Status[1]==0))?hardware_interruption[3]:1'b0;
             cause[12]<=(Status[0]&&Status[12]&&(Status[1]==0))?hardware_interruption[2]:1'b0;
@@ -206,7 +196,7 @@ module CP0
         else if(waddr==13&&general_write_in)begin
             //cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
             cause[31]<=Branch_delay;
-            cause[15]<=hardware_interruption[5];
+            cause[15]<=(count==compare_data);
             cause[14]<=hardware_interruption[4];
             cause[13]<=hardware_interruption[3];
             cause[12]<=hardware_interruption[2];
@@ -217,7 +207,7 @@ module CP0
             cause[6:2]<=Exception_code;
         end
     end
-    always@(*) begin
+    always@(raddr) begin
         if(rst) begin
             Readdata=32'h00000000;
         end
@@ -231,7 +221,7 @@ module CP0
             //5'b00110:Readdata=Wired;
             //5'b00111:Readdata=Reserved1;
             5'b01000:Readdata=BADVADDR;
-            5'b01001:Readdata=count;
+            //5'b01001:Readdata=count;
             //5'b01010:Readdata=EntryHi;
             //5'b01011:Readdata=compare;
             5'b01100:Readdata=Status;
@@ -285,7 +275,7 @@ module cp0_up
         input Branch_delay,
         input [4:0] Exception_code,
 		output [WIDTH-1:0] readdata,//无条件读
-        //output [WIDTH-1:0] count_data,
+        output [WIDTH-1:0] count_data,
         output [WIDTH-1:0] compare_data,
         output [WIDTH-1:0] Status_data,
         output [WIDTH-1:0] cause_data,
@@ -365,7 +355,7 @@ module cp0_up
         .IE(r_IE),
         .Branch_delay(r_Branch_delay),
         .Exception_code(r_Exception_code),
-        //.count_data(count_data),
+        .count_data(count_data),
         .compare_data(compare_data),
         .Status_data(Status_data),
         .cause_data(cause_data),
