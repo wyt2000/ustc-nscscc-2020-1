@@ -9,7 +9,7 @@ module cache #(
     input  [31:0] addr,        // 读写请求地址
     input  rd_req,             // 读请求信号
     output reg [31:0] rd_data, // 读出的数据，一次读一个word
-    input  wr_req,             // 写请求信号
+    input  [3:0] wr_req,             // 写请求信号
     input  [31:0] wr_data      // 要写入的数据，一次写一个word
 );
 
@@ -59,7 +59,9 @@ always @ (*) begin              // 判断 输入的address 是否在 cache 中�
         cache_hit = 1'b0;*/
     for (integer i=0;i<WAY_CNT;i++) begin
         if (valid[set_addr][i] && cache_tags[set_addr][i]==tag_addr)
-            set_search<=1'b1;
+            set_search[i]<=1'b1;
+        else
+            set_search[i]<=1'b0;
     end
     for (integer i=0;i<SET_SIZE;i++) begin
         for (integer j=0;j<WAY_CNT;j++) begin
@@ -72,9 +74,9 @@ always @ (*) begin              // 判断 输入的address 是否在 cache 中�
 end
 
 always@(*) begin  //update the biggest LRU_count in each set
-    for (integer i=0;i<SET_SIZE;i++)
+    for (integer i=0;i<SET_SIZE;i=i+1)
     begin
-        LRU[i]=LRU_count[((LRU_count[i][0]>LRU_count[i][1])?0:1)] > LRU_count[((LRU_count[i][2]>LRU_count[i][3])?2:3)] ? 
+        LRU[i]=LRU_count[ ( (LRU_count[i][0] > LRU_count[i][1]) ?0:1) ] > LRU_count[((LRU_count[i][2]>LRU_count[i][3])?2:3)] ? 
                 (LRU_count[i][0]>LRU_count[i][1]?0:1):(LRU_count[i][2]>LRU_count[i][3]?2:3);
     end
 end
@@ -82,13 +84,13 @@ end
 always @ (posedge clk or posedge rst) begin     // ?? cache ???
     if(rst) begin
         cache_stat <= IDLE;
-        for(integer i = 0; i < SET_SIZE; i++) begin
-            for (integer j=0;j<WAY_CNT;j++) begin
+        for(integer i = 0; i < SET_SIZE; i=i+1) begin
+            for (integer j=0;j<WAY_CNT;j=j+1) begin
                 dirty[i][j] = 1'b0;
                 valid[i][j] = 1'b0;
             end
         end
-        for(integer k = 0; k < LINE_SIZE; k++)
+        for(integer k = 0; k < LINE_SIZE; k=k+1)
             mem_wr_line[k] <= 0;
         mem_wr_addr <= 0;
         {mem_rd_tag_addr, mem_rd_set_addr} <= 0;
@@ -103,7 +105,10 @@ always @ (posedge clk or posedge rst) begin     // ?? cache ???
                             end else if(wr_req) begin // 如果cache命中，并且是写请求，
                                 for (integer i=0;i<WAY_CNT;i++) begin
                                     if (set_search[i]) begin
-                                        cache_mem[set_addr][i][line_addr] <= wr_data;   // 则直接向cache中写入数据
+                                        if (wr_req[0]) cache_mem[set_addr][i][line_addr][7:0] <= wr_data[7:0];
+                                        if (wr_req[1]) cache_mem[set_addr][i][line_addr][15:8] <= wr_data[15:8];
+                                        if (wr_req[2]) cache_mem[set_addr][i][line_addr][23:16] <= wr_data[23:16];
+                                        if (wr_req[3]) cache_mem[set_addr][i][line_addr][31:24] <= wr_data[31:24];
                                         dirty[set_addr][i] <= 1'b1;                     // 写数据的同时置脏位
                                     end
                                 end
