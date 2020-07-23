@@ -52,15 +52,15 @@ module Exception_module(
     assign we[12]                           = (StallW && !FlushW) ? 0 : exception_occur;
     assign we[13]                           = (StallW && !FlushW) ? 0 : exception_occur;
     assign we[14]                           = (StallW && !FlushW) ? 0 : exception_occur;
-    assign Cause_IP                         = ((|software_abortion)) ? {6'b000000, software_abortion} : 8'b00000000;
+    assign Cause_IP                         = {hardware_abortion, software_abortion};
     assign new_Status_EXL                   = exception_occur;
-    assign new_Status_IM                    = (|software_abortion) ? 8'b1111_1111 : 8'b0000_0000;
+    assign new_Status_IM                    = (|{hardware_abortion, software_abortion}) ? 8'b1111_1111 : 8'b0000_0000;
     assign new_Cause_BD1                    = is_ds;
-    assign new_Status_IE                    = |software_abortion;
+    assign new_Status_IE                    = |{hardware_abortion, software_abortion};
     assign BadVAddr                         = PCError ? (isERET ? EPCD : pc) : ErrorAddr;
 
     always @(*) begin
-        if (|(Cause_IP&&Status_IM))             ExcCode = 5'b00000;
+        if (|(Cause_IP & Status_IM))            ExcCode = 5'b00000;
         else if (PCError)                       ExcCode = 5'b00100; // next PC or EPC load_ex
         else if (reserved)                      ExcCode = 5'b01010;
         else if (overflow_error)                ExcCode = 5'b01100;
@@ -72,21 +72,21 @@ module Exception_module(
     end
 
     always @(*) begin
-        if (PCError && isERET)              EPC = EPCD;
-        else if (|software_abortion)        EPC = is_ds ? pc_old : pc_old + 4;
-        else                                EPC = is_ds ? pc - 4 : pc;
+        if (PCError && isERET)                                   EPC = EPCD;
+        else if (|{hardware_abortion, software_abortion})        EPC = is_ds ? pc_old : pc_old + 4;
+        else                                                     EPC = is_ds ? pc - 4 : pc;
     end
 
     always @(*) begin
         if (Status_EXL)                                 exception_occur = 0;
-        else if (hardware_abortion & Status_IM[7:2])    exception_occur = 1;
+        else if ( |(hardware_abortion & Status_IM[7:2]))exception_occur = 1;
+        else if ( |(software_abortion & Status_IM[1:0]))exception_occur = 1;
+        else if (PCError)                               exception_occur = 1;
+        else if (reserved)                              exception_occur = 1;
         else if (address_error)                         exception_occur = 1;
         else if (overflow_error)                        exception_occur = 1;
         else if (syscall)                               exception_occur = 1;
         else if (_break)                                exception_occur = 1;
-        else if (reserved)                              exception_occur = 1;
-        else if (PCError)                               exception_occur = 1;
-        else if (|software_abortion)                    exception_occur = 1;
         else                                            exception_occur = 0;
     end
 
