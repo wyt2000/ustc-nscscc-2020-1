@@ -102,8 +102,7 @@ module register_file(
             lo <= hl_data[31:0];
         end
     end
-    wire [31:0] count_data,compare_data,configure_data,prid_data,
-    Random_data;
+    wire [31:0] count_data,compare_data,configure_data,prid_data;
     //CP0
     assign reg_cp0_we = regwrite & ~write_addr[6] & write_addr[5];
     assign timer_int_data = 0;
@@ -134,7 +133,6 @@ module register_file(
                       .configure_data(configure_data),
                       .pridin(32'b0),
                       .prid_data(prid_data),
-                      .Random_data(Random_data),
                       .BADVADDR_data(BADVADDR_data),//output
                       .allow_interrupt(allow_interrupt),//output    
                       .state(STATE)//output
