@@ -38,7 +38,7 @@ module ID_module(
     input       [31:0]  BADADDR,
     input               Branch_delay,
     //modify the CP0 register
-    input IE,
+    input new_IE,
     //to ID/EX reg
         output [5:0] ALUOp,
         //outputs from ctl_unit
@@ -91,6 +91,7 @@ module ID_module(
     assign RegWriteD = RegWriteBD | RegWriteCD;
     assign PCSrc_reg = RsValue;
     assign PCout = PCin;
+    assign old_IE = Status_data[0];
 
     //mux
     assign RsValue = ForwardAD[1] ?  ALUoutM : (ForwardAD[0] ? ALUoutE : Read_data_1);
@@ -128,7 +129,7 @@ module ID_module(
                            .EPC_data(EPCout),
                            .cause_data(cause_data),
                            .we(we),
-                           .IE(IE),
+                           .IE(new_IE),
                            .interrupt_enable(interrupt_enable),
                            .Exception_code(Exception_code),
                            .EXL(EXL),
@@ -136,7 +137,8 @@ module ID_module(
                            .software_interruption(software_interruption),
                            .epc(EPCin),
                            .BADADDR(BADADDR),
-                           .Branch_delay(Branch_delay));
+                           .Branch_delay(Branch_delay)
+                           );
 
     Branch_judge brch_jdg(.Op(instr[31:26]),
                           .rt(instr[20:16]),

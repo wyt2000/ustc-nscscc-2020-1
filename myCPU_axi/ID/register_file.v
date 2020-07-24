@@ -136,7 +136,11 @@ module register_file(
     wire    [1:0]    hl_wr_en;
     assign  hl_wr_en    =   {2{hl_write_enable_from_wb}} | {{regwrite && write_addr == 7'b1111111}, {regwrite && write_addr == 7'b1000000}};
     always@(posedge clk) begin
-        case(hl_wr_en)
+        if(rst) begin
+            hi <= 32'b0;
+            lo <= 32'b0;
+        end
+        else case(hl_wr_en)
         2'b01:      begin
             lo  <=  write_data;
         end

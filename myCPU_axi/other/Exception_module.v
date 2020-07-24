@@ -32,6 +32,7 @@ module Exception_module(
     input FlushW
     );
 
+    wire old_IE;
     wire PCError;
     wire Status_EXL;
     reg [31:0] pc_old;
@@ -44,6 +45,7 @@ module Exception_module(
     end
 
     assign PCError                          = (pc[1:0]!=2'b00 || (isERET && EPCD[1:0]!=2'b00)) ? 1 : 0;
+    assign old_IE                           = Status[0];
     assign Status_EXL                       = Status[1];
     assign we[7:0]                          = 0;
     assign we[11:9]                         = 0;
@@ -56,7 +58,7 @@ module Exception_module(
     assign new_Status_EXL                   = exception_occur;
     assign new_Status_IM                    = (|{hardware_abortion, software_abortion}) ? 8'b1111_1111 : 8'b0000_0000;
     assign new_Cause_BD1                    = is_ds;
-    assign new_Status_IE                    = |{hardware_abortion, software_abortion};
+    assign new_Status_IE                    = ~|{hardware_abortion, software_abortion};
     assign BadVAddr                         = PCError ? (isERET ? EPCD : pc) : ErrorAddr;
 
     always @(*) begin
@@ -78,16 +80,16 @@ module Exception_module(
     end
 
     always @(*) begin
-        if (Status_EXL)                                 exception_occur = 0;
-        else if ( |(hardware_abortion & Status_IM[7:2]))exception_occur = 1;
-        else if ( |(software_abortion & Status_IM[1:0]))exception_occur = 1;
-        else if (PCError)                               exception_occur = 1;
-        else if (reserved)                              exception_occur = 1;
-        else if (address_error)                         exception_occur = 1;
-        else if (overflow_error)                        exception_occur = 1;
-        else if (syscall)                               exception_occur = 1;
-        else if (_break)                                exception_occur = 1;
-        else                                            exception_occur = 0;
+        if (Status_EXL)                                             exception_occur = 0;
+        else if ( |(hardware_abortion & Status_IM[7:2]) & old_IE)   exception_occur = 1;
+        else if ( |(software_abortion & Status_IM[1:0]) & old_IE)   exception_occur = 1;
+        else if (PCError)                                           exception_occur = 1;
+        else if (reserved)                                          exception_occur = 1;
+        else if (address_error)                                     exception_occur = 1;
+        else if (overflow_error)                                    exception_occur = 1;
+        else if (syscall)                                           exception_occur = 1;
+        else if (_break)                                            exception_occur = 1;
+        else                                                        exception_occur = 0;
     end
 
 endmodule

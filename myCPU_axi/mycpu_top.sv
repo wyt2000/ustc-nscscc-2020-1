@@ -75,7 +75,7 @@ typedef struct packed {
     logic Jump;
     logic [31:0] PCSrc_reg;
     logic [31:0] EPCout;
-    logic IE;
+	logic new_IE;
     logic [31:0] Jump_addr;
     logic [31:0] Branch_addr;
     logic CLR_EN;
@@ -485,7 +485,7 @@ module mycpu_top(
 	assign ID.we							= Exception.we;
 	assign ID.Branch_delay					= Exception.Branch_delay;
 	assign ID.EPCin							= Exception.EPC;
-	assign ID.IE   							= Exception.new_Status_IE;
+	assign ID.new_IE   						= Exception.new_Status_IE;
 	assign ID.hardware_interruption			= ext_int;
 	assign ID.BADADDR						= Exception.BadVAddr;
 
@@ -1119,8 +1119,8 @@ module mycpu_top(
 		.we							(ID.we),
     	.interrupt_enable			(ID.Exception_enable),
     	.Exception_code				(ID.Exception_code),
-		.IE							(ID.IE),
-    	.EXL						(ID.Exception_EXL),
+		.new_IE						(ID.new_IE),
+		.EXL						(ID.Exception_EXL),
     	.EPCin						(ID.EPCin),
     	.BADADDR					(ID.BADADDR),
     	.Branch_delay				(ID.Branch_delay),
