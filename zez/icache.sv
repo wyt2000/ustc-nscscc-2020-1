@@ -30,9 +30,13 @@ module ICache #(
     output miss,               // 对CPU发出的miss信号
     input  [31:0] addr,        // 读写请求地址
     input  rd_req,             // 读请求信号
-    output reg [31:0] rd_data // 读出的数据，一次读一个word
+    output reg [31:0] rd_data, // 读出的数据，一次读一个word
+    
+    //AXI
+    input axi_mem_gnt,
+    input [31:0] ins [OFFSET_LEN-2],
+    output [31:0] mem_addr
 );
-wire [31:0] ins [OFFSET_LEN-2];
 
 wire [TAG_LEN-1   : 0] tag;
 assign tag=addr[31:12];
@@ -92,10 +96,8 @@ begin
     endcase
 end
 
-wire [31:0] axi_mem_addr;
 wire mem_read_req=(cache_state==SWAP_IN);
-wire [31:0] mem_addr = mem_read_req ? {addr[31:5],5'b0} : 32'b0;
-wire axi_mem_gnt;
+assign mem_addr = mem_read_req ? {addr[31:5],5'b0} : 32'b0;
 
 always@(posedge clk or posedge rst)
 begin
@@ -105,11 +107,11 @@ begin
     else begin
         case (cache_state)
             IDLE: begin
+                for (integer i=0;i<WAY_CNT;i++) begin
+                    weW[i]<=0;
+                    weB[i]<=8'b0;
+                end
                 if (cache_hit) begin
-                    for (integer i=0;i<WAY_CNT;i++) begin
-                        weW[i]<=0;
-                        weB[i]<=8'b0;
-                    end
                 
                     for (integer i=0;i<WAY_CNT;i++) begin
                         if (set_search[i])
