@@ -109,12 +109,7 @@ begin
     else begin
         case (cache_state)
             IDLE: begin
-                for (integer i=0;i<WAY_CNT;i++) begin
-                    weW[i]<=0;
-                    weB[i]<=8'b0;
-                end
                 if (cache_hit) begin
-                
                     for (integer i=0;i<WAY_CNT;i++) begin
                         if (set_search[i])
                             LRU[i][index]<=0;
@@ -139,6 +134,13 @@ begin
 end
 
 always@(*) begin
+    if(cache_state == IDLE) begin
+        for (integer i=0;i<WAY_CNT;i++) begin
+            weW[i]=0;
+            weB[i]=8'b0;
+        end
+    end
+
     if(cache_state == SWAP_IN_FINISHED) begin
         case (valid)
         2'b00:begin
