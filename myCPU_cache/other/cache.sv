@@ -78,28 +78,28 @@ enum {IDLE,SWAP_IN,SWAP_IN_FINISHED} cache_state;
 always@(*)
 begin
     if (rst) begin
-        rd_data<=0;
+        rd_data=0;
     end
     
     for (integer i=0;i<WAY_CNT;i++) begin
         if (valid[i] && cache_tag[i]==tag) begin
-            set_search[i]<=1'b1;
+            set_search[i]=1'b1;
         end
         else
-            set_search[i]<=1'b0;
+            set_search[i]=1'b0;
     end
     
     case (set_search)
-        2'b00: rd_data<=31'b0;
-        2'b01: rd_data<=cache_mem[0][offset[OFFSET_LEN-2:0]];
-        2'b10: rd_data<=cache_mem[1][offset[OFFSET_LEN-2:0]];
-        2'b11: rd_data<=cache_mem[1][offset[OFFSET_LEN-2:0]];
+        2'b00: rd_data=31'b0;
+        2'b01: rd_data=cache_mem[0][offset[OFFSET_LEN-2:0]];
+        2'b10: rd_data=cache_mem[1][offset[OFFSET_LEN-2:0]];
+        2'b11: rd_data=cache_mem[1][offset[OFFSET_LEN-2:0]];
     endcase
 end
 
 assign mem_read_req=(cache_state==SWAP_IN);
 assign mem_addr = mem_read_req ? {addr[31:5],5'b0} : 32'b0;
-assign miss=(rd_req) & !(cache_hit & cache_state==IDLE);
+assign miss=(rd_req) && !(cache_hit && cache_state==IDLE);
 
 always@(posedge clk or posedge rst)
 begin
@@ -132,32 +132,40 @@ begin
                 end
             end
             SWAP_IN_FINISHED:begin
-                case (valid)
-                    2'b00:begin
-                        weW[0]<=1;
-                        weB[0]<=8'b1;
-                    end
-                    2'b01:begin
-                        weW[1]<=1;
-                        weB[1]<=8'b1;
-                    end
-                    2'b10:begin
-                        weW[0]<=1;
-                        weB[0]<=8'b1;
-                    end
-                    2'b11:begin
-                        if (LRU[0][index]==1) begin
-                            weW[0]<=1;
-                            weB[0]<=8'b1;
-                        end
-                        else begin
-                            weW[1]<=1;
-                            weB[1]<=8'b1;
-                        end
-                    end
-                endcase
+                cache_state <=  IDLE;
             end
         endcase
     end
 end
+
+always@(*) begin
+    if(cache_state == SWAP_IN_FINISHED) begin
+        case (valid)
+        2'b00:begin
+            weW[0]=1;
+            weB[0]=8'b1;
+        end
+        2'b01:begin
+            weW[1]=1;
+            weB[1]=8'b1;
+        end
+        2'b10:begin
+            weW[0]=1;
+            weB[0]=8'b1;
+        end
+        2'b11:begin
+            if (LRU[0][index]==1) begin
+                weW[0]=1;
+                weB[0]=8'b1;
+            end
+            else begin
+                weW[1]=1;
+                weB[1]=8'b1;
+            end
+        end
+        endcase
+
+    end
+end
+
 endmodule
