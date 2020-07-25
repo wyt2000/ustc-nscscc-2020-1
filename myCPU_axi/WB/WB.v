@@ -1,7 +1,8 @@
 module WB_module
 	#(parameter WIDTH=32)
 	(
-		input [WIDTH-1:0] aluout,
+		input clk,
+        input [WIDTH-1:0] aluout,
 		input [WIDTH-1:0] Memdata,
 		input [6:0] WritetoRFaddrin,
 		input MemtoRegW,
@@ -19,13 +20,16 @@ module WB_module
 		output HI_LO_writeenableout,
 		output [WIDTH-1:0] WritetoRFdata,
 		output RegWrite,
-		output [31:0] PCout,
+(* keep = "true" *)		output [31:0] PCout,
         output [3:0] exception_out,
         output MemWrite,
         //is_ds
         output is_ds_out
 	);
-	reg [31:0] TrueMemData;
+
+
+
+(* keep = "true" *)	reg [31:0] TrueMemData;
 	assign HI_LO_writeenableout=HI_LO_writeenablein;
 	wire [WIDTH-1:0] WritetoRFtemp;
 	assign WritetoRFtemp = MemtoRegW?aluout:TrueMemData; 

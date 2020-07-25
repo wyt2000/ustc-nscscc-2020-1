@@ -2,6 +2,7 @@
     
 module Exception_module(
     input clk,
+    input rst,
     input address_error,
     input MemWrite,
     input overflow_error,
@@ -28,20 +29,19 @@ module Exception_module(
     output reg exception_occur,
     output reg [4:0] ExcCode,
     output [7:0] new_Status_IM,
+    output PCError,
     input StallW,
     input FlushW
     );
 
     wire old_IE;
-    wire PCError;
     wire Status_EXL;
     reg [31:0] pc_old;
-
     always@(posedge clk) begin
-        if(!StallW && !FlushW)
+        if(rst)
+            pc_old <= 32'b0;
+        else if(pc != 32'b0)
             pc_old <= pc;
-        else
-            pc_old <= pc_old;
     end
 
     assign PCError                          = (pc[1:0]!=2'b00 || (isERET && EPCD[1:0]!=2'b00)) ? 1 : 0;
@@ -80,16 +80,16 @@ module Exception_module(
     end
 
     always @(*) begin
-        if (Status_EXL)                                             exception_occur = 0;
-        else if ( |(hardware_abortion & Status_IM[7:2]) & old_IE)   exception_occur = 1;
-        else if ( |(software_abortion & Status_IM[1:0]) & old_IE)   exception_occur = 1;
-        else if (PCError)                                           exception_occur = 1;
-        else if (reserved)                                          exception_occur = 1;
-        else if (address_error)                                     exception_occur = 1;
-        else if (overflow_error)                                    exception_occur = 1;
-        else if (syscall)                                           exception_occur = 1;
-        else if (_break)                                            exception_occur = 1;
-        else                                                        exception_occur = 0;
+        if (Status_EXL)                                                  exception_occur = 0;
+        else if ( ( | (hardware_abortion & Status_IM[7:2]) ) & old_IE)   exception_occur = 1;
+        else if ( ( | (software_abortion & Status_IM[1:0]) ) & old_IE)   exception_occur = 1;
+        else if (PCError)                                                exception_occur = 1;
+        else if (reserved)                                               exception_occur = 1;
+        else if (address_error)                                          exception_occur = 1;
+        else if (overflow_error)                                         exception_occur = 1;
+        else if (syscall)                                                exception_occur = 1;
+        else if (_break)                                                 exception_occur = 1;
+        else                                                             exception_occur = 0;
     end
 
 endmodule

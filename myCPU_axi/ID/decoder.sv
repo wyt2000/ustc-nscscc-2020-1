@@ -117,7 +117,7 @@ module decoder(
                     `FUNC_ERET:
                         if(rt == 0 && rd == 0 && sa == 0 && func == 6'b011000) exception = 0;
                     `FUNC_MFC0,`FUNC_MTC0:
-                        if(sa == 0 && func == 0) exception = 0;
+                        if(sa == 0 && func[5:3] == 0) exception = 0;
                 endcase
             `OP_ADDI,`OP_ADDIU,
             `OP_SLTI,`OP_SLTIU,

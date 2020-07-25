@@ -92,7 +92,7 @@
 
 **解决方案：**
 
-1.ERET等效为ADDIU	CP0.Status	​CP0.Status	-2，通过ID段的译码模块实现
+1.ERET等效为 ADDIU	CP0.Status	​CP0.Status	-2 ，通过ID段的译码模块实现
 
 2.改变了读Status的端口
 

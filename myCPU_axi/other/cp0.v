@@ -140,7 +140,7 @@ module CP0
             Status[31:23]<=9'b000000000;//read only can't be modified 
             Status[22]<=1'b1;//read only can't be modified
             Status[21:16]<=6'b000000;//read only can't be modified
-            Status[15:8]<=8'b11111111;//0:Break can take 1:Break can't take
+            Status[15:8]<=8'b00000000;//0:Break can take 1:Break can't take
             Status[7:2]<=6'b000000;//read only and always 0
             Status[1]<=1'b0;//EXL 0:normal state 1:Kernel state
             Status[0]<=1'b0;//IE  1:all breaks enable 0:all not enable

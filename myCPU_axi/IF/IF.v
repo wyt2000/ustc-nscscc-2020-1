@@ -29,7 +29,6 @@ module IF_module
     output          CLR,
     output          stall
     );
-    
     assign PC_add_4 = PCout + 4;
     always@(posedge clk) begin
         if(rst) PCout <= 32'hbfc0_0000;
@@ -63,20 +62,21 @@ module IF_module
     end
     assign instr = inst_data_ok ? inst_rdata : reg_instr;
 
-    inst_sram i_sram(.clk    (clk),
-                    .rst    (rst),
+    inst_sram i_sram(.clk           (clk),
+                    .rst            (rst),
                     
-                    .inst_req   (inst_req)  ,
-                    .inst_wr    (inst_wr)   ,
-                    .inst_size  (inst_size) ,
-                    .inst_addr  (inst_addr) ,
-                    .inst_wdata (inst_wdata),
-                    .inst_rdata (inst_rdata),
+                    .inst_req       (inst_req)  ,
+                    .inst_wr        (inst_wr)   ,
+                    .inst_size      (inst_size) ,
+                    .inst_addr      (inst_addr) ,
+                    .inst_wdata     (inst_wdata),
+                    .inst_rdata     (inst_rdata),
                     .inst_addr_ok   (inst_addr_ok)  ,
                     .inst_data_ok   (inst_data_ok)  ,
                     
-                    .is_newPC   (is_newPC)  ,
-                    .PC         (PCout)     ,
-                    .CLR        (CLR)       ,
-                    .stall      (stall)     );
+                    .is_newPC       (is_newPC)  ,
+                    .PC             ( {3'b000, PCout[28:0]} )     ,
+                    .CLR            (CLR)       ,
+                    .stall          (stall)     
+                    );
 endmodule

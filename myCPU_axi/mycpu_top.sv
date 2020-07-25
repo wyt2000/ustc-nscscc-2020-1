@@ -16,11 +16,11 @@ typedef struct packed {
     //output
     logic [31:0] Instruction;
     logic [31:0] PC_add_4;
-    logic [31:0] PCout;
+ 	logic [31:0] PCout;
 
     logic is_newPC;
     
-    logic [31:0] instr;
+	logic [31:0] instr;
 
     logic inst_req;
     logic inst_wr;
@@ -82,7 +82,7 @@ typedef struct packed {
     logic exception;
     logic isBranch;
     logic [31:0] PCout;
-    logic [31:0]  Status;
+	logic [31:0]  Status;
     logic [31:0]  cause;
     logic [7:0]    Exception_enable;
     logic [31:0]  we;
@@ -229,7 +229,7 @@ typedef struct packed {
     logic RegWrite;
     logic [31:0] PCout;
     logic [3:0] exception_in;
-    logic [3:0] exception_out;
+	logic [3:0] exception_out;
     logic MemWrite;
     logic MemWriteW;
     logic is_ds_in;
@@ -283,10 +283,10 @@ typedef struct packed {
 typedef struct packed{
     //input
     logic clk;
-    logic address_error;
+	logic address_error;
     logic MemWrite;
-    logic overflow_error;
-    logic reserved;
+ 	logic overflow_error;
+	logic reserved;
     logic [5:0] hardware_abortion;//硬件中断
     logic [1:0] software_abortion;//软件中断
     logic [31:0] Status;//Status寄存器当前的值
@@ -299,7 +299,7 @@ typedef struct packed{
     logic [31:0] NewPc;//PC跳转
     logic [31:0] we;//写使能字
     logic Branch_delay;//给cause寄存器赋新值
-    logic Stall;//异常发生（Stall，Clear）
+	logic Stall;//异常发生（Stall，Clear）
     logic EXL;
     logic [7:0] enable;
     logic [31:0] epc;
@@ -316,6 +316,7 @@ typedef struct packed{
 	logic _break;
     logic StallW;
     logic FlushW;
+	logic PCError;
 } Exception_interface;
 
 typedef struct packed{
@@ -1223,6 +1224,7 @@ module mycpu_top(
 	);
 
 	WB_module WB_module(
+		.clk						(clk),
 		.aluout                     (WB.aluout),
 		.Memdata                    (WB.Memdata),
 		.WritetoRFaddrin            (WB.WritetoRFaddrin),
@@ -1290,6 +1292,7 @@ module mycpu_top(
 
 	Exception_module Exception_module(
 		.clk						(clk),
+		.rst 						(rst),
     	.address_error				(Exception.address_error),
     	.MemWrite					(Exception.MemWrite),					
     	.overflow_error				(Exception.overflow_error),
@@ -1317,7 +1320,8 @@ module mycpu_top(
         .new_Status_IM              (Exception.new_Status_IM),
         .is_ds                      (Exception.is_ds),
         .StallW                     (Exception.StallW),
-        .FlushW                     (Exception.FlushW)
+        .FlushW                     (Exception.FlushW),
+		.PCError					(Exception.PCError)
 	);
 
     cpu_axi_interface cpu_axi_interface(
