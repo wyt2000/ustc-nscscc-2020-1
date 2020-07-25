@@ -99,7 +99,7 @@ end
 
 assign mem_read_req=(cache_state==SWAP_IN);
 assign mem_addr = mem_read_req ? {addr[31:5],5'b0} : 32'b0;
-assign miss = !(cache_state == IDLE);
+assign miss=(rd_req) & !(cache_hit & cache_state==IDLE);
 
 always@(posedge clk or posedge rst)
 begin
@@ -160,7 +160,4 @@ begin
         endcase
     end
 end
-/*
-和AXI总线通信
-*/
 endmodule
