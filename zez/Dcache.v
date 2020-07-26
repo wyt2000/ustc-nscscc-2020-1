@@ -1,218 +1,211 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2020/07/22 17:16:05
-// Design Name: 
-// Module Name: DCache
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+module dcache (
+    input               clk,
+    input               rst,
 
+    //connect with CPU
+    output              miss,
+    input       [31:0]  addr,
+    input       [31:0]  raw_wr_data,
+    input       [3:0]   wr_req,
+    output reg  [31:0]  rd_data,
 
-module DCache #(
-    parameter  OFFSET_LEN    = 5,
-    parameter  INDEX_LEN = 7,
-    parameter  TAG_LEN  = 20,
-    parameter  WAY_CNT  = 2
-)(
-    input  clk, rst,
-    output miss,               // 对CPU发出的miss信号
-    input  [31:0] addr,        // 读写请求地址
-    input  rd_req,             // 读请求信号
-    output reg [31:0] rd_data, // 读出的数据，一次读一个word
-	input [3:0] wr_req,
-	input [31:0] wr_data,
-    
-    //AXI
-    input axi_mem_gnt,
-    input [31:0] mass_data [1<<(OFFSET_LEN-2)],
-    output [31:0] mem_addr,
-	output [31:0] axi_wr[1<<(OFFSET_LEN-2)],
-	output mem_read_req
+    //connect with axi module
+    input               axi_gnt,
+    input               axi_wr_gnt,
+    input       [31:0]  axi_data[0:7],
+    output      [31:0]  axi_addr,
+    output      [31:0]  axi_wr[0:7],
+    output reg          axi_rd_req,
+    output reg          axi_wr_req
 );
+    int i;
 
-wire [TAG_LEN-1   : 0] tag;
-assign tag=addr[31:12];
-wire [INDEX_LEN-1 : 0] index;
-assign index=addr[11:5];
-wire [TAG_LEN-1   : 0] cache_tag[WAY_CNT];
-wire [WAY_CNT-1:0] valid;
-wire [31:0] cache_mem [WAY_CNT][1<<(OFFSET_LEN-2)];
-wire [4:0] offset;
-assign offset=addr[4:0];
-reg weW[WAY_CNT];
-reg [7:0] weB[WAY_CNT];
-reg LRU [WAY_CNT][INDEX_LEN-1:0];
-reg dirty [WAY_CNT][INDEX_LEN-1:0];
-reg [WAY_CNT-1:0] set_search;
-wire cache_hit;
-assign cache_hit=(|set_search) & (rd_req | wr_req);
-enum {IDLE,SWAP_OUT,SWAP_IN,SWAP_IN_FINISHED,CLEAR} cache_state;
-assign miss=!(cache_hit & cache_state==IDLE);
-assign mem_read_req=(cache_state==SWAP_IN);
-assign mem_addr = mem_read_req ? {addr[31:5],5'b0} : 32'b0;
+    reg     [6 :0]  index_old;
+    wire            ram_ready;
 
-reg [31:0] cache_input_raw;
+    wire    [19:0]  tag;
+    wire    [6 :0]  index;
+    wire    [4 :0]  offset;
 
-wire [31:0] cache_input [1<<(OFFSET_LEN-2)];
-assign cache_input[0]=(cache_state==SWAP_IN_FINISHED) ? mass_data[0]:cache_input_raw;
-assign cache_input[1]=(cache_state==SWAP_IN_FINISHED) ? mass_data[1]:cache_input_raw;
-assign cache_input[2]=(cache_state==SWAP_IN_FINISHED) ? mass_data[2]:cache_input_raw;
-assign cache_input[3]=(cache_state==SWAP_IN_FINISHED) ? mass_data[3]:cache_input_raw;
-assign cache_input[4]=(cache_state==SWAP_IN_FINISHED) ? mass_data[4]:cache_input_raw;
-assign cache_input[5]=(cache_state==SWAP_IN_FINISHED) ? mass_data[5]:cache_input_raw;
-assign cache_input[6]=(cache_state==SWAP_IN_FINISHED) ? mass_data[6]:cache_input_raw;
-assign cache_input[7]=(cache_state==SWAP_IN_FINISHED) ? mass_data[7]:cache_input_raw;
-TAG_V_RAM TAG_V_RAM_Way0(.a(index),.d({tag,1}),.clk(clk),.we(weW[0]),.spo({cache_tag[0],valid[0]}));
-TAG_V_RAM TAG_V_RAM_Way1(.a(index),.d({tag,1}),.clk(clk),.we(weW[1]),.spo({cache_tag[1],valid[1]}));
-data_bank Way0_bank0    (.a(index),.d(cache_input[0]),.clk(clk),.we(weB[0][0]),.spo(cache_mem[0][0]));
-data_bank Way0_bank1    (.a(index),.d(cache_input[1]),.clk(clk),.we(weB[0][1]),.spo(cache_mem[0][1]));
-data_bank Way0_bank2    (.a(index),.d(cache_input[2]),.clk(clk),.we(weB[0][2]),.spo(cache_mem[0][2]));
-data_bank Way0_bank3    (.a(index),.d(cache_input[3]),.clk(clk),.we(weB[0][3]),.spo(cache_mem[0][3]));
-data_bank Way0_bank4    (.a(index),.d(cache_input[4]),.clk(clk),.we(weB[0][4]),.spo(cache_mem[0][4]));
-data_bank Way0_bank5    (.a(index),.d(cache_input[5]),.clk(clk),.we(weB[0][5]),.spo(cache_mem[0][5]));
-data_bank Way0_bank6    (.a(index),.d(cache_input[6]),.clk(clk),.we(weB[0][6]),.spo(cache_mem[0][6]));
-data_bank Way0_bank7    (.a(index),.d(cache_input[7]),.clk(clk),.we(weB[0][7]),.spo(cache_mem[0][7]));
-data_bank Way1_bank0    (.a(index),.d(cache_input[0]),.clk(clk),.we(weB[1][0]),.spo(cache_mem[1][0]));
-data_bank Way1_bank1    (.a(index),.d(cache_input[1]),.clk(clk),.we(weB[1][1]),.spo(cache_mem[1][1]));
-data_bank Way1_bank2    (.a(index),.d(cache_input[2]),.clk(clk),.we(weB[1][2]),.spo(cache_mem[1][2]));
-data_bank Way1_bank3    (.a(index),.d(cache_input[3]),.clk(clk),.we(weB[1][3]),.spo(cache_mem[1][3]));
-data_bank Way1_bank4    (.a(index),.d(cache_input[4]),.clk(clk),.we(weB[1][4]),.spo(cache_mem[1][4]));
-data_bank Way1_bank5    (.a(index),.d(cache_input[5]),.clk(clk),.we(weB[1][5]),.spo(cache_mem[1][5]));
-data_bank Way1_bank6    (.a(index),.d(cache_input[6]),.clk(clk),.we(weB[1][6]),.spo(cache_mem[1][6]));
-data_bank Way1_bank7    (.a(index),.d(cache_input[7]),.clk(clk),.we(weB[1][7]),.spo(cache_mem[1][7]));
+    reg     [1 :0]  LRU_index[0:127];
+    reg             we_way[0:3];
+    wire    [20:0]  tagv_way[0:3];
+    wire    [31:0]  data_way_bank[0:3][0:7];
 
+    wire    [3 :0]  way_hit;
 
+    reg     [1 :0]  current_state, next_state;
 
-always@(*)
-begin
-    if (rst) begin
-        rd_data<=0;
-    end
-    
-    for (integer i=0;i<WAY_CNT;i++) begin
-        if (valid[i] && cache_tag[i]==tag) begin
-            set_search[i]<=1'b1;
-        end
-        else
-            set_search[i]<=1'b0;
-    end
-    
-    case (set_search)
-        2'b00: rd_data<=31'b0;
-        2'b01: rd_data<=cache_mem[0][offset[OFFSET_LEN:2]];
-        2'b10: rd_data<=cache_mem[1][offset[OFFSET_LEN:2]];
-        2'b11: rd_data<=cache_mem[1][offset[OFFSET_LEN:2]];
-    endcase
-end
+    reg     [7 :0]  dirty[0:3];
 
+    localparam      IDLE    =   0;
+    localparam      REQ     =   1;
+    localparam      WRIT    =   2;
+    localparam      WR      =   3;
 
-always@(posedge clk or posedge rst)
-begin
-    if (rst) begin
-        cache_state <= IDLE;
-		
-    end
-    else begin
-        case (cache_state)
-            IDLE: begin
-                if (cache_hit) begin
-					if (rd_req) begin
-						for (integer i=0;i<WAY_CNT;i++) begin
-							if (set_search[i])
-								LRU[i][index]<=0;
-							else
-								LRU[i][index]<=1;
-						end
-					end
-					else begin
-						for (integer i=0;i<WAY_CNT;i++) begin
-							if (set_search[i]) begin
-								if (wr_req[0]) cache_input_raw[7:0]<=wr_data[7:0];
-								else cache_input_raw[7:0]<=cache_mem[i][offset[OFFSET_LEN:2]][7:0];
-								if (wr_req[1]) cache_input_raw[15:8]<=wr_data[15:8];
-								else cache_input_raw[15:8]<=cache_mem[i][offset[OFFSET_LEN:2]][15:8];
-								if (wr_req[2]) cache_input_raw[23:16]<=wr_data[23:16];
-								else cache_input_raw[23:16]<=cache_mem[i][offset[OFFSET_LEN:2]][23:16];
-								if (wr_req[3]) cache_input_raw[31:24]<=wr_data[31:24];
-								else cache_input_raw[31:24]<=cache_mem[i][offset[OFFSET_LEN:2]][31:24];
-								LRU[i][index]<=0;
-								dirty[i][index]<=1;
-							end
-							else begin
-								LRU[i][index]<=1;
-							end
-						end
-						
-					end
-				end
-				else begin
-					if (dirty[i][index]) begin
-						cache_state<=SWAP_OUT;
-					end
-					else begin
-						cache_state <= SWAP_IN;
-					end
-                end
-            end
-			SWAP_OUT: begin
-			end
-            SWAP_IN:begin
-                if (axi_mem_gnt) begin
-                    cache_state <= SWAP_IN_FINISHED;
-                end
-            end
-            SWAP_IN_FINISHED:begin
-                case (valid)
-                    2'b00:begin
-                        weW[0]<=1;
-                        weB[0]<=8'b1;
-						dirty[0][index]<=0;
-                    end
-                    2'b01:begin
-                        weW[1]<=1;
-                        weB[1]<=8'b1;
-						dirty[0][index]<=0;
-                    end
-                    2'b10:begin
-                        weW[0]<=1;
-                        weB[0]<=8'b1;
-						dirty[0][index]<=0;
-                    end
-                    2'b11:begin
-                        if (LRU[0][index]==1) begin
-                            weW[0]<=1;
-                            weB[0]<=8'b1;
-							dirty[0][index]<=0;
-                        end
-                        else begin
-                            weW[1]<=1;
-                            weB[1]<=8'b1;
-							dirty[0][index]<=0;
-                        end
-                    end
-                endcase
-				cache_state<=CLEAR;
-            end
-			CLEAR:begin
-                for (integer i=0;i<WAY_CNT;i++) begin
-					weW[i]<=0;
-					weB[i]<=8'b0;
-                end
-				cache_state<=IDLE
-			end
+    wire [31:0] ram_input_data[0:3];
+    wire [31:0] wr_data;
+    assign wr_data[7:0]=(wr_req[0]==1)?raw_wr_data[7:0]:data_way_bank[LRU_index[index]][offset[5:2]];
+    assign ram_input_data[0]=(|wr_req) ? wr_data:axi_data[0];
+    assign ram_input_data[1]=(|wr_req) ? wr_data:axi_data[1];
+    assign ram_input_data[2]=(|wr_req) ? wr_data:axi_data[2];
+    assign ram_input_data[3]=(|wr_req) ? wr_data:axi_data[3];
+    assign ram_input_data[4]=(|wr_req) ? wr_data:axi_data[4];
+    assign ram_input_data[5]=(|wr_req) ? wr_data:axi_data[5];
+    assign ram_input_data[6]=(|wr_req) ? wr_data:axi_data[6];
+    assign ram_input_data[7]=(|wr_req) ? wr_data:axi_data[7];
+
+    TAGV_RAM TAGV_WAY_0 (.clka(clk),    .addra(index),  .douta(tagv_way[0]),    .wea(we_way[0]),     .dina({tag, 1'b1}),    .ena(1));
+    TAGV_RAM TAGV_WAY_1 (.clka(clk),    .addra(index),  .douta(tagv_way[1]),    .wea(we_way[1]),     .dina({tag, 1'b1}),    .ena(1));
+    TAGV_RAM TAGV_WAY_2 (.clka(clk),    .addra(index),  .douta(tagv_way[2]),    .wea(we_way[2]),     .dina({tag, 1'b1}),    .ena(1));
+    TAGV_RAM TAGV_WAY_3 (.clka(clk),    .addra(index),  .douta(tagv_way[3]),    .wea(we_way[3]),     .dina({tag, 1'b1}),    .ena(1));
+
+    DATA_RAM DATA_WAY0_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][0]),    .wea(we_way[0]),     .dina(ram_input_data[0]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][1]),    .wea(we_way[0]),     .dina(ram_input_data[1]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][2]),    .wea(we_way[0]),     .dina(ram_input_data[2]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][3]),    .wea(we_way[0]),     .dina(ram_input_data[3]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][4]),    .wea(we_way[0]),     .dina(ram_input_data[4]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][5]),    .wea(we_way[0]),     .dina(ram_input_data[5]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][6]),    .wea(we_way[0]),     .dina(ram_input_data[6]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][7]),    .wea(we_way[0]),     .dina(ram_input_data[7]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][0]),    .wea(we_way[1]),     .dina(ram_input_data[0]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][1]),    .wea(we_way[1]),     .dina(ram_input_data[1]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][2]),    .wea(we_way[1]),     .dina(ram_input_data[2]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][3]),    .wea(we_way[1]),     .dina(ram_input_data[3]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][4]),    .wea(we_way[1]),     .dina(ram_input_data[4]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][5]),    .wea(we_way[1]),     .dina(ram_input_data[5]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][6]),    .wea(we_way[1]),     .dina(ram_input_data[6]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][7]),    .wea(we_way[1]),     .dina(ram_input_data[7]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][0]),    .wea(we_way[2]),     .dina(ram_input_data[0]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][1]),    .wea(we_way[2]),     .dina(ram_input_data[1]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][2]),    .wea(we_way[2]),     .dina(ram_input_data[2]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][3]),    .wea(we_way[2]),     .dina(ram_input_data[3]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][4]),    .wea(we_way[2]),     .dina(ram_input_data[4]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][5]),    .wea(we_way[2]),     .dina(ram_input_data[5]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][6]),    .wea(we_way[2]),     .dina(ram_input_data[6]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][7]),    .wea(we_way[2]),     .dina(ram_input_data[7]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][0]),    .wea(we_way[3]),     .dina(ram_input_data[0]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][1]),    .wea(we_way[3]),     .dina(ram_input_data[1]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][2]),    .wea(we_way[3]),     .dina(ram_input_data[2]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][3]),    .wea(we_way[3]),     .dina(ram_input_data[3]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][4]),    .wea(we_way[3]),     .dina(ram_input_data[4]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][5]),    .wea(we_way[3]),     .dina(ram_input_data[5]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][6]),    .wea(we_way[3]),     .dina(ram_input_data[6]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][7]),    .wea(we_way[3]),     .dina(ram_input_data[7]),    .ena(1));
+
+    assign  miss    = (!(|way_hit)) || (!ram_ready) || !(tagv_way[0]);
+    assign  {tag,   index,  offset} = addr;
+    assign  way_hit = {!(|(tag ^ tagv_way[3][20:1])), 
+                       !(|(tag ^ tagv_way[2][20:1])), 
+                       !(|(tag ^ tagv_way[1][20:1])), 
+                       !(|(tag ^ tagv_way[0][20:1]))};
+    assign axi_wr[0]=data_way_bank[LRU_index[index]][0];
+    assign axi_wr[1]=data_way_bank[LRU_index[index]][1];
+    assign axi_wr[2]=data_way_bank[LRU_index[index]][2];
+    assign axi_wr[3]=data_way_bank[LRU_index[index]][3];
+    assign axi_wr[4]=data_way_bank[LRU_index[index]][4];
+    assign axi_wr[5]=data_way_bank[LRU_index[index]][5];
+    assign axi_wr[6]=data_way_bank[LRU_index[index]][6];
+    assign axi_wr[7]=data_way_bank[LRU_index[index]][7];
+    always@(*) begin
+        case(way_hit)
+        4'b0001:    rd_data =   data_way_bank[0][offset[4:2]];
+        4'b0010:    rd_data =   data_way_bank[1][offset[4:2]];
+        4'b0100:    rd_data =   data_way_bank[2][offset[4:2]];
+        4'b1000:    rd_data =   data_way_bank[3][offset[4:2]];
+        default:    rd_data =   0;
         endcase
     end
-end
+
+//==========stage machine begin==========
+    assign  axi_addr    =   {addr[31:5], 5'b00000};
+    //stage change
+    always@(posedge clk) begin
+        if(rst)
+            current_state   <=  IDLE;
+        else
+            current_state   <=  next_state;
+    end
+    //next state logic
+    always@(*) begin
+        case(current_state)
+        IDLE:   begin
+            if((!(|way_hit)) && ram_ready) begin
+                if ((|wr_req) & dirty[LRU_index[index]][index])
+                    next_state  =   WR;
+                else
+                    next_state  =   REQ;
+            end
+            else
+                next_state  =   IDLE;
+        end
+        
+        WR:     begin
+            if (axi_wr_gnt)
+                next_state=REQ;
+            else
+                next_state=WR;
+        end
+
+        REQ:    begin
+            if(axi_gnt)
+                next_state  =   WRIT;
+            else
+                next_state  =   REQ;
+        end
+
+        WRIT:   begin
+            next_state      =   IDLE;
+        end
+        default:    next_state  =   IDLE;
+        endcase
+    end
+    //control signals
+    always@(*) begin
+        for(i = 0; i < 4; i++)
+            we_way[i]   =   0;
+        axi_rd_req      =   0;
+        case(current_state)
+        IDLE:   begin
+            if((!(|way_hit)) && ram_ready)
+                axi_rd_req  =   1;
+            else axi_rd_req =   0;
+            if (|wr_req)
+                we_way[LRU_index[index]]=1;
+            else
+                we_way[LRU_index[index]]=0;
+        end
+        WR: begin
+            axi_wr_req      =   1;
+        end
+        REQ:    begin
+            axi_rd_req      =   1;
+        end
+
+        WRIT:   begin
+            we_way[LRU_index[index]]    =   1;
+        end
+        default:    ;
+        endcase
+    end
+//==========stage machine end==========
+
+    //fake LRU replace
+    always@(posedge clk) begin
+        if(rst) begin
+            for(i = 0; i < 128; i++)
+                LRU_index[i]    <=  0;
+        end
+        else if((|way_hit) && ram_ready) begin
+            if(LRU_index[index] == (way_hit == 4'b1000 ? 2'b11 : way_hit >> 1))
+                LRU_index[index]    <=  LRU_index[index] + 1;
+            else 
+                LRU_index[index]    <=  LRU_index[index];
+        end
+    end
+
+    //get ram ready
+    always@(posedge clk) 
+        index_old   <=  index;
+    assign ram_ready    =   (index == index_old) ? 1 : 0;
 endmodule
