@@ -42,6 +42,7 @@ module WB_module
     assign MemWrite = MemWriteW;
     assign is_ds_out = is_ds_in;
 
+    
     always@(*)
     begin
         TrueMemData = Memdata;
@@ -82,5 +83,6 @@ module WB_module
             end
         end
     end
+    
 
 endmodule

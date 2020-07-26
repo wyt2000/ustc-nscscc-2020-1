@@ -48,13 +48,17 @@ module MEM_module (
     reg [3:0] calWE;
     reg [31:0] TrueRamData;
     reg [31:0] reg_Memdata;
+    reg TrueMemWrite;
 
     always@(*)
     begin
         calWE = 0;
         TrueRamData = 0;
-        if (exception_in != 0 || PCin[1:0] != 2'b00) calWE = 0;
-        else if(MemWriteM) begin
+        TrueMemWrite = MemWriteM;
+        if (exception_in != 0 || PCin[1:0] != 2'b00) begin
+            TrueMemWrite = 0;
+        end 
+        else begin
             case (MemReadType[1:0])
                 2'b00:
                     case (ALUout[1:0])
@@ -133,8 +137,9 @@ module MEM_module (
                         .data_data_ok   (data_data_ok)  ,
                     
                         .MemRead        (MemReadM)      ,
-                        .MemWrite       (calWE)         ,
-                        .addr           (ALUout)       ,
+                        .MemWrite       (TrueMemWrite)  ,
+                        .calWE          (calWE)         ,
+                        .addr           (ALUout)        ,
                         .wdata          (TrueRamData)   ,
                         .CLR            (CLR)           ,
                         .stall          (stall)         
