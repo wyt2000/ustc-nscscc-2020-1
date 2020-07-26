@@ -65,5 +65,5 @@
 `define ALU_ERET        55
 `define ALU_MFC0        56
 `define ALU_MTC0        57
-
+`define ALU_MUL         58
 

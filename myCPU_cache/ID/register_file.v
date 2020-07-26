@@ -68,6 +68,7 @@ module register_file(
         4'b0000:            read_data_1     =   reg_file[read_addr_1[4:0]];
         default:            read_data_1     =   reg_file[read_addr_1[4:0]];
         endcase
+        if (read_addr_1 == 7'b0) read_data_1 = 32'b0;
     end
 
     //read port 2
@@ -88,6 +89,7 @@ module register_file(
         4'b0000:            read_data_2     =   reg_file[read_addr_2[4:0]];
         default:            read_data_2     =   reg_file[read_addr_2[4:0]];
         endcase
+        if (read_addr_2 == 7'b0) read_data_2 = 32'b0;
     end
     // //read port 1
     // always@(*) begin
@@ -136,7 +138,11 @@ module register_file(
     wire    [1:0]    hl_wr_en;
     assign  hl_wr_en    =   {2{hl_write_enable_from_wb}} | {{regwrite && write_addr == 7'b1111111}, {regwrite && write_addr == 7'b1000000}};
     always@(posedge clk) begin
-        case(hl_wr_en)
+            if(rst) begin
+            hi <= 32'b0;
+            lo <= 32'b0;
+        end
+        else case(hl_wr_en)
         2'b01:      begin
             lo  <=  write_data;
         end

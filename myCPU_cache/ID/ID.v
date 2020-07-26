@@ -38,7 +38,7 @@ module ID_module(
     input       [31:0]  BADADDR,
     input               Branch_delay,
     //modify the CP0 register
-    input IE,
+    input new_IE,
     //to ID/EX reg
         output [5:0] ALUOp,
         //outputs from ctl_unit
@@ -130,7 +130,7 @@ module ID_module(
                            .EPC_data(EPCout),
                            .cause_data(cause_data),
                            .we(we),
-                           .IE(IE),
+                           .IE(new_IE),
                            .interrupt_enable(interrupt_enable),
                            .Exception_code(Exception_code),
                            .EXL(EXL),
@@ -138,7 +138,8 @@ module ID_module(
                            .software_interruption(software_interruption),
                            .epc(EPCin),
                            .BADADDR(BADADDR),
-                           .Branch_delay(Branch_delay));
+                           .Branch_delay(Branch_delay)
+                           );
 
     Branch_judge brch_jdg(.Op(instr[31:26]),
                           .rt(instr[20:16]),
@@ -164,27 +165,5 @@ module ID_module(
         else
             isBranch_old    <=  isBranch_old;
     end
-    // reg is_ds_tmp;
-    // assign is_ds = is_ds_tmp && 
-    // always@(posedge clk) begin
-    //     if(rst) begin
-    //         isBranch_old <= 0;
-    //         pc_old <= 0;
-    //     end
-    //     else begin
-    //         isBranch_old <= isBranch;
-    //         pc_old <= PCin;
-    //     end
-    // end
-    // always@(*) begin
-    //     if(rst)
-    //         is_ds_tmp <= 0;
-    //     else if(pc_old == PCin)
-    //         is_ds_tmp <= is_ds;
-    //     else if(isBranch_old && (pc_old != PCin))
-    //         is_ds_tmp <= 1;
-    //     else
-    //         is_ds_tmp <= 0;
-    // end
     
 endmodule

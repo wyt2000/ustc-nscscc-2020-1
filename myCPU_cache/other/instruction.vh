@@ -20,6 +20,8 @@
 `define OP_BNE          6'b000101
 `define OP_BGTZ         6'b000111
 `define OP_BLEZ         6'b000110
+`define OP_MUL          6'b011100
+
 
 `define OP_ZERO         6'b000000
 `define FUNC_ADD        6'b100000

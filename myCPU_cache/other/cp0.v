@@ -80,7 +80,7 @@ module CP0
     assign prid_data=prid;
 
     assign compare_data=0;
-    //reg temp;
+    reg temp;
     assign state=Status[1]?1'b0:1;
     assign allow_interrupt=Status[0];
     always@(posedge clk or posedge rst)begin
@@ -92,29 +92,19 @@ module CP0
             EPC<=epc;
 
     end
-    /*
-    always@(posedge clk or posedge rst) begin
+
+    always@(posedge clk) begin
         if(rst)
             temp<=0;
         else 
             temp<=~temp;
     end
-    always@(*) begin
-        if(rst) 
-            count=0;
-        else count=count+temp;
-    end
-    */
     always@(posedge clk) begin
-        if(rst) begin
-            count <= 0;
-        end
-        else begin
-            count <= count + 1;
-        end
+        if(rst) 
+            count<=0;
+        else count<=count+temp;
     end
-
-    always@(posedge clk or posedge rst) begin
+    always@(posedge clk) begin
         if(rst)
             BADVADDR<=0;
         else if(we[8])
@@ -122,7 +112,7 @@ module CP0
         else if(waddr==8&&general_write_in)
             BADVADDR<=BADADDR;
     end
-    always@(posedge clk or posedge rst) begin
+    always@(posedge clk) begin
         if(rst)
             prid<=0;
         else if(we[15]) 
@@ -145,20 +135,18 @@ module CP0
         end
     end
 */
-    always@(posedge clk or posedge rst) begin
+    always@(posedge clk) begin
         if(rst) begin
             Status[31:23]<=9'b000000000;//read only can't be modified 
             Status[22]<=1'b1;//read only can't be modified
             Status[21:16]<=6'b000000;//read only can't be modified
-            Status[15:8]<=8'b11111111;//0:Break can take 1:Break can't take
+            Status[15:8]<=8'b00000000;//0:Break can take 1:Break can't take
             Status[7:2]<=6'b000000;//read only and always 0
             Status[1]<=1'b0;//EXL 0:normal state 1:Kernel state
             Status[0]<=1'b0;//IE  1:all breaks enable 0:all not enable
         end
         else if(we[12]) begin
-            Status[15:8]<=interrupt_enable;
             Status[1]<=EXL;
-            Status[0]<=IE;
         end
         else if(waddr==12&&general_write_in)begin
             Status[15:8]<=interrupt_enable;
@@ -174,7 +162,7 @@ module CP0
             Random<=count; 
     end
     */
-    always@(posedge clk or posedge rst)begin
+    always@(posedge clk)begin
         if(rst)begin
             configure[15]<=1'b1;
             configure[31:16]<=0;
@@ -187,7 +175,7 @@ module CP0
             configure<=configuredata;
         end
     end
-    always@(posedge clk or posedge rst)begin
+    always@(posedge clk)begin
         if(rst)
             cause<=0;
         else if(we[13])begin
@@ -204,14 +192,7 @@ module CP0
             cause[6:2]<=Exception_code;
         end 
         else if(waddr==13&&general_write_in)begin
-            //cause[0]<=Branch_delay?1:0;//The exception Instruction is in the Delay_slot,then it is 1
             cause[31]<=Branch_delay;
-            cause[15]<=hardware_interruption[5];
-            cause[14]<=hardware_interruption[4];
-            cause[13]<=hardware_interruption[3];
-            cause[12]<=hardware_interruption[2];
-            cause[11]<=hardware_interruption[1];
-            cause[10]<=hardware_interruption[0];
             cause[9]<=software_interruption[1];
             cause[8]<=software_interruption[0];
             cause[6:2]<=Exception_code;

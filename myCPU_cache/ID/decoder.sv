@@ -23,7 +23,7 @@ module decoder(
     assign rd = ins[15:11];
     assign sa = ins[10:6];
     assign func = ins[5:0]; 
-    assign imm = (op == `OP_PRIV && rs == `FUNC_ERET) ? 32'hfffffffe : ins[15:0];
+    assign imm = ins[15:0];
 
     always_comb begin : set_ALUop
         ALUop = `ALU_NOP;
@@ -81,6 +81,7 @@ module decoder(
             `OP_BEQ,`OP_BNE,
             `OP_BGTZ,`OP_BLEZ,
             `OP_BELSE:                      ALUop = `ALU_ADDU;
+            `OP_MUL:                        ALUop = `ALU_MUL;
         endcase
     end
 
@@ -110,14 +111,14 @@ module decoder(
                     `FUNC_MFHI,`FUNC_MFLO:
                         if(rs == 0 && rt == 0 && sa == 0) exception = 0;
                     `FUNC_BREAK,`FUNC_SYSCALL:
-                        exception = 0;
-                endcase
+                        exception = 0;     
+                    endcase
             `OP_PRIV:
                 case (rs)
                     `FUNC_ERET:
                         if(rt == 0 && rd == 0 && sa == 0 && func == 6'b011000) exception = 0;
                     `FUNC_MFC0,`FUNC_MTC0:
-                        if(sa == 0 && func == 0) exception = 0;
+                        if(sa == 0 && func[5:3] == 0) exception = 0;
                 endcase
             `OP_ADDI,`OP_ADDIU,
             `OP_SLTI,`OP_SLTIU,
@@ -134,7 +135,9 @@ module decoder(
             `OP_LUI:
                 if(rs == 0) exception = 0;
             `OP_BELSE:
-                if(ins[19:17] == 0) exception = 0;                
+                if(ins[19:17] == 0) exception = 0;
+            `OP_MUL:
+                if(sa == 0 && func == 6'b000010) exception = 0;                           
         endcase
         if(ins == 32'b0) exception = 0;
     end
@@ -179,9 +182,9 @@ module decoder(
                         Rs = 0;
                     end
                     `FUNC_ERET: begin
-                        Rt = {2'b01, 5'b01100};
+                        Rt = 0;
                         Rs = 0;
-                        Rd = {2'b01, 5'b01100};
+                        Rd = 0;
                     end
                 endcase
         endcase

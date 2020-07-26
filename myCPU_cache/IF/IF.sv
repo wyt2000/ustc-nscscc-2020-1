@@ -17,15 +17,6 @@ module IF_module
     
     output  [31:0]  instr,
 
-    // output          inst_req,
-    // output          inst_wr,
-    // output  [1:0]   inst_size,
-    // output  [31:0]  inst_addr,
-    // output  [31:0]  inst_wdata,
-    // input   [31:0]  inst_rdata,
-    // input           inst_addr_ok,
-    // input           inst_data_ok,
-
     output          CLR,
     output          stall,
 
@@ -106,7 +97,7 @@ module IF_module
         .clk            (clk),
         .rst            (rst),
         .miss           (miss),
-        .addr           (PCout),
+        .addr           ({3'b000, PCout[28:0]}),
         .rd_data        (instr),
 
         .axi_gnt        (axi_gnt),
@@ -161,38 +152,5 @@ module IF_module
         .rlast      (instr_rlast),
         .rvalid     (instr_rvalid),
         .rready     (instr_rready)
-
     );
-    // reg [31:0] reg_instr;
-    // always@(posedge clk) begin
-    //     if(rst) begin
-    //         reg_instr <= 0;
-    //     end
-    //     else if(inst_data_ok) begin
-    //         reg_instr <= inst_rdata;
-    //     end
-    //     else begin
-    //         reg_instr <= reg_instr;
-    //     end
-    // end
-    // assign instr = inst_data_ok ? inst_rdata : reg_instr;
-
-    // inst_sram i_sram(.clk    (clk),
-    //                 .rst    (rst),
-                    
-    //                 .inst_req   (inst_req)  ,
-    //                 .inst_wr    (inst_wr)   ,
-    //                 .inst_size  (inst_size) ,
-    //                 .inst_addr  (inst_addr) ,
-    //                 .inst_wdata (inst_wdata),
-    //                 .inst_rdata (inst_rdata),
-    //                 .inst_addr_ok   (inst_addr_ok)  ,
-    //                 .inst_data_ok   (inst_data_ok)  ,
-                    
-    //                 .is_newPC   (is_newPC)  ,
-    //                 .PC         (PCout)     ,
-    //                 .CLR        (CLR)       ,
-    //                 .stall      (stall)     );
-
-
 endmodule

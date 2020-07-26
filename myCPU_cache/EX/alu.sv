@@ -114,6 +114,14 @@ module alu(
                 mul_b = b;
             end
 
+            `ALU_MUL: begin
+                mul_begin = 1;
+                mul_sign = 0;
+                mul_a = a;
+                mul_b = b;
+                result = mul_res;
+            end
+
             `ALU_AND, `ALU_ANDI:
                 result = a & b;
             `ALU_LUI:

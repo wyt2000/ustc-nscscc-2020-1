@@ -109,7 +109,7 @@ typedef struct packed {
     logic Jump;
     logic [31:0] PCSrc_reg;
     logic [31:0] EPCout;
-    logic IE;
+    logic new_IE;
     logic [31:0] Jump_addr;
     logic [31:0] Branch_addr;
     logic CLR_EN;
@@ -490,44 +490,44 @@ module mycpu_top(
         .aclk           (aclk),
         .aresetn        (aresetn),
 
-        .s_axi_awid     ({/*MEM.data_*/axi.awid,        IF.instr_awid}),
-        .s_axi_awaddr   ({/*MEM.data_*/axi.awaddr,      IF.instr_awaddr}),
-        .s_axi_awlen    ({/*MEM.data_*/axi.awlen,       IF.instr_awlen}),
-        .s_axi_awsize   ({/*MEM.data_*/axi.awsize,      IF.instr_awsize}),
-        .s_axi_awburst  ({/*MEM.data_*/axi.awburst,     IF.instr_awburst}),
-        .s_axi_awlock   ({/*MEM.data_*/axi.awlock,      IF.instr_awlock}),
-        .s_axi_awcache  ({/*MEM.data_*/axi.awcache,     IF.instr_awcache}),
-        .s_axi_awprot   ({/*MEM.data_*/axi.awprot,      IF.instr_awprot}),
-        .s_axi_awqos    (0),   //?
-        .s_axi_awvalid  ({/*MEM.data_*/axi.awvalid,     IF.instr_awvalid}),
-        .s_axi_awready  ({/*MEM.data_*/axi.awready,     IF.instr_awready}),
-        .s_axi_wid      ({/*MEM.data_*/axi.wid,         IF.instr_wid}),
-        .s_axi_wdata    ({/*MEM.data_*/axi.wdata,       IF.instr_wdata}),
-        .s_axi_wstrb    ({/*MEM.data_*/axi.wstrb,       IF.instr_wstrb}),
-        .s_axi_wlast    ({/*MEM.data_*/axi.wlast,       IF.instr_wlast}),
-        .s_axi_wvalid   ({/*MEM.data_*/axi.wvalid,      IF.instr_wvalid}),
-        .s_axi_wready   ({/*MEM.data_*/axi.wready,      IF.instr_wready}),
-        .s_axi_bid      ({/*MEM.data_*/axi.bid,         IF.instr_bid}),
-        .s_axi_bresp    ({/*MEM.data_*/axi.bresp,       IF.instr_bresp}),
-        .s_axi_bvalid   ({/*MEM.data_*/axi.bvalid,      IF.instr_bvalid}),
-        .s_axi_bready   ({/*MEM.data_*/axi.bready,      IF.instr_bready}),
-        .s_axi_arid     ({/*MEM.data_*/axi.arid,        IF.instr_arid}),
-        .s_axi_araddr   ({/*MEM.data_*/axi.araddr,      IF.instr_araddr}),
-        .s_axi_arlen    ({/*MEM.data_*/axi.arlen,       IF.instr_arlen}),
-        .s_axi_arsize   ({/*MEM.data_*/axi.arsize,      IF.instr_arsize}),
-        .s_axi_arburst  ({/*MEM.data_*/axi.arburst,     IF.instr_arburst}),
-        .s_axi_arlock   ({/*MEM.data_*/axi.arlock,      IF.instr_arlock}),
-        .s_axi_arcache  ({/*MEM.data_*/axi.arcache,     IF.instr_arcache}),
-        .s_axi_arprot   ({/*MEM.data_*/axi.arprot,      IF.instr_arprot}),
-        .s_axi_arqos    ({0}),   //?
-        .s_axi_arvalid  ({/*MEM.data_*/axi.arvalid,     IF.instr_arvalid}),
-        .s_axi_arready  ({/*MEM.data_*/axi.arready,     IF.instr_arready}),
-        .s_axi_rid      ({/*MEM.data_*/axi.rid,         IF.instr_rid}),
-        .s_axi_rdata    ({/*MEM.data_*/axi.rdata,       IF.instr_rdata}),
-        .s_axi_rresp    ({/*MEM.data_*/axi.rresp,       IF.instr_rresp}),
-        .s_axi_rlast    ({/*MEM.data_*/axi.rlast,       IF.instr_rlast}),
-        .s_axi_rvalid   ({/*MEM.data_*/axi.rvalid,      IF.instr_rvalid}),
-        .s_axi_rready   ({/*MEM.data_*/axi.rready,      IF.instr_rready}),
+        .s_axi_awid     ({axi.awid,        IF.instr_awid}),
+        .s_axi_awaddr   ({axi.awaddr,      IF.instr_awaddr}),
+        .s_axi_awlen    ({axi.awlen,       IF.instr_awlen}),
+        .s_axi_awsize   ({axi.awsize,      IF.instr_awsize}),
+        .s_axi_awburst  ({axi.awburst,     IF.instr_awburst}),
+        .s_axi_awlock   ({axi.awlock,      IF.instr_awlock}),
+        .s_axi_awcache  ({axi.awcache,     IF.instr_awcache}),
+        .s_axi_awprot   ({axi.awprot,      IF.instr_awprot}),
+        .s_axi_awqos    (0),
+        .s_axi_awvalid  ({axi.awvalid,     IF.instr_awvalid}),
+        .s_axi_awready  ({axi.awready,     IF.instr_awready}),
+        .s_axi_wid      ({axi.wid,         IF.instr_wid}),
+        .s_axi_wdata    ({axi.wdata,       IF.instr_wdata}),
+        .s_axi_wstrb    ({axi.wstrb,       IF.instr_wstrb}),
+        .s_axi_wlast    ({axi.wlast,       IF.instr_wlast}),
+        .s_axi_wvalid   ({axi.wvalid,      IF.instr_wvalid}),
+        .s_axi_wready   ({axi.wready,      IF.instr_wready}),
+        .s_axi_bid      ({axi.bid,         IF.instr_bid}),
+        .s_axi_bresp    ({axi.bresp,       IF.instr_bresp}),
+        .s_axi_bvalid   ({axi.bvalid,      IF.instr_bvalid}),
+        .s_axi_bready   ({axi.bready,      IF.instr_bready}),
+        .s_axi_arid     ({axi.arid,        IF.instr_arid}),
+        .s_axi_araddr   ({axi.araddr,      IF.instr_araddr}),
+        .s_axi_arlen    ({axi.arlen,       IF.instr_arlen}),
+        .s_axi_arsize   ({axi.arsize,      IF.instr_arsize}),
+        .s_axi_arburst  ({axi.arburst,     IF.instr_arburst}),
+        .s_axi_arlock   ({axi.arlock,      IF.instr_arlock}),
+        .s_axi_arcache  ({axi.arcache,     IF.instr_arcache}),
+        .s_axi_arprot   ({axi.arprot,      IF.instr_arprot}),
+        .s_axi_arqos    ({0}),
+        .s_axi_arvalid  ({axi.arvalid,     IF.instr_arvalid}),
+        .s_axi_arready  ({axi.arready,     IF.instr_arready}),
+        .s_axi_rid      ({axi.rid,         IF.instr_rid}),
+        .s_axi_rdata    ({axi.rdata,       IF.instr_rdata}),
+        .s_axi_rresp    ({axi.rresp,       IF.instr_rresp}),
+        .s_axi_rlast    ({axi.rlast,       IF.instr_rlast}),
+        .s_axi_rvalid   ({axi.rvalid,      IF.instr_rvalid}),
+        .s_axi_rready   ({axi.rready,      IF.instr_rready}),
 
         .m_axi_awid     (awid),
         .m_axi_awaddr   (awaddr),
@@ -604,7 +604,7 @@ module mycpu_top(
 	assign ID.we							= Exception.we;
 	assign ID.Branch_delay					= Exception.Branch_delay;
 	assign ID.EPCin							= Exception.EPC;
-	assign ID.IE   							= Exception.new_Status_IE;
+	assign ID.new_IE   						= Exception.new_Status_IE;
 	assign ID.hardware_interruption			= ext_int;
 	assign ID.BADADDR						= Exception.BadVAddr;
     assign ID.StallD                        = Hazard.StallD;
@@ -665,9 +665,6 @@ module mycpu_top(
     assign axi.inst_size                    = 0;
     assign axi.inst_addr                    = 0;
     assign axi.inst_wdata                   = 0;
-    // assign IF.inst_rdata                    = axi.inst_rdata;
-    // assign IF.inst_addr_ok                  = axi.inst_addr_ok;
-    // assign IF.inst_data_ok                  = axi.inst_data_ok;
     
     assign axi.data_req                     = MEM.data_req;
     assign axi.data_wr                      = MEM.data_wr;
@@ -677,43 +674,6 @@ module mycpu_top(
     assign MEM.data_rdata                   = axi.data_rdata;
     assign MEM.data_addr_ok                 = axi.data_addr_ok;
     assign MEM.data_data_ok                 = axi.data_data_ok;
-
-    // assign arid                             = axi.arid;
-    // assign araddr                           = axi.araddr;
-    // assign arlen                            = axi.arlen;
-    // assign arsize                           = axi.arsize;
-    // assign arburst                          = axi.arburst;
-    // assign arlock                           = axi.arlock;
-    // assign arcache                          = axi.arcache;
-    // assign arprot                           = axi.arprot;
-    // assign arvalid                          = axi.arvalid;
-    // assign axi.arready                      = arready;
-    // assign axi.rid                          = rid;
-    // assign axi.rdata                        = rdata;
-    // assign axi.rresp                        = rresp;
-    // assign axi.rlast                        = rlast;
-    // assign axi.rvalid                       = rvalid;
-    // assign rready                           = axi.rready;
-    // assign awid                             = axi.awid;
-    // assign awaddr                           = axi.awaddr;
-    // assign awlen                            = axi.awlen;
-    // assign awsize                           = axi.awsize;
-    // assign awburst                          = axi.awburst;
-    // assign awlock                           = axi.awlock;
-    // assign awcache                          = axi.awcache;
-    // assign awprot                           = axi.awprot;
-    // assign awvalid                          = axi.awvalid;
-    // assign axi.awready                      = awready;
-    // assign wid                              = axi.wid;
-    // assign wdata                            = axi.wdata;
-    // assign wstrb                            = axi.wstrb;
-    // assign wlast                            = axi.wlast;
-    // assign wvalid                           = axi.wvalid;
-    // assign axi.wready                       = wready;
-    // assign axi.bid                          = bid;
-    // assign axi.bresp                        = bresp;
-    // assign axi.bvalid                       = bvalid;
-    // assign bready                           = axi.bready;
 
 	// IF/ID registers
 
@@ -1273,7 +1233,7 @@ module mycpu_top(
 		.we							(ID.we),
     	.interrupt_enable			(ID.Exception_enable),
     	.Exception_code				(ID.Exception_code),
-		.IE							(ID.IE),
+		.new_IE						(ID.new_IE),
     	.EXL						(ID.Exception_EXL),
     	.EPCin						(ID.EPCin),
     	.BADADDR					(ID.BADADDR),
@@ -1445,6 +1405,7 @@ module mycpu_top(
 
 	Exception_module Exception_module(
 		.clk						(clk),
+        .rst 						(rst),
     	.address_error				(Exception.address_error),
     	.MemWrite					(Exception.MemWrite),					
     	.overflow_error				(Exception.overflow_error),
