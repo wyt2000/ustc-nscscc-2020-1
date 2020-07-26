@@ -81,6 +81,7 @@ module decoder(
             `OP_BEQ,`OP_BNE,
             `OP_BGTZ,`OP_BLEZ,
             `OP_BELSE:                      ALUop = `ALU_ADDU;
+            `OP_MUL:                        ALUop = `ALU_MUL;
         endcase
     end
 
@@ -111,6 +112,7 @@ module decoder(
                         if(rs == 0 && rt == 0 && sa == 0) exception = 0;
                     `FUNC_BREAK,`FUNC_SYSCALL:
                         exception = 0;
+
                 endcase
             `OP_PRIV:
                 case (rs)
@@ -134,7 +136,9 @@ module decoder(
             `OP_LUI:
                 if(rs == 0) exception = 0;
             `OP_BELSE:
-                if(ins[19:17] == 0) exception = 0;                
+                if(ins[19:17] == 0) exception = 0; 
+            `OP_MUL:
+                if(sa == 0 && func == 6'b000010) exception = 0;               
         endcase
         if(ins == 32'b0) exception = 0;
     end
