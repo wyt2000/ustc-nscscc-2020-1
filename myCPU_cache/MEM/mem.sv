@@ -53,7 +53,7 @@ module MEM_module (
     begin
         calWE = 0;
         TrueRamData = 0;
-        if (exception_in != 0 || PCin[1:0] != 2'b00) calWE = 0;
+        if (exception_in != 0 || PCin[1:0] != 2'b00 || (old_exception != 0 && old_exception != 7)) calWE = 0;
         else if(MemWriteM) begin
             case (MemReadType[1:0])
                 2'b00:
@@ -139,4 +139,8 @@ module MEM_module (
                         .CLR            (CLR)           ,
                         .stall          (stall)         
                         );
+
+    reg     [3:0] old_exception;
+    always@(posedge clk)
+        old_exception   <=  exception_in;
 endmodule

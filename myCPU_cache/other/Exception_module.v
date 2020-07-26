@@ -37,10 +37,10 @@ module Exception_module(
     reg [31:0] pc_old;
 
     always@(posedge clk) begin
-        if(!StallW && !FlushW)
-            pc_old <= pc;
-        else
+        if(pc == 0)
             pc_old <= pc_old;
+        else
+            pc_old <= pc;
     end
 
     assign PCError                          = (pc[1:0]!=2'b00 || (isERET && EPCD[1:0]!=2'b00)) ? 1 : 0;

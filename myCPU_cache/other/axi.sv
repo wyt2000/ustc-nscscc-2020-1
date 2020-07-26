@@ -6,7 +6,7 @@ module axi
 (
 //requests from cache
     output  reg                 gnt                         ,
-    input      [ADDR_LEN-1: 0]  addr                        ,
+    input              [31: 0]  addr                        ,
     input                       rd_req                      ,
     output  reg        [31: 0]  rd_line [8]                 , 
     input                       wr_req                      ,
@@ -89,7 +89,7 @@ module axi
             Start_Address   <=  0;
             // write_data      <=  0;
         end
-        else if((rd_req || wr_req) && gnt) begin
+        else if((rd_req || wr_req)) begin
             Start_Address   <=  addr;
             // write_data      <=  wr_line;
             if(wr_req)

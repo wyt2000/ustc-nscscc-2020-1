@@ -79,7 +79,9 @@ module ID_module(
     output      [31:0]  Status_data,
     output      [31:0]  cause_data,
     //is_ds
-    output reg is_ds
+    output is_ds,
+
+    input StallD
     );
 
     wire Branch_taken, RegWriteCD, RegWriteBD;
@@ -155,26 +157,34 @@ module ID_module(
                .exception(exception));
 
     reg isBranch_old;
-    reg [31:0] pc_old;
+    assign is_ds = isBranch_old;
     always@(posedge clk) begin
-        if(rst) begin
-            isBranch_old <= 0;
-            pc_old <= 0;
-        end
-        else begin
-            isBranch_old <= isBranch;
-            pc_old <= PCin;
-        end
-    end
-    always@(posedge clk) begin
-        if(rst)
-            is_ds <= 0;
-        else if(pc_old == PCin)
-            is_ds <= is_ds;
-        else if(isBranch_old && (pc_old != PCin))
-            is_ds <= 1;
+        if(!StallD)
+            isBranch_old    <=  isBranch;
         else
-            is_ds <= 0;
+            isBranch_old    <=  isBranch_old;
     end
+    // reg is_ds_tmp;
+    // assign is_ds = is_ds_tmp && 
+    // always@(posedge clk) begin
+    //     if(rst) begin
+    //         isBranch_old <= 0;
+    //         pc_old <= 0;
+    //     end
+    //     else begin
+    //         isBranch_old <= isBranch;
+    //         pc_old <= PCin;
+    //     end
+    // end
+    // always@(*) begin
+    //     if(rst)
+    //         is_ds_tmp <= 0;
+    //     else if(pc_old == PCin)
+    //         is_ds_tmp <= is_ds;
+    //     else if(isBranch_old && (pc_old != PCin))
+    //         is_ds_tmp <= 1;
+    //     else
+    //         is_ds_tmp <= 0;
+    // end
     
 endmodule

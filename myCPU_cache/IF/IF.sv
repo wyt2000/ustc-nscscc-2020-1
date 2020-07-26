@@ -97,23 +97,22 @@ module IF_module
 //==================================================================================//
     wire            miss;
     wire            axi_gnt;
-    wire    [31:0]  axi_rd_line[8];
+    wire    [31:0]  axi_rd_line[0:7];
     wire    [31:0]  axi_addr;
     wire            axi_rd_req;
 
     assign stall = miss;
-    cache instr_cache(
+    icache instr_cache(
         .clk            (clk),
         .rst            (rst),
         .miss           (miss),
         .addr           (PCout),
-        .rd_req         (1),
         .rd_data        (instr),
 
-        .mem_gnt        (axi_gnt),
-        .ins            (axi_rd_line),
-        .mem_addr       (axi_addr),
-        .mem_read_req   (axi_rd_req)
+        .axi_gnt        (axi_gnt),
+        .axi_data       (axi_rd_line),
+        .axi_addr       (axi_addr),
+        .axi_rd_req     (axi_rd_req)
     );
 
     axi instr_axi(

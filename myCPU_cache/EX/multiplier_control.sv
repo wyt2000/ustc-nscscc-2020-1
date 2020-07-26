@@ -34,7 +34,7 @@ module multiplier_control(
             if(mul_counter != 0) begin
                 mul_counter <= mul_counter - 1;
             end
-            else if(mul_begin) begin
+            else if(mul_begin && !mul_done) begin
                 mul_counter <= `mul_cycle;                
             end
         end

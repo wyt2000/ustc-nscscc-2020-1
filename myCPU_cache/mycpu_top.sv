@@ -128,6 +128,7 @@ typedef struct packed {
     logic [31:0]  BADADDR;
     logic Branch_delay;
     logic is_ds;
+    logic StallD;
 } ID_interface;
 
 typedef struct packed {
@@ -606,6 +607,7 @@ module mycpu_top(
 	assign ID.IE   							= Exception.new_Status_IE;
 	assign ID.hardware_interruption			= ext_int;
 	assign ID.BADADDR						= Exception.BadVAddr;
+    assign ID.StallD                        = Hazard.StallD;
 
 	assign EX.ForwardMEM                    = MEM.ALUout;
 	assign EX.ForwardWB                     = WB.WritetoRFdata;
@@ -1281,7 +1283,8 @@ module mycpu_top(
 		.Status_data				(ID.Status),
     	.cause_data					(ID.cause),
 		.isBranch					(ID.isBranch),
-        .is_ds                      (ID.is_ds)
+        .is_ds                      (ID.is_ds),
+        .StallD                     (ID.StallD)
 	);
 
 	EX_module EX_module(

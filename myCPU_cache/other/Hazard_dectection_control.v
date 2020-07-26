@@ -30,13 +30,13 @@ module Hazard_module(
     	else                                                        ForwardBD = 2'b00;
     always@(*)
         if(rst || RsE == 0)                                         ForwardAE = 2'b00;
-        else if(RegWriteW && WriteRegW == RsE && RsE)               ForwardAE = 2'b01;//add+nop+use(non-branch)
     	else if(RegWriteM && WriteRegM == RsE && MemtoRegM && RsE)  ForwardAE = 2'b10;//add+use(non-Branch)
+        else if(RegWriteW && WriteRegW == RsE && RsE)               ForwardAE = 2'b01;//add+nop+use(non-branch)
     	else ForwardAE=2'b00;
     always@(*)
         if(rst || RtE == 0)                                         ForwardBE = 2'b00;
-        else if(RegWriteW && WriteRegW == RtE && RtE)               ForwardBE = 2'b01;
     	else if(RegWriteM && WriteRegM == RtE && MemtoRegM && RtE)  ForwardBE = 2'b10;
+        else if(RegWriteW && WriteRegW == RtE && RtE)               ForwardBE = 2'b01;
     	else                                                        ForwardBE = 2'b00;
     
     reg [3:0] State;
@@ -52,13 +52,18 @@ module Hazard_module(
         if(rst)                                                                                                 next_state = 4'b0000;
         else if ((Exception_clean || Exception_Stall) && (IF_stall || MEM_stall))                               next_state = 4'b1110;
         else if (Exception_clean || Exception_Stall)                                                            next_state = 4'b0001;//Exception situation (clean and Stall all the Registers)
-        else if (!IF_stall && MEM_stall)                                                                        next_state = 4'b1101;//MEM operates RAM
-        else if (IF_stall && MEM_stall)                                                                         next_state = 4'b1101;//RAM busy 
+        else if ((WriteRegW[5] && !WriteRegW[6]) && RegWriteW)                                                  next_state = 4'b1101;//write_cp0 instruction in WB
+        else if (/*!IF_stall && */MEM_stall)                                                                    next_state = 4'b1101;//MEM operates RAM
+        // else if (IF_stall && MEM_stall)                                                                         next_state = 4'b1101;//RAM busy 
         else if (MemReadM && ((WriteRegM == RsD) || (WriteRegM == RtD)) && RegWriteM && isaBranchInstruction)   next_state = 4'b0100;//lw+use(Branch),WB-->>EX
         else if (ALU_stall && !ALU_done)                                                                        next_state = 4'b1000; //stall requested by alu
+        else if (MemReadM && ((WriteRegM == RsE) || (WriteRegM == RtE)) && RegWriteM)                           next_state = 4'b1000;
+        else if ((WriteRegM[5] && !WriteRegM[6]) && RegWriteM)                                                  next_state = 4'b1000;//write_cp0 instruction in MEM
         else if (State == 4'b1000)                                                                              next_state = 4'b1001; //mul/div stall 1
         else if (State == 4'b1001)                                                                              next_state = 4'b1010; //mul/div stall 2
         else if (IF_stall && !MEM_stall)                                                                        next_state = 4'b1100;//IF operates RAM
+        else if (MemReadE && ((WriteRegE == RsD) || (WriteRegE == RtD)) && RegWriteE && isaBranchInstruction)   next_state = 4'b1100;
+        else if ((WriteRegE[5] && !WriteRegE[6]) && RegWriteE)                                                  next_state = 4'b1100;//write_cp0 instruction in EX
         else                                                                                                    next_state = 4'b0000;
     end
     always@(next_state)begin
