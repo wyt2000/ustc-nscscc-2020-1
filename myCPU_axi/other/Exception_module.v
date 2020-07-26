@@ -51,7 +51,7 @@ module Exception_module(
     assign we[11:9]                         = 0;
     assign we[31:15]                        = 0;
     assign we[8]                            = (StallW && !FlushW) ? 0 : address_error | PCError ;
-    assign we[12]                           = (StallW && !FlushW) ? 0 : exception_occur;
+    assign we[12]                           = (StallW && !FlushW) ? 0 : exception_occur | isERET;
     assign we[13]                           = (StallW && !FlushW) ? 0 : exception_occur;
     assign we[14]                           = (StallW && !FlushW) ? 0 : exception_occur;
     assign Cause_IP                         = {hardware_abortion, software_abortion};

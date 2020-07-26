@@ -82,7 +82,7 @@ typedef struct packed {
     logic exception;
     logic isBranch;
     logic [31:0] PCout;
-	logic [31:0]  Status;
+(* keep = "true" *)	        	logic [31:0]  Status;
     logic [31:0]  cause;
     logic [7:0]    Exception_enable;
     logic [31:0]  we;
@@ -227,7 +227,7 @@ typedef struct packed {
     logic HI_LO_writeenableout;
     logic [63:0] WriteinRF_HI_LO_data;
     logic RegWrite;
-    logic [31:0] PCout;
+(* keep = "true" *)	            logic [31:0] PCout;
     logic [3:0] exception_in;
 	logic [3:0] exception_out;
     logic MemWrite;
@@ -299,7 +299,7 @@ typedef struct packed{
     logic [31:0] NewPc;//PC跳转
     logic [31:0] we;//写使能字
     logic Branch_delay;//给cause寄存器赋新值
-	logic Stall;//异常发生（Stall，Clear）
+(* keep = "true" *)	        	logic Stall;//异常发生（Stall，Clear）
     logic EXL;
     logic [7:0] enable;
     logic [31:0] epc;
@@ -390,7 +390,7 @@ typedef struct packed{
 module mycpu_top(
 	input aclk,
 	input aresetn,
-	input [5:0] ext_int,
+(* keep = "true" *)	        	input [5:0] ext_int,
     //axi
     //ar
     output [3 :0] arid         ,
@@ -439,6 +439,15 @@ module mycpu_top(
 	output [4:0] debug_wb_rf_wnum,
 	output [31:0] debug_wb_rf_wdata
 	);
+
+	ila_32 ila_32(
+        .clk        (clk),
+        .probe0     (WB.PCout),
+        .probe1     (ext_int),
+        .probe2     (Exception.Stall),
+		.probe3		(ID.Status)
+    );
+
 
 	logic rst;
 
