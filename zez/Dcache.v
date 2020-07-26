@@ -178,23 +178,28 @@ begin
                     2'b00:begin
                         weW[0]<=1;
                         weB[0]<=8'b1;
+						dirty[0][index]<=0;
                     end
                     2'b01:begin
                         weW[1]<=1;
                         weB[1]<=8'b1;
+						dirty[0][index]<=0;
                     end
                     2'b10:begin
                         weW[0]<=1;
                         weB[0]<=8'b1;
+						dirty[0][index]<=0;
                     end
                     2'b11:begin
                         if (LRU[0][index]==1) begin
                             weW[0]<=1;
                             weB[0]<=8'b1;
+							dirty[0][index]<=0;
                         end
                         else begin
                             weW[1]<=1;
                             weB[1]<=8'b1;
+							dirty[0][index]<=0;
                         end
                     end
                 endcase
@@ -210,7 +215,4 @@ begin
         endcase
     end
 end
-/*
-和AXI总线通信
-*/
 endmodule
