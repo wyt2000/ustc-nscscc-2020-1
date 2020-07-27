@@ -1,4 +1,24 @@
 `timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 2020/07/22 17:16:05
+// Design Name: 
+// Module Name: ICache
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
 
 module icache (
     input               clk,
@@ -75,12 +95,12 @@ module icache (
     DATA_RAM DATA_WAY3_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][6]),    .wea(we_way[3]),     .dina(axi_data[6]),    .ena(1));
     DATA_RAM DATA_WAY3_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][7]),    .wea(we_way[3]),     .dina(axi_data[7]),    .ena(1));
 
-    assign  miss    = (!(|way_hit)) || (!ram_ready);
+    assign  miss    = (!(|way_hit)) || (!ram_ready) || !(tagv_way[0]);
     assign  {tag,   index,  offset} = addr;
-    assign  way_hit = {((tag == tagv_way[3][20:1]) && tagv_way[3][0]), 
-                       ((tag == tagv_way[2][20:1]) && tagv_way[2][0]), 
-                       ((tag == tagv_way[1][20:1]) && tagv_way[1][0]), 
-                       ((tag == tagv_way[0][20:1]) && tagv_way[0][0])};
+    assign  way_hit = {!(|(tag ^ tagv_way[3][20:1])), 
+                       !(|(tag ^ tagv_way[2][20:1])), 
+                       !(|(tag ^ tagv_way[1][20:1])), 
+                       !(|(tag ^ tagv_way[0][20:1]))};
     always@(*) begin
         case(way_hit)
         4'b0001:    rd_data =   data_way_bank[0][offset[4:2]];
@@ -161,13 +181,7 @@ module icache (
     end
 
     //get ram ready
-    always@(posedge clk) begin
-        if(rst) begin
-            index_old <= 0;
-        end
-        else begin
-            index_old   <=  index;
-        end
-    end
+    always@(posedge clk) 
+        index_old   <=  index;
     assign ram_ready    =   (index == index_old) ? 1 : 0;
 endmodule

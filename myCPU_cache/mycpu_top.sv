@@ -543,7 +543,7 @@ module mycpu_top(
 	assign clk								= aclk;
 	assign rst 								= ~aresetn;
 	assign debug_wb_pc 						= WB.PCout;
-	assign debug_wb_rf_wen					= (WB.RegWrite && WB.WritetoRFaddrout[6:5] == 2'b00) ? 4'b1111 : 4'b0000;
+	assign debug_wb_rf_wen					= (WB.RegWrite && (WB.WritetoRFaddrout[6:5] == 2'b00) && !Hazard.FlushW) ? 4'b1111 : 4'b0000;
 	assign debug_wb_rf_wnum					= WB.WritetoRFaddrout[4:0];
 	assign debug_wb_rf_wdata				= WB.WritetoRFdata;
 
@@ -988,7 +988,7 @@ module mycpu_top(
 	register #(1) MEM_WB_MemtoRegW (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.MemtoRegW),
 		.q(WB.MemtoRegW)
@@ -997,7 +997,7 @@ module mycpu_top(
 	register #(1) MEM_WB_RegWriteW (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.RegWriteW),
 		.q(WB.RegWriteW)
@@ -1006,7 +1006,7 @@ module mycpu_top(
 	register #(1) MEM_WB_HI_LO_writeenablein (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.HI_LO_write_enableW),
 		.q(WB.HI_LO_writeenablein)
@@ -1015,7 +1015,7 @@ module mycpu_top(
 	register #(64) MEM_WB_HILO_data (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.HI_LO_dataW),
 		.q(WB.HILO_data)
@@ -1024,7 +1024,7 @@ module mycpu_top(
 	register #(32) MEM_WB_aluout (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.ALUoutW),
 		.q(WB.aluout)
@@ -1033,7 +1033,7 @@ module mycpu_top(
 	register #(7) MEM_WB_WritetoRFaddrin (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.WriteRegisterW),
 		.q(WB.WritetoRFaddrin)
@@ -1042,7 +1042,7 @@ module mycpu_top(
 	register #(32) MEM_WB_PCout (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.PCout),
 		.q(WB.PCin)
@@ -1051,7 +1051,7 @@ module mycpu_top(
 	register #(3) MEM_WB_MemReadTypeW (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.MemReadTypeW),
 		.q(WB.MemReadTypeW)
@@ -1060,7 +1060,7 @@ module mycpu_top(
     register #(4) MEM_WB_exception(
         .clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
         .d(MEM.exception_out),
         .q(WB.exception_in)
@@ -1069,7 +1069,7 @@ module mycpu_top(
 	register #(1) MEM_WB_MemWriteW (
         .clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
         .d(MEM.MemWriteW),
         .q(WB.MemWriteW)
@@ -1078,7 +1078,7 @@ module mycpu_top(
     register #(1) MEM_WB_is_ds (
         .clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
         .d(MEM.is_ds_out),
         .q(WB.is_ds_in)
@@ -1087,7 +1087,7 @@ module mycpu_top(
     register #(32) MEM_WB_Memdata (
         .clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
         .d(MEM.Memdata),
         .q(WB.Memdata)

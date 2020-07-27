@@ -158,10 +158,10 @@ module ID_module(
     reg isBranch_old;
     assign is_ds = isBranch_old;
     always@(posedge clk) begin
-        if(!StallD)
+        if(rst) 
+            isBranch_old    <=  0;
+        else if(!StallD)
             isBranch_old    <=  isBranch;
-        else
-            isBranch_old    <=  isBranch_old;
     end
     
 endmodule
