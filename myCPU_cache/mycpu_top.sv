@@ -11,17 +11,14 @@ typedef struct packed {
     logic [31:0] Jump_addr;
     logic [31:0] beq_addr;
     logic StallF;
-    logic [31:0] Instruction_in;
     logic Error_happend;
     //output
-    logic [31:0] Instruction;
     logic [31:0] PC_add_4;
     logic [31:0] PCout;
 
     logic is_newPC;
     
     logic [31:0] instr;
-    logic CLR;
     logic stall;
     
 //========instr axi bus========
@@ -80,7 +77,6 @@ typedef struct packed {
     logic [63:0] HI_LO_data;
     logic [31:0] ALUoutE;
     logic [31:0] ALUoutM;
-    logic [31:0] RAMoutM;
     logic [1:0] ForwardAD;
     logic [1:0] ForwardBD;
     logic [31:0] PCin;
@@ -112,15 +108,12 @@ typedef struct packed {
     logic new_IE;
     logic [31:0] Jump_addr;
     logic [31:0] Branch_addr;
-    logic CLR_EN;
     logic exception;
     logic isBranch;
     logic [31:0] PCout;
     logic [31:0]  Status;
     logic [31:0]  cause;
-    logic [7:0]    Exception_enable;
     logic [31:0]  we;
-    logic [7:0]   interrupt_enable;
     logic [4:0]   Exception_code;
     logic Exception_EXL;
     logic [5:0]   hardware_interruption;
@@ -156,13 +149,6 @@ typedef struct packed {
     logic [1:0] ForwardA;
     logic [1:0] ForwardB;
     logic [31:0] PCin;
-    logic BranchD;
-    logic JumpD;
-    logic EPC_selD;
-    logic [31:0] Branch_addrD;
-    logic [31:0] Jump_addrD;
-    logic [31:0] PCSrc_regD;
-    logic [31:0] EPCD;
     //output
     logic hiloWrite_o;
     logic [2:0] MemReadType_o;
@@ -180,13 +166,6 @@ typedef struct packed {
     logic [3:0] exception;
     logic stall;
     logic [31:0] PCout;
-    logic Branch;
-    logic Jump;
-    logic EPC_sel;
-    logic [31:0] Branch_addr;
-    logic [31:0] Jump_addr;
-    logic [31:0] PCSrc_reg;
-    logic [31:0] EPC;
     logic exceptionD;
     logic is_ds_in;
     logic is_ds_out;
@@ -204,20 +183,16 @@ typedef struct packed {
     logic [31:0] RamData;
     logic [6:0] WriteRegister;
     logic [2:0] MemReadType;
-    logic [31:0] RAMtmp;
     logic [31:0] PCin;
     //output
     logic MemtoRegW;
     logic RegWriteW;
     logic HI_LO_write_enableW;
     logic [63:0] HI_LO_dataW;
-    logic [31:0] RAMout;
     logic [31:0] ALUoutW;
     logic [6:0] WriteRegisterW;
-    logic [3:0] calWE;
     logic [31:0] PCout;
     logic [2:0] MemReadTypeW;
-    logic [31:0] TrueRamData;
     logic [3:0] exception_in;
     logic [3:0] exception_out;
     logic MemWriteW;
@@ -247,13 +222,8 @@ typedef struct packed {
     logic MemtoRegW;
     logic RegWriteW;
     logic [6:0] WritetoRFaddrin;
-    logic HI_LO_write_enablein;
     logic [63:0] HILO_data;
-    logic Exception_Write_addr_sel;
-    logic Exception_Write_data_sel;
     logic HI_LO_writeenablein;
-    logic [6:0] Exception_RF_addr;
-    logic [31:0] Exceptiondata;
     logic [31:0] PCin;
     logic [2:0] MemReadTypeW;
     //output
@@ -317,7 +287,6 @@ typedef struct packed {
 
 typedef struct packed{
     //input
-    logic clk;
     logic address_error;
     logic MemWrite;
     logic overflow_error;
@@ -331,20 +300,16 @@ typedef struct packed{
     logic [31:0] BadVAddr;//输出置BadVaddr
     logic [31:0] EPC;//输出置EPC
     //epc
-    logic [31:0] NewPc;//PC跳转
     logic [31:0] we;//写使能字
     logic Branch_delay;//给cause寄存器赋新值
     logic Stall;//异常发生（Stall，Clear）
     logic EXL;
     logic [7:0] enable;
-    logic [31:0] epc;
     logic new_Status_IE;//给Status寄存器赋新值
-    logic [7:0] Cause_IP;//给cause寄存器赋新值
     logic [7:0] Status_IM;//给Status寄存器赋新值
     logic [4:0] ExcCode;//异常编码
     logic [31:0] ErrorAddr;
     logic isERET;
-    logic [7:0] new_Status_IM;
     logic is_ds;
 	logic [31:0] EPCD;
 	logic syscall;
@@ -354,8 +319,6 @@ typedef struct packed{
 } Exception_interface;
 
 typedef struct packed{
-    logic         clk;
-    logic         resetn; 
 
     //inst sram-like 
     logic         inst_req     ;
@@ -473,6 +436,11 @@ module mycpu_top(
 	output [4:0] debug_wb_rf_wnum,
 	output [31:0] debug_wb_rf_wdata
 	);
+
+    ila ila(
+        .clk        (clk),
+        .probe0     (WB.PCout)
+    );
 
 	logic rst;
 
@@ -600,7 +568,6 @@ module mycpu_top(
 	assign ID.ForwardAD                     = Hazard.ForwardAD;
 	assign ID.ForwardBD                     = Hazard.ForwardBD;
 	assign ID.Exception_EXL					= Exception.EXL;
-	assign ID.Exception_enable				= Exception.new_Status_IM;
 	assign ID.software_interruption         = Exception.software_abortion;
 	assign ID.Exception_code				= Exception.ExcCode;
 	assign ID.we							= Exception.we;
@@ -1232,7 +1199,6 @@ module mycpu_top(
 		.PCin						(ID.PCin),
 		.PCout						(ID.PCout),		
 		.we							(ID.we),
-    	.interrupt_enable			(ID.Exception_enable),
     	.Exception_code				(ID.Exception_code),
 		.new_IE						(ID.new_IE),
     	.EXL						(ID.Exception_EXL),
@@ -1431,7 +1397,6 @@ module mycpu_top(
 		.ErrorAddr					(Exception.ErrorAddr),
 		.EPCD						(Exception.EPCD),
 		.isERET						(Exception.isERET),
-        .new_Status_IM              (Exception.new_Status_IM),
         .is_ds                      (Exception.is_ds),
         .StallW                     (Exception.StallW),
         .FlushW                     (Exception.FlushW)

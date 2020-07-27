@@ -47,7 +47,7 @@ module axi
     input             awready  ,
     //w          
     output reg [3 :0] wid      ,
-    output reg [31:0] wdata    ,
+    output     [31:0] wdata    ,
     output reg [3 :0] wstrb    ,
     output reg        wlast    ,
     output reg        wvalid   ,
@@ -82,6 +82,8 @@ module axi
     reg [3  :0] count;
     reg [1  :0] current_state,  next_state;
     
+    assign wdata = 32'b0;
+
     //save request information
     always@(posedge aclk) begin
         if(!aresetn) begin
@@ -192,9 +194,6 @@ module axi
         end
         else 
                     count           <=  0;
-    end
-    always@(*) begin
-        wdata = wr_line[count];
     end
 
     //constants
