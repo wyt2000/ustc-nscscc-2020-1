@@ -37,7 +37,7 @@ module dcache(
     reg             we_bank[0:7];
     wire    [21:0]  tagvd_way[0:3];
     wire    [31:0]  data_way_bank[0:3][0:7];
-    reg     [31:0]  wr_data_way[0:3];
+    reg     [31:0]  wr_data_bank[0:7];
 
     wire    [3 :0]  way_hit;
     wire    [1 :0]  way_num;
@@ -54,38 +54,38 @@ module dcache(
     TAGVD_RAM TAGVD_WAY_2 (.clka(clk),    .addra(index),  .douta(tagvd_way[2]),    .wea(we_way[2]),     .dina({tag, valid, dirty}),    .ena(1));
     TAGVD_RAM TAGVD_WAY_3 (.clka(clk),    .addra(index),  .douta(tagvd_way[3]),    .wea(we_way[3]),     .dina({tag, valid, dirty}),    .ena(1));
 
-    DATA_RAM DATA_WAY0_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][0]),    .wea(we_way[0] & we_bank[0]),     .dina(wr_data_way[0]),    .ena(1));
-    DATA_RAM DATA_WAY0_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][1]),    .wea(we_way[0] & we_bank[1]),     .dina(wr_data_way[0]),    .ena(1));
-    DATA_RAM DATA_WAY0_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][2]),    .wea(we_way[0] & we_bank[2]),     .dina(wr_data_way[0]),    .ena(1));
-    DATA_RAM DATA_WAY0_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][3]),    .wea(we_way[0] & we_bank[3]),     .dina(wr_data_way[0]),    .ena(1));
-    DATA_RAM DATA_WAY0_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][4]),    .wea(we_way[0] & we_bank[4]),     .dina(wr_data_way[0]),    .ena(1));
-    DATA_RAM DATA_WAY0_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][5]),    .wea(we_way[0] & we_bank[5]),     .dina(wr_data_way[0]),    .ena(1));
-    DATA_RAM DATA_WAY0_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][6]),    .wea(we_way[0] & we_bank[6]),     .dina(wr_data_way[0]),    .ena(1));
-    DATA_RAM DATA_WAY0_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][7]),    .wea(we_way[0] & we_bank[7]),     .dina(wr_data_way[0]),    .ena(1));
-    DATA_RAM DATA_WAY1_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][0]),    .wea(we_way[1] & we_bank[0]),     .dina(wr_data_way[1]),    .ena(1));
-    DATA_RAM DATA_WAY1_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][1]),    .wea(we_way[1] & we_bank[1]),     .dina(wr_data_way[1]),    .ena(1));
-    DATA_RAM DATA_WAY1_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][2]),    .wea(we_way[1] & we_bank[2]),     .dina(wr_data_way[1]),    .ena(1));
-    DATA_RAM DATA_WAY1_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][3]),    .wea(we_way[1] & we_bank[3]),     .dina(wr_data_way[1]),    .ena(1));
-    DATA_RAM DATA_WAY1_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][4]),    .wea(we_way[1] & we_bank[4]),     .dina(wr_data_way[1]),    .ena(1));
-    DATA_RAM DATA_WAY1_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][5]),    .wea(we_way[1] & we_bank[5]),     .dina(wr_data_way[1]),    .ena(1));
-    DATA_RAM DATA_WAY1_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][6]),    .wea(we_way[1] & we_bank[6]),     .dina(wr_data_way[1]),    .ena(1));
-    DATA_RAM DATA_WAY1_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][7]),    .wea(we_way[1] & we_bank[7]),     .dina(wr_data_way[1]),    .ena(1));
-    DATA_RAM DATA_WAY2_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][0]),    .wea(we_way[2] & we_bank[0]),     .dina(wr_data_way[2]),    .ena(1));
-    DATA_RAM DATA_WAY2_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][1]),    .wea(we_way[2] & we_bank[1]),     .dina(wr_data_way[2]),    .ena(1));
-    DATA_RAM DATA_WAY2_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][2]),    .wea(we_way[2] & we_bank[2]),     .dina(wr_data_way[2]),    .ena(1));
-    DATA_RAM DATA_WAY2_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][3]),    .wea(we_way[2] & we_bank[3]),     .dina(wr_data_way[2]),    .ena(1));
-    DATA_RAM DATA_WAY2_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][4]),    .wea(we_way[2] & we_bank[4]),     .dina(wr_data_way[2]),    .ena(1));
-    DATA_RAM DATA_WAY2_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][5]),    .wea(we_way[2] & we_bank[5]),     .dina(wr_data_way[2]),    .ena(1));
-    DATA_RAM DATA_WAY2_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][6]),    .wea(we_way[2] & we_bank[6]),     .dina(wr_data_way[2]),    .ena(1));
-    DATA_RAM DATA_WAY2_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][7]),    .wea(we_way[2] & we_bank[7]),     .dina(wr_data_way[2]),    .ena(1));
-    DATA_RAM DATA_WAY3_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][0]),    .wea(we_way[3] & we_bank[0]),     .dina(wr_data_way[3]),    .ena(1));
-    DATA_RAM DATA_WAY3_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][1]),    .wea(we_way[3] & we_bank[1]),     .dina(wr_data_way[3]),    .ena(1));
-    DATA_RAM DATA_WAY3_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][2]),    .wea(we_way[3] & we_bank[2]),     .dina(wr_data_way[3]),    .ena(1));
-    DATA_RAM DATA_WAY3_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][3]),    .wea(we_way[3] & we_bank[3]),     .dina(wr_data_way[3]),    .ena(1));
-    DATA_RAM DATA_WAY3_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][4]),    .wea(we_way[3] & we_bank[4]),     .dina(wr_data_way[3]),    .ena(1));
-    DATA_RAM DATA_WAY3_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][5]),    .wea(we_way[3] & we_bank[5]),     .dina(wr_data_way[3]),    .ena(1));
-    DATA_RAM DATA_WAY3_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][6]),    .wea(we_way[3] & we_bank[6]),     .dina(wr_data_way[3]),    .ena(1));
-    DATA_RAM DATA_WAY3_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][7]),    .wea(we_way[3] & we_bank[7]),     .dina(wr_data_way[3]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][0]),    .wea(we_way[0] & we_bank[0]),     .dina(wr_data_bank[0]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][1]),    .wea(we_way[0] & we_bank[1]),     .dina(wr_data_bank[1]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][2]),    .wea(we_way[0] & we_bank[2]),     .dina(wr_data_bank[2]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][3]),    .wea(we_way[0] & we_bank[3]),     .dina(wr_data_bank[3]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][4]),    .wea(we_way[0] & we_bank[4]),     .dina(wr_data_bank[4]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][5]),    .wea(we_way[0] & we_bank[5]),     .dina(wr_data_bank[5]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][6]),    .wea(we_way[0] & we_bank[6]),     .dina(wr_data_bank[6]),    .ena(1));
+    DATA_RAM DATA_WAY0_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][7]),    .wea(we_way[0] & we_bank[7]),     .dina(wr_data_bank[7]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][0]),    .wea(we_way[1] & we_bank[0]),     .dina(wr_data_bank[0]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][1]),    .wea(we_way[1] & we_bank[1]),     .dina(wr_data_bank[1]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][2]),    .wea(we_way[1] & we_bank[2]),     .dina(wr_data_bank[2]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][3]),    .wea(we_way[1] & we_bank[3]),     .dina(wr_data_bank[3]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][4]),    .wea(we_way[1] & we_bank[4]),     .dina(wr_data_bank[4]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][5]),    .wea(we_way[1] & we_bank[5]),     .dina(wr_data_bank[5]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][6]),    .wea(we_way[1] & we_bank[6]),     .dina(wr_data_bank[6]),    .ena(1));
+    DATA_RAM DATA_WAY1_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[1][7]),    .wea(we_way[1] & we_bank[7]),     .dina(wr_data_bank[7]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][0]),    .wea(we_way[2] & we_bank[0]),     .dina(wr_data_bank[0]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][1]),    .wea(we_way[2] & we_bank[1]),     .dina(wr_data_bank[1]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][2]),    .wea(we_way[2] & we_bank[2]),     .dina(wr_data_bank[2]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][3]),    .wea(we_way[2] & we_bank[3]),     .dina(wr_data_bank[3]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][4]),    .wea(we_way[2] & we_bank[4]),     .dina(wr_data_bank[4]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][5]),    .wea(we_way[2] & we_bank[5]),     .dina(wr_data_bank[5]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][6]),    .wea(we_way[2] & we_bank[6]),     .dina(wr_data_bank[6]),    .ena(1));
+    DATA_RAM DATA_WAY2_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[2][7]),    .wea(we_way[2] & we_bank[7]),     .dina(wr_data_bank[7]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][0]),    .wea(we_way[3] & we_bank[0]),     .dina(wr_data_bank[0]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][1]),    .wea(we_way[3] & we_bank[1]),     .dina(wr_data_bank[1]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK2 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][2]),    .wea(we_way[3] & we_bank[2]),     .dina(wr_data_bank[2]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK3 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][3]),    .wea(we_way[3] & we_bank[3]),     .dina(wr_data_bank[3]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK4 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][4]),    .wea(we_way[3] & we_bank[4]),     .dina(wr_data_bank[4]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK5 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][5]),    .wea(we_way[3] & we_bank[5]),     .dina(wr_data_bank[5]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][6]),    .wea(we_way[3] & we_bank[6]),     .dina(wr_data_bank[6]),    .ena(1));
+    DATA_RAM DATA_WAY3_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][7]),    .wea(we_way[3] & we_bank[7]),     .dina(wr_data_bank[7]),    .ena(1));
 
     assign  miss    = ((!(|way_hit)) || (!ram_ready)) && (rd_req || wr_req);
     assign  {tag,   index,  offset} = addr;
@@ -147,9 +147,9 @@ module dcache(
     always@(*) begin
         for(i = 0; i < 4; i++)begin
             we_way[i]       =   0;
-            wr_data_way[i]  =   32'b0;
         end
         for(i = 0; i < 8; i++) begin
+            wr_data_bank[i]  =   32'b0;
             we_bank[i]      =   0;
             axi_wr_data[i]  =   32'b0;
         end
@@ -163,7 +163,7 @@ module dcache(
             if((|way_hit) && ram_ready && wr_req) begin
                 we_way[way_num]         =   1;
                 we_bank[offset[4:2]]    =   1;
-                wr_data_way[way_num]    =   {valid_lane[3] ? wr_data[31:24] : data_way_bank[way_num][offset[4:2]][31:24],
+                wr_data_bank[offset[4:2]]=  {valid_lane[3] ? wr_data[31:24] : data_way_bank[way_num][offset[4:2]][31:24],
                                              valid_lane[2] ? wr_data[23:16] : data_way_bank[way_num][offset[4:2]][23:16],
                                              valid_lane[1] ? wr_data[15: 8] : data_way_bank[way_num][offset[4:2]][15: 8],
                                              valid_lane[0] ? wr_data[ 7: 0] : data_way_bank[way_num][offset[4:2]][ 7: 0]};
@@ -188,7 +188,7 @@ module dcache(
                 we_bank[i]                  =   1;
             we_way[LRU_index[index]]        =   1;
             for(i = 0; i < 8; i++)
-                wr_data_way[LRU_index[index]][i]   =   axi_rd_data[i];
+                wr_data_bank[i]             =   axi_rd_data[i];
             valid                           =   1;
             dirty                           =   0;
         end
