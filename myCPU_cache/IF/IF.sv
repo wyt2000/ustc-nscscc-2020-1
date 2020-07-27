@@ -17,7 +17,6 @@ module IF_module
     
     output  [31:0]  instr,
 
-    output          CLR,
     output          stall,
 
     //=========instr axi bus=========
@@ -111,7 +110,7 @@ module IF_module
         .addr       (axi_addr),
         .rd_req     (axi_rd_req),
         .rd_line    (axi_rd_line),
-        .wr_req     (0),
+        .wr_req     (1'b0),
 
         .aclk       (clk),
         .aresetn    (!rst),

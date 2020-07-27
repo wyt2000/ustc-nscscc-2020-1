@@ -485,7 +485,9 @@ module mycpu_top(
 	Exception_interface Exception;    
     axi_interface axi;
 
-    wire        awqos,  arqos;
+    wire   [3:0] awqos,  arqos;
+    assign awqos = 4'b0000;
+    assign arqos = 4'b0000;
     AXI_Crossbar axi_bridge(
         .aclk           (aclk),
         .aresetn        (aresetn),
@@ -1141,7 +1143,6 @@ module mycpu_top(
         .is_newPC                   (IF.is_newPC),
 
         .instr                      (IF.instr),
-        .CLR                        (IF.CLR),
         .stall                      (IF.stall),
 
         //========INSTR_AXI_BUS========
