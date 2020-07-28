@@ -82,8 +82,6 @@ module axi
     reg [3  :0] count;
     reg [1  :0] current_state,  next_state;
 
-    assign wdata = 32'b0;
-
     //save request information
     always@(posedge aclk) begin
         if(!aresetn) begin
@@ -201,6 +199,8 @@ module axi
         else 
                     count           <=  0;
     end
+
+    assign wdata = wr_line[count];
 
     //constants
     always@(*) begin
