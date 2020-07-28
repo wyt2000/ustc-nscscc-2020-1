@@ -1,11 +1,21 @@
 module TLB(
+	input clk,
+	input rst,
+	
+	
 	input [31:0] logic_addr,
 	input [1:0] reftype,
 	output [31:0] phy_addr,
 	//TLB exceptions
 	output Refill,
 	output Invalid,
-	output Modified
+	output Modified,
+	//TLB write
+	input we,
+	input [31:0] EntryHi,
+	input [31:0] PageaMask,
+	input [31:0] EntryLo0,
+	input [31:0] EntryLo1
 );
 localparam fetch = 2'b00;
 localparam load  = 2'b01;
@@ -53,13 +63,48 @@ always@(*) begin
 		end
 		else begin
 			found[i]<=0;
-			{c,d,v}<=5'b0;
-			PFN<=0;
 		end
 	end
 end
 
 assign phy_addr={PFN,valow};
+
+reg [7:0] LRU [0:31];
+reg [4:0] writereg;
+reg [4:0] count;
+reg [4:0] nextwritereg;
+getnextreg(LRU,nextwritereg);
+
+always@(posedge clk) begin
+	if (rst) begin
+		for (integer i=0;i<31;i++) LRU[i]<=0;
+	end
+	else begin
+		if ((|found) && we) begin
+			for (integer i=0;i<31;i++) begin
+				if (found[i]) LRU[i]<=0;
+				else LRU[i]<=LRU[i]+1;
+			end
+		end
+	end
+end
+always@(posedge clk) begin
+	nextwritereg <= LRU[count] > LRU[nextwritereg]? count:nextwritereg;
+	count <= count+1;
+end
+always@(posedge clk) begin
+	if (we) begin
+		VPN2 	 [writereg] <= EntryHi[31:13];
+		ASID 	 [writereg] <= EntryHi[7:0];
+		Pagemask [writereg] <= PageMask[24:13];
+		G     	 [writereg] <= EntryLo0[0];
+		PFN0     [writereg] <= EntryLo0[25:6];
+		CDV0     [writereg] <= EntryLo0[5:1];
+		PFN1     [writereg] <= EntryLo1[25:6];
+		CDV1     [writereg] <= EntryLo1[5:1];
+		writereg<=nextwritereg;
+	end
+end
 endmodule
 
 
