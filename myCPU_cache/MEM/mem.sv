@@ -177,12 +177,12 @@ module MEM_module (
     wire    [31:0]  Memdata_cache,  Memdata_uncache;
     wire            stall_uncache;
 
-    assign MemRead_cache    =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? MemReadM : 0;
-    assign MemRead_uncache  =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? MemReadM : 0;
-    assign MemWrite_cache   =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? TrueMemWrite : 0;
-    assign MemWrite_uncache =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? TrueMemWrite : 0;
+    assign MemRead_cache    =   (ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF) ? MemReadM : 0;
+    assign MemRead_uncache  =   (ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000) ? MemReadM : 0;
+    assign MemWrite_cache   =   (ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF) ? TrueMemWrite : 0;
+    assign MemWrite_uncache =   (ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000) ? TrueMemWrite : 0;
 
-    assign Memdata          =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? Memdata_cache : Memdata_uncache;
+    assign Memdata          =   (ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF) ? Memdata_cache : Memdata_uncache;
     assign stall = miss || stall_uncache;
     dcache data_cache(
         .clk            (clk),
