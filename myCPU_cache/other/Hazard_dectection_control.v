@@ -78,5 +78,6 @@ module Hazard_module(
             default: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b000000000;
         endcase
     end
+
         
 endmodule // Hazard_detection_control

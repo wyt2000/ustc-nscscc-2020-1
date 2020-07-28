@@ -1,8 +1,6 @@
 module axi
 #(
-    parameter                   LINE_ADDR_LEN = 3           ,
-    parameter                   ADDR_LEN      = 8           
-)
+    parameter                   LINE_ADDR_LEN = 3           )
 (
 //requests from cache
     output  reg                 gnt                         ,
@@ -83,7 +81,7 @@ module axi
     reg         request_type;
     reg [3  :0] count;
     reg [1  :0] current_state,  next_state;
-    
+
     assign wdata = 32'b0;
 
     //save request information
@@ -164,8 +162,10 @@ module axi
             end
             else begin
                 wvalid      =   1;
-                if(count == BURST_LENGTH) begin
+                if(count == BURST_LENGTH - 1) begin
                     wlast   =   1;
+                end
+                if(count == BURST_LENGTH)   begin
                     gnt     =   1;
                 end
             end

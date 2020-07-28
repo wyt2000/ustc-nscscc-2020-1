@@ -29,7 +29,7 @@ module CP0
         output allow_interrupt,
         output state//user mode:0 kernel mode:1
 );  
-    
+
     reg [WIDTH-1:0] Readdata;
     reg [WIDTH-1:0] BADVADDR;//8 deal with the exception such as TLB miss and address error
     reg [WIDTH-1:0] count;//9 +1 every two clock cycles
@@ -40,7 +40,7 @@ module CP0
     reg [WIDTH-1:0] configure;//16  config some information of the processor 
     assign CP0_data = Readdata;
     assign EPC_data=EPC;
-    assign BADVADDR_data=BADVADDR;    
+    assign BADVADDR_data=BADVADDR;
     assign Status_data=Status;
     assign cause_data=cause;
     assign configure_data=configure;

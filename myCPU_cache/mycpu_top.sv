@@ -201,16 +201,60 @@ typedef struct packed {
 
     logic [31:0] Memdata;
 
-    logic data_req;
-    logic data_wr;
-    logic [1:0] data_size;
-    logic [31:0] data_addr;
-    logic [31:0] data_wdata;
-    logic [31:0] data_rdata;
-    logic data_addr_ok;
-    logic data_data_ok;
+    logic mem_req;
+    logic mem_wr;
+    logic [1:0] mem_size;
+    logic [31:0] mem_addr;
+    logic [31:0] mem_wdata;
+    logic [31:0] mem_rdata;
+    logic mem_addr_ok;
+    logic mem_data_ok;
 
     logic CLR;
+
+    //========data axi bus========
+    //ar
+    logic       [3:0]   data_arid      ;
+    logic       [31:0]  data_araddr    ;
+    logic       [3:0]   data_arlen     ;
+    logic       [2:0]   data_arsize    ;
+    logic       [1:0]   data_arburst   ;
+    logic       [1:0]   data_arlock    ;
+    logic       [3:0]   data_arcache   ;
+    logic       [2:0]   data_arprot    ;
+    logic               data_arvalid   ;
+    logic               data_arready   ;
+    //r
+    logic       [3:0]   data_rid       ;
+    logic       [31:0]  data_rdata     ;
+    logic       [1:0]   data_rresp     ;
+    logic               data_rlast     ;
+    logic               data_rvalid    ;
+    logic               data_rready    ;
+    //aw
+    logic       [3:0]   data_awid      ;
+    logic       [31:0]  data_awaddr    ;
+    logic       [3:0]   data_awlen     ;
+    logic       [2:0]   data_awsize    ;
+    logic       [1:0]   data_awburst   ;
+    logic       [1:0]   data_awlock    ;
+    logic       [3:0]   data_awcache   ;
+    logic       [2:0]   data_awprot    ;
+    logic               data_awvalid   ;
+    logic               data_awready   ;
+    //w
+    logic       [3:0]   data_wid       ;
+    logic       [31:0]  data_wdata     ;
+    logic       [3:0]   data_wstrb     ;
+    logic               data_wlast     ;
+    logic               data_wvalid    ;
+    logic               data_wready    ;
+    //b
+    logic       [3:0]   data_bid       ;
+    logic       [1:0]   data_bresp     ;
+    logic               data_bvalid    ;
+    logic               data_bready    ;
+
     logic stall;
 
 } MEM_interface;
@@ -319,6 +363,8 @@ typedef struct packed{
 } Exception_interface;
 
 typedef struct packed{
+    logic         clk;
+    logic         resetn; 
 
     //inst sram-like 
     logic         inst_req     ;
@@ -436,12 +482,7 @@ module mycpu_top(
 	output [4:0] debug_wb_rf_wnum,
 	output [31:0] debug_wb_rf_wdata
 	);
-/*
-    ila ila(
-        .clk        (clk),
-        .probe0     (WB.PCout)
-    );
-*/
+
 	logic rst;
 
 	IF_interface IF;
@@ -460,44 +501,44 @@ module mycpu_top(
         .aclk           (aclk),
         .aresetn        (aresetn),
 
-        .s_axi_awid     ({axi.awid,        IF.instr_awid}),
-        .s_axi_awaddr   ({axi.awaddr,      IF.instr_awaddr}),
-        .s_axi_awlen    ({axi.awlen,       IF.instr_awlen}),
-        .s_axi_awsize   ({axi.awsize,      IF.instr_awsize}),
-        .s_axi_awburst  ({axi.awburst,     IF.instr_awburst}),
-        .s_axi_awlock   ({axi.awlock,      IF.instr_awlock}),
-        .s_axi_awcache  ({axi.awcache,     IF.instr_awcache}),
-        .s_axi_awprot   ({axi.awprot,      IF.instr_awprot}),
+        .s_axi_awid     ({MEM.data_awid,        IF.instr_awid,          axi.awid}),
+        .s_axi_awaddr   ({MEM.data_awaddr,      IF.instr_awaddr,        axi.awaddr}),
+        .s_axi_awlen    ({MEM.data_awlen,       IF.instr_awlen,         axi.awlen}),
+        .s_axi_awsize   ({MEM.data_awsize,      IF.instr_awsize,        axi.awsize}),
+        .s_axi_awburst  ({MEM.data_awburst,     IF.instr_awburst,       axi.awburst}),
+        .s_axi_awlock   ({MEM.data_awlock,      IF.instr_awlock,        axi.awlock}),
+        .s_axi_awcache  ({MEM.data_awcache,     IF.instr_awcache,       axi.awcache}),
+        .s_axi_awprot   ({MEM.data_awprot,      IF.instr_awprot,        axi.awprot}),
         .s_axi_awqos    (0),
-        .s_axi_awvalid  ({axi.awvalid,     IF.instr_awvalid}),
-        .s_axi_awready  ({axi.awready,     IF.instr_awready}),
-        .s_axi_wid      ({axi.wid,         IF.instr_wid}),
-        .s_axi_wdata    ({axi.wdata,       IF.instr_wdata}),
-        .s_axi_wstrb    ({axi.wstrb,       IF.instr_wstrb}),
-        .s_axi_wlast    ({axi.wlast,       IF.instr_wlast}),
-        .s_axi_wvalid   ({axi.wvalid,      IF.instr_wvalid}),
-        .s_axi_wready   ({axi.wready,      IF.instr_wready}),
-        .s_axi_bid      ({axi.bid,         IF.instr_bid}),
-        .s_axi_bresp    ({axi.bresp,       IF.instr_bresp}),
-        .s_axi_bvalid   ({axi.bvalid,      IF.instr_bvalid}),
-        .s_axi_bready   ({axi.bready,      IF.instr_bready}),
-        .s_axi_arid     ({axi.arid,        IF.instr_arid}),
-        .s_axi_araddr   ({axi.araddr,      IF.instr_araddr}),
-        .s_axi_arlen    ({axi.arlen,       IF.instr_arlen}),
-        .s_axi_arsize   ({axi.arsize,      IF.instr_arsize}),
-        .s_axi_arburst  ({axi.arburst,     IF.instr_arburst}),
-        .s_axi_arlock   ({axi.arlock,      IF.instr_arlock}),
-        .s_axi_arcache  ({axi.arcache,     IF.instr_arcache}),
-        .s_axi_arprot   ({axi.arprot,      IF.instr_arprot}),
+        .s_axi_awvalid  ({MEM.data_awvalid,     IF.instr_awvalid,       axi.awvalid}),
+        .s_axi_awready  ({MEM.data_awready,     IF.instr_awready,       axi.awready}),
+        .s_axi_wid      ({MEM.data_wid,         IF.instr_wid,           axi.wid}),
+        .s_axi_wdata    ({MEM.data_wdata,       IF.instr_wdata,         axi.wdata}),
+        .s_axi_wstrb    ({MEM.data_wstrb,       IF.instr_wstrb,         axi.wstrb}),
+        .s_axi_wlast    ({MEM.data_wlast,       IF.instr_wlast,         axi.wlast}),
+        .s_axi_wvalid   ({MEM.data_wvalid,      IF.instr_wvalid,        axi.wvalid}),
+        .s_axi_wready   ({MEM.data_wready,      IF.instr_wready,        axi.wready}),
+        .s_axi_bid      ({MEM.data_bid,         IF.instr_bid,           axi.bid}),
+        .s_axi_bresp    ({MEM.data_bresp,       IF.instr_bresp,         axi.bresp}),
+        .s_axi_bvalid   ({MEM.data_bvalid,      IF.instr_bvalid,        axi.bvalid}),
+        .s_axi_bready   ({MEM.data_bready,      IF.instr_bready,        axi.bready}),
+        .s_axi_arid     ({MEM.data_arid,        IF.instr_arid,          axi.arid}),
+        .s_axi_araddr   ({MEM.data_araddr,      IF.instr_araddr,        axi.araddr}),
+        .s_axi_arlen    ({MEM.data_arlen,       IF.instr_arlen,         axi.arlen}),
+        .s_axi_arsize   ({MEM.data_arsize,      IF.instr_arsize,        axi.arsize}),
+        .s_axi_arburst  ({MEM.data_arburst,     IF.instr_arburst,       axi.arburst}),
+        .s_axi_arlock   ({MEM.data_arlock,      IF.instr_arlock,        axi.arlock}),
+        .s_axi_arcache  ({MEM.data_arcache,     IF.instr_arcache,       axi.arcache}),
+        .s_axi_arprot   ({MEM.data_arprot,      IF.instr_arprot,        axi.arprot}),
         .s_axi_arqos    ({0}),
-        .s_axi_arvalid  ({axi.arvalid,     IF.instr_arvalid}),
-        .s_axi_arready  ({axi.arready,     IF.instr_arready}),
-        .s_axi_rid      ({axi.rid,         IF.instr_rid}),
-        .s_axi_rdata    ({axi.rdata,       IF.instr_rdata}),
-        .s_axi_rresp    ({axi.rresp,       IF.instr_rresp}),
-        .s_axi_rlast    ({axi.rlast,       IF.instr_rlast}),
-        .s_axi_rvalid   ({axi.rvalid,      IF.instr_rvalid}),
-        .s_axi_rready   ({axi.rready,      IF.instr_rready}),
+        .s_axi_arvalid  ({MEM.data_arvalid,     IF.instr_arvalid,       axi.arvalid}),
+        .s_axi_arready  ({MEM.data_arready,     IF.instr_arready,       axi.arready}),
+        .s_axi_rid      ({MEM.data_rid,         IF.instr_rid,           axi.rid}),
+        .s_axi_rdata    ({MEM.data_rdata,       IF.instr_rdata,         axi.rdata}),
+        .s_axi_rresp    ({MEM.data_rresp,       IF.instr_rresp,         axi.rresp}),
+        .s_axi_rlast    ({MEM.data_rlast,       IF.instr_rlast,         axi.rlast}),
+        .s_axi_rvalid   ({MEM.data_rvalid,      IF.instr_rvalid,        axi.rvalid}),
+        .s_axi_rready   ({MEM.data_rready,      IF.instr_rready,        axi.rready}),
 
         .m_axi_awid     (awid),
         .m_axi_awaddr   (awaddr),
@@ -635,14 +676,14 @@ module mycpu_top(
     assign axi.inst_addr                    = 0;
     assign axi.inst_wdata                   = 0;
     
-    assign axi.data_req                     = MEM.data_req;
-    assign axi.data_wr                      = MEM.data_wr;
-    assign axi.data_size                    = MEM.data_size;
-    assign axi.data_addr                    = MEM.data_addr;
-    assign axi.data_wdata                   = MEM.data_wdata;
-    assign MEM.data_rdata                   = axi.data_rdata;
-    assign MEM.data_addr_ok                 = axi.data_addr_ok;
-    assign MEM.data_data_ok                 = axi.data_data_ok;
+    assign axi.data_req                     = MEM.mem_req;
+    assign axi.data_wr                      = MEM.mem_wr;
+    assign axi.data_size                    = MEM.mem_size;
+    assign axi.data_addr                    = MEM.mem_addr;
+    assign axi.data_wdata                   = MEM.mem_wdata;
+    assign MEM.mem_rdata                    = axi.data_rdata;
+    assign MEM.mem_addr_ok                  = axi.data_addr_ok;
+    assign MEM.mem_data_ok                  = axi.data_data_ok;
 
 	// IF/ID registers
 
@@ -1291,14 +1332,58 @@ module mycpu_top(
         
         .Memdata                    (MEM.Memdata),
 
-        .data_req                   (MEM.data_req),
-        .data_wr                    (MEM.data_wr),
-        .data_size                  (MEM.data_size),
-        .data_addr                  (MEM.data_addr),
-        .data_wdata                 (MEM.data_wdata),
-        .data_rdata                 (MEM.data_rdata),
-        .data_addr_ok               (MEM.data_addr_ok),
-        .data_data_ok               (MEM.data_data_ok),
+        //========MEM_AXI_BUS========
+        //ar
+        .data_arid                 (MEM.data_arid),
+        .data_araddr               (MEM.data_araddr),
+        .data_arlen                (MEM.data_arlen),
+        .data_arsize               (MEM.data_arsize),
+        .data_arburst              (MEM.data_arburst),
+        .data_arlock               (MEM.data_arlock),
+        .data_arcache              (MEM.data_arcache),
+        .data_arprot               (MEM.data_arprot),
+        .data_arvalid              (MEM.data_arvalid),
+        .data_arready              (MEM.data_arready),
+        //r
+        .data_rid                  (MEM.data_rid),
+        .data_rdata                (MEM.data_rdata),
+        .data_rresp                (MEM.data_rresp),
+        .data_rlast                (MEM.data_rlast),
+        .data_rvalid               (MEM.data_rvalid),
+        .data_rready               (MEM.data_rready),
+        //aw
+        .data_awid                 (MEM.data_awid),
+        .data_awaddr               (MEM.data_awaddr),
+        .data_awlen                (MEM.data_awlen),
+        .data_awsize               (MEM.data_awsize),
+        .data_awburst              (MEM.data_awburst),
+        .data_awlock               (MEM.data_awlock),
+        .data_awcache              (MEM.data_awcache),
+        .data_awprot               (MEM.data_awprot),
+        .data_awvalid              (MEM.data_awvalid),
+        .data_awready              (MEM.data_awready),
+        //w
+        .data_wid                  (MEM.data_wid),
+        .data_wdata                (MEM.data_wdata),
+        .data_wstrb                (MEM.data_wstrb),
+        .data_wlast                (MEM.data_wlast),
+        .data_wvalid               (MEM.data_wvalid),
+        .data_wready               (MEM.data_wready),
+        //b
+        .data_bid                  (MEM.data_bid),
+        .data_bresp                (MEM.data_bresp),
+        .data_bvalid               (MEM.data_bvalid),
+        .data_bready               (MEM.data_bready),
+
+
+        .mem_req                   (MEM.mem_req),
+        .mem_wr                    (MEM.mem_wr),
+        .mem_size                  (MEM.mem_size),
+        .mem_addr                  (MEM.mem_addr),
+        .mem_wdata                 (MEM.mem_wdata),
+        .mem_rdata                 (MEM.mem_rdata),
+        .mem_addr_ok               (MEM.mem_addr_ok),
+        .mem_data_ok               (MEM.mem_data_ok),
 
         .CLR                        (MEM.CLR),
         .stall                      (MEM.stall)

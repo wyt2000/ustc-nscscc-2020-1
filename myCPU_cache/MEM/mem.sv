@@ -32,17 +32,61 @@ module MEM_module (
     
     output [31:0] Memdata,
 
-    output          data_req,
-    output          data_wr,
-    output  [1:0]   data_size,
-    output  [31:0]  data_addr,
-    output  [31:0]  data_wdata,
-    input   [31:0]  data_rdata,
-    input           data_addr_ok,
-    input           data_data_ok,
+    output          mem_req,
+    output          mem_wr,
+    output  [1:0]   mem_size,
+    output  [31:0]  mem_addr,
+    output  [31:0]  mem_wdata,
+    input   [31:0]  mem_rdata,
+    input           mem_addr_ok,
+    input           mem_data_ok,
 
     output          CLR,
-    output          stall
+    output          stall,
+
+//=========data axi bus=========
+    //ar
+    output      [3:0]   data_arid      ,
+    output      [31:0]  data_araddr    ,
+    output      [3:0]   data_arlen     ,
+    output      [2:0]   data_arsize    ,
+    output      [1:0]   data_arburst   ,
+    output      [1:0]   data_arlock    ,
+    output      [3:0]   data_arcache   ,
+    output      [2:0]   data_arprot    ,
+    output              data_arvalid   ,
+    input               data_arready   ,
+    //r
+    input       [3:0]   data_rid       ,
+    input       [31:0]  data_rdata     ,
+    input       [1:0]   data_rresp     ,
+    input               data_rlast     ,
+    input               data_rvalid    ,
+    output              data_rready    ,
+    //aw
+    output      [3:0]   data_awid      ,
+    output      [31:0]  data_awaddr    ,
+    output      [3:0]   data_awlen     ,
+    output      [2:0]   data_awsize    ,
+    output      [1:0]   data_awburst   ,
+    output      [1:0]   data_awlock    ,
+    output      [3:0]   data_awcache   ,
+    output      [2:0]   data_awprot    ,
+    output              data_awvalid   ,
+    input               data_awready   ,
+    //w
+    output      [3:0]   data_wid       ,
+    output      [31:0]  data_wdata     ,
+    output      [3:0]   data_wstrb     ,
+    output              data_wlast     ,
+    output              data_wvalid    ,
+    input               data_wready    ,
+    //b
+    input       [3:0]   data_bid       ,
+    input       [1:0]   data_bresp     ,
+    input               data_bvalid    ,
+    output              data_bready    
+
     );
 
     reg [3:0] calWE;
@@ -120,11 +164,101 @@ module MEM_module (
     assign MemWriteW = MemWriteM;
     assign is_ds_out = is_ds_in;
     
+//==================================================================================//
+    wire            miss;
+    wire            axi_gnt;
+    wire    [31:0]  axi_rd_line[0:7];
+    wire    [31:0]  axi_addr;
+    wire            axi_rd_req;
+    wire    [31:0]  axi_wr_line[0:7];
+    wire            axi_wr_req;
+    wire            MemRead_cache, MemRead_uncache;
+    wire            MemWrite_cache, MemWrite_uncache;
+    wire    [31:0]  Memdata_cache,  Memdata_uncache;
+    wire            stall_uncache;
+
+    assign MemRead_cache    =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? MemReadM : 0;
+    assign MemRead_uncache  =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? MemReadM : 0;
+    assign MemWrite_cache   =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? TrueMemWrite : 0;
+    assign MemWrite_uncache =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? TrueMemWrite : 0;
+
+    assign Memdata          =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? Memdata_cache : Memdata_uncache;
+    assign stall = miss || stall_uncache;
+    dcache data_cache(
+        .clk            (clk),
+        .rst            (rst),
+
+        .miss           (miss),
+        .addr           ({3'b000, ALUout[28:0]}),
+        .rd_req         (MemRead_cache),
+        .rd_data        (Memdata_cache),
+        .wr_req         (MemWrite_cache),
+        .wr_data        (TrueRamData),
+        .valid_lane     (calWE),
+
+        .axi_gnt        (axi_gnt),
+        .axi_addr       (axi_addr),
+        .axi_rd_req     (axi_rd_req),
+        .axi_rd_data    (axi_rd_line),
+        .axi_wr_req     (axi_wr_req),
+        .axi_wr_data    (axi_wr_line)
+    );
+
+    axi data_axi(
+        .gnt        (axi_gnt),
+        .addr       (axi_addr),
+        .rd_req     (axi_rd_req),
+        .rd_line    (axi_rd_line),
+        .wr_req     (axi_wr_req),
+        .wr_line    (axi_wr_line),
+
+        .aclk       (clk),
+        .aresetn    (!rst),
+
+        .awid       (data_awid),
+        .awaddr     (data_awaddr),
+        .awlen      (data_awlen),
+        .awsize     (data_awsize),
+        .awburst    (data_awburst),
+        .awlock     (data_awlock),
+        .awcache    (data_awcache),
+        .awprot     (data_awprot),
+        .awvalid    (data_awvalid),
+        .awready    (data_awready),
+        .wid        (data_wid),
+        .wdata      (data_wdata),
+        .wstrb      (data_wstrb),
+        .wlast      (data_wlast),
+        .wvalid     (data_wvalid),
+        .wready     (data_wready),
+        .bid        (data_bid),
+        .bresp      (data_bresp),
+        .bvalid     (data_bvalid),
+        .bready     (data_bready),
+        .arid       (data_arid),
+        .araddr     (data_araddr),
+        .arlen      (data_arlen),
+        .arsize     (data_arsize),
+        .arburst    (data_arburst),
+        .arlock     (data_arlock),
+        .arcache    (data_arcache),
+        .arprot     (data_arprot),
+        .arvalid    (data_arvalid),
+        .arready    (data_arready),
+        .rid        (data_rid),
+        .rdata      (data_rdata),
+        .rresp      (data_rresp),
+        .rlast      (data_rlast),
+        .rvalid     (data_rvalid),
+        .rready     (data_rready)
+    );
+
+
     always@(posedge clk) begin
         if(rst) begin
             reg_Memdata <= 0;
         end
-        else if(data_data_ok) begin
+        else if(mem_data_ok) begin
             reg_Memdata <= data_rdata;
         end
         else begin
@@ -132,27 +266,27 @@ module MEM_module (
         end
     end
 
-    assign Memdata = data_data_ok ? data_rdata : reg_Memdata;
+    assign Memdata_uncache = mem_data_ok ? mem_rdata : reg_Memdata;
 
     data_sram   d_sram( .clk            (clk)   ,
                         .rst            (rst)   ,
                     
-                        .data_req       (data_req)      ,
-                        .data_wr        (data_wr)       ,
-                        .data_size      (data_size)     ,
-                        .data_addr      (data_addr)     ,
-                        .data_wdata     (data_wdata)    ,
-                        .data_rdata     (data_rdata)    ,
-                        .data_addr_ok   (data_addr_ok)  ,
-                        .data_data_ok   (data_data_ok)  ,
+                        .data_req       (mem_req)      ,
+                        .data_wr        (mem_wr)       ,
+                        .data_size      (mem_size)     ,
+                        .data_addr      (mem_addr)     ,
+                        .data_wdata     (mem_wdata)    ,
+                        .data_rdata     (mem_rdata)    ,
+                        .data_addr_ok   (mem_addr_ok)  ,
+                        .data_data_ok   (mem_data_ok)  ,
                     
-                        .MemRead        (MemReadM)      ,
-                        .MemWrite       (TrueMemWrite)  ,
+                        .MemRead        (MemRead_uncache)      ,
+                        .MemWrite       (MemWrite_uncache)  ,
                         .calWE          (calWE)         ,
                         .addr           (ALUout)        ,
                         .wdata          (TrueRamData)   ,
                         .CLR            (CLR)           ,
-                        .stall          (stall)         
+                        .stall          (stall_uncache)         
                         );
                         
 endmodule
