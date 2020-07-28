@@ -28,7 +28,6 @@ module Exception_module(
     output new_Status_IE,
     output reg exception_occur,
     output reg [4:0] ExcCode,
-    output [7:0] new_Status_IM,
     input StallW,
     input FlushW
     );
@@ -51,13 +50,12 @@ module Exception_module(
     assign we[7:0]                          = 0;
     assign we[11:9]                         = 0;
     assign we[31:15]                        = 0;
-    assign we[8]                            = (StallW && !FlushW) ? 0 : address_error | PCError ;
-    assign we[12]                           = (StallW && !FlushW) ? 0 : exception_occur | isERET;
+    assign we[8]                            = (StallW && !FlushW) ? 0 : exception_occur && (address_error || PCError);
+    assign we[12]                           = (StallW && !FlushW) ? 0 : exception_occur || (isERET && !PCError);
     assign we[13]                           = (StallW && !FlushW) ? 0 : exception_occur;
     assign we[14]                           = (StallW && !FlushW) ? 0 : exception_occur;
     assign Cause_IP                         = {hardware_abortion, software_abortion};
     assign new_Status_EXL                   = exception_occur;
-    assign new_Status_IM                    = (|{hardware_abortion, software_abortion}) ? 8'b1111_1111 : 8'b0000_0000;
     assign new_Cause_BD1                    = is_ds;
     assign new_Status_IE                    = ~|{hardware_abortion, software_abortion};
     assign BadVAddr                         = PCError ? (isERET ? EPCD : pc) : ErrorAddr;

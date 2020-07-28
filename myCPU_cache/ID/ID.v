@@ -29,7 +29,6 @@ module ID_module(
     input [1:0] ForwardAD,
     input [1:0] ForwardBD,
     input       [31:0]  we,
-    input       [7:0]   interrupt_enable,
     input       [4:0]   Exception_code,
     input               EXL,
     input       [5:0]   hardware_interruption,
@@ -131,7 +130,6 @@ module ID_module(
                            .cause_data(cause_data),
                            .we(we),
                            .IE(new_IE),
-                           .interrupt_enable(interrupt_enable),
                            .Exception_code(Exception_code),
                            .EXL(EXL),
                            .hardware_interruption(hardware_interruption),
@@ -160,10 +158,10 @@ module ID_module(
     reg isBranch_old;
     assign is_ds = isBranch_old;
     always@(posedge clk) begin
-        if(!StallD)
+        if(rst) 
+            isBranch_old    <=  0;
+        else if(!StallD)
             isBranch_old    <=  isBranch;
-        else
-            isBranch_old    <=  isBranch_old;
     end
     
 endmodule

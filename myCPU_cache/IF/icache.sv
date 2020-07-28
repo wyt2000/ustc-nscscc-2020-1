@@ -1,24 +1,4 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2020/07/22 17:16:05
-// Design Name: 
-// Module Name: ICache
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
 
 module icache (
     input               clk,
@@ -181,7 +161,13 @@ module icache (
     end
 
     //get ram ready
-    always@(posedge clk) 
-        index_old   <=  index;
+    always@(posedge clk) begin
+        if(rst) begin
+            index_old <= 0;
+        end
+        else begin
+            index_old   <=  index;
+        end
+    end
     assign ram_ready    =   (index == index_old) ? 1 : 0;
 endmodule

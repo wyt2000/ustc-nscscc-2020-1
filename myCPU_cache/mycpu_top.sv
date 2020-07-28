@@ -11,17 +11,14 @@ typedef struct packed {
     logic [31:0] Jump_addr;
     logic [31:0] beq_addr;
     logic StallF;
-    logic [31:0] Instruction_in;
     logic Error_happend;
     //output
-    logic [31:0] Instruction;
     logic [31:0] PC_add_4;
     logic [31:0] PCout;
 
     logic is_newPC;
     
     logic [31:0] instr;
-    logic CLR;
     logic stall;
     
 //========instr axi bus========
@@ -80,7 +77,6 @@ typedef struct packed {
     logic [63:0] HI_LO_data;
     logic [31:0] ALUoutE;
     logic [31:0] ALUoutM;
-    logic [31:0] RAMoutM;
     logic [1:0] ForwardAD;
     logic [1:0] ForwardBD;
     logic [31:0] PCin;
@@ -112,15 +108,12 @@ typedef struct packed {
     logic new_IE;
     logic [31:0] Jump_addr;
     logic [31:0] Branch_addr;
-    logic CLR_EN;
     logic exception;
     logic isBranch;
     logic [31:0] PCout;
     logic [31:0]  Status;
     logic [31:0]  cause;
-    logic [7:0]    Exception_enable;
     logic [31:0]  we;
-    logic [7:0]   interrupt_enable;
     logic [4:0]   Exception_code;
     logic Exception_EXL;
     logic [5:0]   hardware_interruption;
@@ -156,13 +149,6 @@ typedef struct packed {
     logic [1:0] ForwardA;
     logic [1:0] ForwardB;
     logic [31:0] PCin;
-    logic BranchD;
-    logic JumpD;
-    logic EPC_selD;
-    logic [31:0] Branch_addrD;
-    logic [31:0] Jump_addrD;
-    logic [31:0] PCSrc_regD;
-    logic [31:0] EPCD;
     //output
     logic hiloWrite_o;
     logic [2:0] MemReadType_o;
@@ -180,13 +166,6 @@ typedef struct packed {
     logic [3:0] exception;
     logic stall;
     logic [31:0] PCout;
-    logic Branch;
-    logic Jump;
-    logic EPC_sel;
-    logic [31:0] Branch_addr;
-    logic [31:0] Jump_addr;
-    logic [31:0] PCSrc_reg;
-    logic [31:0] EPC;
     logic exceptionD;
     logic is_ds_in;
     logic is_ds_out;
@@ -204,20 +183,16 @@ typedef struct packed {
     logic [31:0] RamData;
     logic [6:0] WriteRegister;
     logic [2:0] MemReadType;
-    logic [31:0] RAMtmp;
     logic [31:0] PCin;
     //output
     logic MemtoRegW;
     logic RegWriteW;
     logic HI_LO_write_enableW;
     logic [63:0] HI_LO_dataW;
-    logic [31:0] RAMout;
     logic [31:0] ALUoutW;
     logic [6:0] WriteRegisterW;
-    logic [3:0] calWE;
     logic [31:0] PCout;
     logic [2:0] MemReadTypeW;
-    logic [31:0] TrueRamData;
     logic [3:0] exception_in;
     logic [3:0] exception_out;
     logic MemWriteW;
@@ -291,13 +266,8 @@ typedef struct packed {
     logic MemtoRegW;
     logic RegWriteW;
     logic [6:0] WritetoRFaddrin;
-    logic HI_LO_write_enablein;
     logic [63:0] HILO_data;
-    logic Exception_Write_addr_sel;
-    logic Exception_Write_data_sel;
     logic HI_LO_writeenablein;
-    logic [6:0] Exception_RF_addr;
-    logic [31:0] Exceptiondata;
     logic [31:0] PCin;
     logic [2:0] MemReadTypeW;
     //output
@@ -361,7 +331,6 @@ typedef struct packed {
 
 typedef struct packed{
     //input
-    logic clk;
     logic address_error;
     logic MemWrite;
     logic overflow_error;
@@ -375,20 +344,16 @@ typedef struct packed{
     logic [31:0] BadVAddr;//输出置BadVaddr
     logic [31:0] EPC;//输出置EPC
     //epc
-    logic [31:0] NewPc;//PC跳转
     logic [31:0] we;//写使能字
     logic Branch_delay;//给cause寄存器赋新值
     logic Stall;//异常发生（Stall，Clear）
     logic EXL;
     logic [7:0] enable;
-    logic [31:0] epc;
     logic new_Status_IE;//给Status寄存器赋新值
-    logic [7:0] Cause_IP;//给cause寄存器赋新值
     logic [7:0] Status_IM;//给Status寄存器赋新值
     logic [4:0] ExcCode;//异常编码
     logic [31:0] ErrorAddr;
     logic isERET;
-    logic [7:0] new_Status_IM;
     logic is_ds;
 	logic [31:0] EPCD;
 	logic syscall;
@@ -529,7 +494,9 @@ module mycpu_top(
 	Exception_interface Exception;    
     axi_interface axi;
 
-    wire        awqos,  arqos;
+    wire   [3:0] awqos,  arqos;
+    assign awqos = 4'b0000;
+    assign arqos = 4'b0000;
     AXI_Crossbar axi_bridge(
         .aclk           (aclk),
         .aresetn        (aresetn),
@@ -617,7 +584,7 @@ module mycpu_top(
 	assign clk								= aclk;
 	assign rst 								= ~aresetn;
 	assign debug_wb_pc 						= WB.PCout;
-	assign debug_wb_rf_wen					= (WB.RegWrite && WB.WritetoRFaddrout[6:5] == 2'b00) ? 4'b1111 : 4'b0000;
+	assign debug_wb_rf_wen					= (WB.RegWrite && (WB.WritetoRFaddrout[6:5] == 2'b00) && !Hazard.FlushW) ? 4'b1111 : 4'b0000;
 	assign debug_wb_rf_wnum					= WB.WritetoRFaddrout[4:0];
 	assign debug_wb_rf_wdata				= WB.WritetoRFdata;
 
@@ -642,7 +609,6 @@ module mycpu_top(
 	assign ID.ForwardAD                     = Hazard.ForwardAD;
 	assign ID.ForwardBD                     = Hazard.ForwardBD;
 	assign ID.Exception_EXL					= Exception.EXL;
-	assign ID.Exception_enable				= Exception.new_Status_IM;
 	assign ID.software_interruption         = Exception.software_abortion;
 	assign ID.Exception_code				= Exception.ExcCode;
 	assign ID.we							= Exception.we;
@@ -715,9 +681,9 @@ module mycpu_top(
     assign axi.data_size                    = MEM.mem_size;
     assign axi.data_addr                    = MEM.mem_addr;
     assign axi.data_wdata                   = MEM.mem_wdata;
-    assign MEM.mem_rdata                   = axi.data_rdata;
-    assign MEM.mem_addr_ok                 = axi.data_addr_ok;
-    assign MEM.mem_data_ok                 = axi.data_data_ok;
+    assign MEM.mem_rdata                    = axi.data_rdata;
+    assign MEM.mem_addr_ok                  = axi.data_addr_ok;
+    assign MEM.mem_data_ok                  = axi.data_data_ok;
 
 	// IF/ID registers
 
@@ -1063,7 +1029,7 @@ module mycpu_top(
 	register #(1) MEM_WB_MemtoRegW (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.MemtoRegW),
 		.q(WB.MemtoRegW)
@@ -1072,7 +1038,7 @@ module mycpu_top(
 	register #(1) MEM_WB_RegWriteW (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.RegWriteW),
 		.q(WB.RegWriteW)
@@ -1081,7 +1047,7 @@ module mycpu_top(
 	register #(1) MEM_WB_HI_LO_writeenablein (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.HI_LO_write_enableW),
 		.q(WB.HI_LO_writeenablein)
@@ -1090,7 +1056,7 @@ module mycpu_top(
 	register #(64) MEM_WB_HILO_data (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.HI_LO_dataW),
 		.q(WB.HILO_data)
@@ -1099,7 +1065,7 @@ module mycpu_top(
 	register #(32) MEM_WB_aluout (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.ALUoutW),
 		.q(WB.aluout)
@@ -1108,7 +1074,7 @@ module mycpu_top(
 	register #(7) MEM_WB_WritetoRFaddrin (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.WriteRegisterW),
 		.q(WB.WritetoRFaddrin)
@@ -1117,7 +1083,7 @@ module mycpu_top(
 	register #(32) MEM_WB_PCout (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.PCout),
 		.q(WB.PCin)
@@ -1126,7 +1092,7 @@ module mycpu_top(
 	register #(3) MEM_WB_MemReadTypeW (
 		.clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
 		.d(MEM.MemReadTypeW),
 		.q(WB.MemReadTypeW)
@@ -1135,7 +1101,7 @@ module mycpu_top(
     register #(4) MEM_WB_exception(
         .clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
         .d(MEM.exception_out),
         .q(WB.exception_in)
@@ -1144,7 +1110,7 @@ module mycpu_top(
 	register #(1) MEM_WB_MemWriteW (
         .clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
         .d(MEM.MemWriteW),
         .q(WB.MemWriteW)
@@ -1153,7 +1119,7 @@ module mycpu_top(
     register #(1) MEM_WB_is_ds (
         .clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
         .d(MEM.is_ds_out),
         .q(WB.is_ds_in)
@@ -1162,7 +1128,7 @@ module mycpu_top(
     register #(32) MEM_WB_Memdata (
         .clk(clk),
 		.rst(rst),
-        .Flush(Hazard.FlushW),
+        .Flush(0),
 		.en(~Hazard.StallW),
         .d(MEM.Memdata),
         .q(WB.Memdata)
@@ -1185,7 +1151,6 @@ module mycpu_top(
         .is_newPC                   (IF.is_newPC),
 
         .instr                      (IF.instr),
-        .CLR                        (IF.CLR),
         .stall                      (IF.stall),
 
         //========INSTR_AXI_BUS========
@@ -1275,7 +1240,6 @@ module mycpu_top(
 		.PCin						(ID.PCin),
 		.PCout						(ID.PCout),		
 		.we							(ID.we),
-    	.interrupt_enable			(ID.Exception_enable),
     	.Exception_code				(ID.Exception_code),
 		.new_IE						(ID.new_IE),
     	.EXL						(ID.Exception_EXL),
@@ -1422,8 +1386,6 @@ module mycpu_top(
         .mem_data_ok               (MEM.mem_data_ok),
 
         .CLR                        (MEM.CLR),
-
-
         .stall                      (MEM.stall)
 	);
 
@@ -1520,7 +1482,6 @@ module mycpu_top(
 		.ErrorAddr					(Exception.ErrorAddr),
 		.EPCD						(Exception.EPCD),
 		.isERET						(Exception.isERET),
-        .new_Status_IM              (Exception.new_Status_IM),
         .is_ds                      (Exception.is_ds),
         .StallW                     (Exception.StallW),
         .FlushW                     (Exception.FlushW)

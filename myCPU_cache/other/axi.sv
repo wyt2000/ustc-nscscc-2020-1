@@ -45,7 +45,7 @@ module axi
     input             awready  ,
     //w          
     output reg [3 :0] wid      ,
-    output reg [31:0] wdata    ,
+    output     [31:0] wdata    ,
     output reg [3 :0] wstrb    ,
     output reg        wlast    ,
     output reg        wvalid   ,
@@ -74,12 +74,16 @@ module axi
     localparam  WR              =   1;
     localparam  RD              =   0;
 
+    integer i;
+
     reg [31 :0] Start_Address;
     // reg [31 :0] write_data[BURST_LENGTH];
     reg         request_type;
     reg [3  :0] count;
     reg [1  :0] current_state,  next_state;
-    
+
+    assign wdata = 32'b0;
+
     //save request information
     always@(posedge aclk) begin
         if(!aresetn) begin
@@ -172,8 +176,12 @@ module axi
 
     //count control and data control
     always@(posedge aclk) begin
-        if(!aresetn)
+        if(!aresetn) begin
             count   <=  0;
+            for(i = 0; i < 8; i++) begin
+                rd_line[i]    <=  0;
+            end
+        end
         else if(current_state == TRANS) begin
             if(request_type == RD) begin
                 if(rvalid && rready) begin
@@ -192,9 +200,6 @@ module axi
         end
         else 
                     count           <=  0;
-    end
-    always@(*) begin
-        wdata = wr_line[count];
     end
 
     //constants

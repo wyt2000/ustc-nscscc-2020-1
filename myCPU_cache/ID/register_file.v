@@ -12,13 +12,10 @@ module register_file(
     input       [31:0]  write_data,
     output reg  [31:0]  read_data_1,
     output reg  [31:0]  read_data_2,
-     //output      [31:0]  epc
-    //for the change in Error_detect module
     output      [31:0]  Status_data,
     output      [31:0]  EPC_data,
     output      [31:0]  cause_data,
     input       [31:0]  we,
-    input       [7:0]   interrupt_enable,
     input       [4:0]   Exception_code,
     input               EXL,
     input               IE,
@@ -27,11 +24,6 @@ module register_file(
     input       [31:0]  epc,
     input       [31:0]  BADADDR,
     input               Branch_delay
-    //以下接口暂时用不�??
-    // output              timer_int_data,
-    // output              allow_interrupt,
-    // output              STATE,
-    // output      [31:0]  BADVADDR_data
     );
 
     wire                    timer_int_data;
@@ -91,41 +83,6 @@ module register_file(
         endcase
         if (read_addr_2 == 7'b0) read_data_2 = 32'b0;
     end
-    // //read port 1
-    // always@(*) begin
-    //     if(write_addr == read_addr_1 && regwrite)                                        //forward 1, from normal reg or cp0
-    //         read_data_1 = write_data;
-    //     else if(read_addr_1[6] && hl_write_enable_from_wb)                               //forward 2, from hi/lo
-    //         read_data_1 = (read_addr_1 == 7'b1111111) ? hl_data[63:32] : hl_data[31:0];
-    //     else begin
-    //         if(read_addr_1[6])                                                           //if read hi/lo
-    //             read_data_1 = (read_addr_1 == 7'b1111111) ? hi : lo;
-    //         else if(read_addr_1[5])                                                      //if read cp0,output z
-    //             read_data_1 = 7'bzzzzzzz;
-    //         else if(read_addr_1 == 32'b0)
-    //             read_data_1 = 32'b0;
-    //         else
-    //             read_data_1 = reg_file[read_addr_1[4:0]];
-    //     end
-    // end 
-
-    // //read port 2
-    // always@(*) begin
-    //     if(write_addr == read_addr_2 && regwrite)                                        //forward 1, from normal reg or cp0
-    //         read_data_2 = write_data;
-    //     else if(read_addr_2[6] && hl_write_enable_from_wb)                               //forward 2, from hi/lo
-    //         read_data_2 = (read_addr_2 == 7'b1111111) ? hl_data[63:32] : hl_data[31:0];
-    //     else begin
-    //         if(read_addr_2[6])                                                           //if read hi/lo
-    //             read_data_2 = (read_addr_2 == 7'b1111111) ? hi : lo;
-    //         else if(read_addr_2[5])                                                      //if read cp0, output cp0
-    //             read_data_2 = CP0_data;
-    //         else if(read_addr_2 == 32'b0)
-    //             read_data_2 = 32'b0;
-    //         else
-    //             read_data_2 = reg_file[read_addr_2[4:0]];
-    //     end
-    // end 
 
     assign reg_file_we = regwrite & ~(write_addr[5] & write_addr[6]);
     always@(posedge clk) begin
@@ -156,17 +113,7 @@ module register_file(
         default:    ;
         endcase
     end
-    // //hi/lo
-    // always@(posedge clk) begin
-    //     if(regwrite && write_addr == 7'b1111111)
-    //         hi <= write_data;
-    //     if(regwrite && write_addr == 7'b1000000)
-    //         lo <= write_data;
-    //     if(hl_write_enable_from_wb) begin
-    //         hi <= hl_data[63:32];
-    //         lo <= hl_data[31:0];
-    //     end
-    // end
+
     wire [31:0] compare_data,configure_data,prid_data;
     //CP0
     assign reg_cp0_we = regwrite & ~write_addr[6] & write_addr[5];
@@ -184,7 +131,6 @@ module register_file(
                       .comparedata(32'h00000000),
                       .configuredata(32'h00000000),
                       .epc(epc),
-                      .interrupt_enable(interrupt_enable),
                       .EXL(EXL),
                       .IE(IE),
                       .Branch_delay(Branch_delay),          

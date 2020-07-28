@@ -212,8 +212,13 @@ module dcache(
     end
 
     //get ram ready
-    always@(posedge clk) 
-        index_old   <=  index;
+    always@(posedge clk) begin
+        if(rst)
+            index_old <= 0;
+        else
+            index_old   <=  index;
+    end
+
     assign ram_ready    =   (index == index_old) ? 1 : 0;
 
 endmodule
