@@ -148,7 +148,7 @@ module icache (
         axi_rd_req      =   0;
         case(current_state)
         IDLE:   begin
-            if((!(|way_hit)) && ram_ready)
+            if((!(|way_hit)) && ram_ready && rd_req)
                 axi_rd_req  =   1;
         end
 
