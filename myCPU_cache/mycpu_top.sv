@@ -21,6 +21,15 @@ typedef struct packed {
     logic [31:0] instr;
     logic stall;
     
+    logic inst_req;
+    logic inst_wr;
+    logic [1:0] inst_size;
+    logic [31:0] inst_addr;
+    logic [31:0] inst_wdata;
+    logic [31:0] inst_rdata;
+    logic inst_addr_ok;
+    logic inst_data_ok;
+
 //========instr axi bus========
     //ar
     logic       [3:0]   instr_arid      ;
@@ -669,12 +678,15 @@ module mycpu_top(
 	assign Exception.EPCD					= ID.EPCout;
     assign Exception.StallW                 = Hazard.StallW;
     assign Exception.FlushW                 = Hazard.FlushW;
-
-    assign axi.inst_req                     = 0;
-    assign axi.inst_wr                      = 0;
-    assign axi.inst_size                    = 0;
-    assign axi.inst_addr                    = 0;
-    assign axi.inst_wdata                   = 0;
+    
+    assign axi.inst_req                     = IF.inst_req;
+    assign axi.inst_wr                      = IF.inst_wr;
+    assign axi.inst_size                    = IF.inst_size;
+    assign axi.inst_addr                    = IF.inst_addr;
+    assign axi.inst_wdata                   = IF.inst_wdata;
+    assign IF.inst_rdata                    = axi.inst_rdata;
+    assign IF.inst_addr_ok                  = axi.inst_addr_ok;
+    assign IF.inst_data_ok                  = axi.inst_data_ok;
     
     assign axi.data_req                     = MEM.mem_req;
     assign axi.data_wr                      = MEM.mem_wr;
@@ -1152,6 +1164,15 @@ module mycpu_top(
 
         .instr                      (IF.instr),
         .stall                      (IF.stall),
+
+        .inst_req                   (IF.inst_req),
+        .inst_wr                    (IF.inst_wr),
+        .inst_size                  (IF.inst_size),
+        .inst_addr                  (IF.inst_addr),
+        .inst_wdata                 (IF.inst_wdata),
+        .inst_rdata                 (IF.inst_rdata),
+        .inst_addr_ok               (IF.inst_addr_ok),
+        .inst_data_ok               (IF.inst_data_ok),
 
         //========INSTR_AXI_BUS========
         //ar

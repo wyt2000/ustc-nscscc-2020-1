@@ -19,6 +19,15 @@ module IF_module
 
     output          stall,
 
+    output          inst_req,
+    output          inst_wr,
+    output  [1:0]   inst_size,
+    output  [31:0]  inst_addr,
+    output  [31:0]  inst_wdata,
+    input   [31:0]  inst_rdata,
+    input           inst_addr_ok,
+    input           inst_data_ok,
+
     //=========instr axi bus=========
     //ar
     output      [3:0]   instr_arid      ,
@@ -90,14 +99,36 @@ module IF_module
     wire    [31:0]  axi_rd_line[0:7];
     wire    [31:0]  axi_addr;
     wire            axi_rd_req;
+    wire            instr_rd_req_cached, instr_rd_req_uncached;
+    wire    [31:0]  instr_cached, instr_uncached;
+    wire            stall_uncached;
 
-    assign stall = miss;
+    assign stall = miss || stall_uncached;
+    assign instr_rd_req_cached      =   (PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000) ? 1 : 0;
+    assign instr_rd_req_uncached    =   (PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000) ? is_newPC : 0;
+    assign instr                    =   (PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000) ? instr_cached : instr_uncached;
+
+    reg [31:0] reg_instr;
+    always@(posedge clk) begin
+        if(rst) begin
+            reg_instr <= 0;
+        end
+        else if(inst_data_ok) begin
+            reg_instr <= inst_rdata;
+        end
+        else begin
+            reg_instr <= reg_instr;
+        end
+    end
+    assign instr_uncached = inst_data_ok ? inst_rdata : reg_instr;
+
     icache instr_cache(
         .clk            (clk),
         .rst            (rst),
         .miss           (miss),
         .addr           ({3'b000, PCout[28:0]}),
-        .rd_data        (instr),
+        .rd_req         (instr_rd_req_cached),
+        .rd_data        (instr_cached),
 
         .axi_gnt        (axi_gnt),
         .axi_data       (axi_rd_line),
@@ -152,4 +183,23 @@ module IF_module
         .rvalid     (instr_rvalid),
         .rready     (instr_rready)
     );
+
+    inst_sram i_sram(.clk           (clk),
+                    .rst            (rst),
+                    
+                    .inst_req       (inst_req)  ,
+                    .inst_wr        (inst_wr)   ,
+                    .inst_size      (inst_size) ,
+                    .inst_addr      (inst_addr) ,
+                    .inst_wdata     (inst_wdata),
+                    .inst_rdata     (inst_rdata),
+                    .inst_addr_ok   (inst_addr_ok)  ,
+                    .inst_data_ok   (inst_data_ok)  ,
+                    
+                    .is_newPC       (instr_rd_req_uncached)  ,
+                    .PC             ( {3'b000, PCout[28:0]} )     ,
+                    .stall          (stall_uncached)     
+                    );
+
+
 endmodule

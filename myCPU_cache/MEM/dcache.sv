@@ -42,17 +42,21 @@ module dcache(
     wire    [3 :0]  way_hit;
     wire    [1 :0]  way_num;
 
-    reg     [1 :0]  current_state, next_state;
+    reg     [2 :0]  current_state, next_state;
     
+    reg     [6 :0]  reset_count;
+    wire    [6 :0]  tagv_index;
+
     localparam      IDLE    =   0;
     localparam      SWPO    =   1;
     localparam      SWPI    =   2;
     localparam      WRIT    =   3;
+    localparam      RSET    =   4;
 
-    TAGVD_RAM TAGVD_WAY_0 (.clka(clk),    .addra(index),  .douta(tagvd_way[0]),    .wea(we_way[0]),     .dina({tag, valid, dirty}),    .ena(1));
-    TAGVD_RAM TAGVD_WAY_1 (.clka(clk),    .addra(index),  .douta(tagvd_way[1]),    .wea(we_way[1]),     .dina({tag, valid, dirty}),    .ena(1));
-    TAGVD_RAM TAGVD_WAY_2 (.clka(clk),    .addra(index),  .douta(tagvd_way[2]),    .wea(we_way[2]),     .dina({tag, valid, dirty}),    .ena(1));
-    TAGVD_RAM TAGVD_WAY_3 (.clka(clk),    .addra(index),  .douta(tagvd_way[3]),    .wea(we_way[3]),     .dina({tag, valid, dirty}),    .ena(1));
+    TAGVD_RAM TAGVD_WAY_0 (.clka(clk),    .addra(tagv_index),  .douta(tagvd_way[0]),    .wea(we_way[0]),     .dina({tag, valid, dirty}),    .ena(1));
+    TAGVD_RAM TAGVD_WAY_1 (.clka(clk),    .addra(tagv_index),  .douta(tagvd_way[1]),    .wea(we_way[1]),     .dina({tag, valid, dirty}),    .ena(1));
+    TAGVD_RAM TAGVD_WAY_2 (.clka(clk),    .addra(tagv_index),  .douta(tagvd_way[2]),    .wea(we_way[2]),     .dina({tag, valid, dirty}),    .ena(1));
+    TAGVD_RAM TAGVD_WAY_3 (.clka(clk),    .addra(tagv_index),  .douta(tagvd_way[3]),    .wea(we_way[3]),     .dina({tag, valid, dirty}),    .ena(1));
 
     DATA_RAM DATA_WAY0_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][0]),    .wea(we_way[0] & we_bank[0]),     .dina(wr_data_bank[0]),    .ena(1));
     DATA_RAM DATA_WAY0_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][1]),    .wea(we_way[0] & we_bank[1]),     .dina(wr_data_bank[1]),    .ena(1));
@@ -94,6 +98,7 @@ module dcache(
                        ((tag == tagvd_way[1][21:2]) && tagvd_way[1][1]), 
                        ((tag == tagvd_way[0][21:2]) && tagvd_way[0][1])};
     assign  way_num = (way_hit == 4'b1000 ? 2'b11 : way_hit >> 1);
+    assign tagv_index   =   current_state == RSET ? reset_count : index;
 
     always@(*) begin
         case(way_hit)
@@ -109,7 +114,7 @@ module dcache(
     //stage change
     always@(posedge clk) begin
         if(rst)
-            current_state   <=  IDLE;
+            current_state   <=  RSET;
         else
             current_state   <=  next_state;
     end
@@ -123,6 +128,8 @@ module dcache(
                 else
                     next_state  =   SWPO;
             end
+            else if(rst)
+                    next_state  =   RSET;
             else
                     next_state  =   IDLE;
         end
@@ -139,6 +146,13 @@ module dcache(
                     next_state  =   WRIT;
             else
                     next_state  =   SWPI;
+        end
+
+        RSET:   begin
+            if(rst || reset_count < 7'b1111111)
+                next_state      =   RSET;
+            else
+                next_state      =   IDLE;
         end
         default:    next_state  =   IDLE;
         endcase
@@ -192,6 +206,13 @@ module dcache(
             valid                           =   1;
             dirty                           =   0;
         end
+
+        RSET: begin
+            for(i = 0; i < 4; i++)
+                we_way[i]       =   1;
+            valid               =   0;
+            dirty               =   0;
+        end
         default:    ;
         endcase
     end
@@ -220,5 +241,13 @@ module dcache(
     end
 
     assign ram_ready    =   (index == index_old) ? 1 : 0;
+
+    //reset count control
+    always@(posedge clk) begin
+        if(rst)
+            reset_count <=  7'b0;
+        else
+            reset_count <=  reset_count + 1;
+    end
 
 endmodule
