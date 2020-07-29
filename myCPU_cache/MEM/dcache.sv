@@ -91,7 +91,7 @@ module dcache(
     DATA_RAM DATA_WAY3_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][6]),    .wea(we_way[3] & we_bank[6]),     .dina(wr_data_bank[6]),    .ena(1));
     DATA_RAM DATA_WAY3_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][7]),    .wea(we_way[3] & we_bank[7]),     .dina(wr_data_bank[7]),    .ena(1));
 
-    assign  miss    = ((!(|way_hit)) || (!ram_ready)) && (rd_req || wr_req);
+    assign  miss    = (((!(|way_hit)) || (!ram_ready)) && (rd_req || wr_req)) || (current_state == RSET) || (rst);
     assign  {tag,   index,  offset} = addr;
     assign  way_hit = {((tag == tagvd_way[3][21:2]) && tagvd_way[3][1]), 
                        ((tag == tagvd_way[2][21:2]) && tagvd_way[2][1]), 
@@ -122,14 +122,14 @@ module dcache(
     always@(*) begin
         case(current_state)
         IDLE:   begin
-            if((!(|way_hit)) && ram_ready && (rd_req || wr_req)) begin
+            if(rst)
+                    next_state  =   RSET;
+            else if((!(|way_hit)) && ram_ready && (rd_req || wr_req)) begin
                 if(tagvd_way[LRU_index[index]][0] == 0)
                     next_state  =   SWPI;
                 else
                     next_state  =   SWPO;
             end
-            else if(rst)
-                    next_state  =   RSET;
             else
                     next_state  =   IDLE;
         end
@@ -174,7 +174,7 @@ module dcache(
         axi_addr            =   32'b0;
         case(current_state)
         IDLE:   begin
-            if((|way_hit) && ram_ready && wr_req) begin
+            if((|way_hit) && ram_ready && wr_req && !rst) begin
                 we_way[way_num]         =   1;
                 we_bank[offset[4:2]]    =   1;
                 wr_data_bank[offset[4:2]]=  {valid_lane[3] ? wr_data[31:24] : data_way_bank[way_num][offset[4:2]][31:24],

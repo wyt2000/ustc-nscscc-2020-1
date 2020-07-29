@@ -81,7 +81,7 @@ module icache (
     DATA_RAM DATA_WAY3_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][6]),    .wea(we_way[3]),     .dina(axi_data[6]),    .ena(1));
     DATA_RAM DATA_WAY3_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][7]),    .wea(we_way[3]),     .dina(axi_data[7]),    .ena(1));
 
-    assign  miss    = ((!(|way_hit)) || (!ram_ready)) && rd_req;
+    assign  miss    = (((!(|way_hit)) || (!ram_ready)) && rd_req) || (current_state == RSET) || (rst);
     assign  {tag,   index,  offset} = addr;
     assign  way_hit = {((tag == tagv_way[3][20:1]) && tagv_way[3][0]), 
                        ((tag == tagv_way[2][20:1]) && tagv_way[2][0]), 
@@ -112,10 +112,10 @@ module icache (
     always@(*) begin
         case(current_state)
         IDLE:   begin
-            if(((!(|way_hit)) && ram_ready) && rd_req)
-                next_state  =   REQ;
-            else if(rst)
+            if(rst)
                 next_state  =   RSET;
+            else if(((!(|way_hit)) && ram_ready) && rd_req)
+                next_state  =   REQ;
             else
                 next_state  =   IDLE;
         end
@@ -148,7 +148,7 @@ module icache (
         axi_rd_req      =   0;
         case(current_state)
         IDLE:   begin
-            if((!(|way_hit)) && ram_ready && rd_req)
+            if(((!(|way_hit)) && ram_ready && rd_req) && !rst)
                 axi_rd_req  =   1;
         end
 
