@@ -8,6 +8,7 @@ module icache (
     output              miss,
     input       [31:0]  addr,
     output reg  [31:0]  rd_data,
+    input               rd_req,
 
     //connect with axi module
     input               axi_gnt,
@@ -33,14 +34,19 @@ module icache (
 
     reg     [1 :0]  current_state, next_state;
 
+    reg     [6 :0]  reset_count;
+    wire    [6 :0]  tagv_index;
+    reg             valid;
+
     localparam      IDLE    =   0;
     localparam      REQ     =   1;
     localparam      WRIT    =   2;
+    localparam      RSET    =   3;
 
-    TAGV_RAM TAGV_WAY_0 (.clka(clk),    .addra(index),  .douta(tagv_way[0]),    .wea(we_way[0]),     .dina({tag, 1'b1}),    .ena(1));
-    TAGV_RAM TAGV_WAY_1 (.clka(clk),    .addra(index),  .douta(tagv_way[1]),    .wea(we_way[1]),     .dina({tag, 1'b1}),    .ena(1));
-    TAGV_RAM TAGV_WAY_2 (.clka(clk),    .addra(index),  .douta(tagv_way[2]),    .wea(we_way[2]),     .dina({tag, 1'b1}),    .ena(1));
-    TAGV_RAM TAGV_WAY_3 (.clka(clk),    .addra(index),  .douta(tagv_way[3]),    .wea(we_way[3]),     .dina({tag, 1'b1}),    .ena(1));
+    TAGV_RAM TAGV_WAY_0 (.clka(clk),    .addra(tagv_index),  .douta(tagv_way[0]),    .wea(we_way[0]),     .dina({tag, valid}),    .ena(1));
+    TAGV_RAM TAGV_WAY_1 (.clka(clk),    .addra(tagv_index),  .douta(tagv_way[1]),    .wea(we_way[1]),     .dina({tag, valid}),    .ena(1));
+    TAGV_RAM TAGV_WAY_2 (.clka(clk),    .addra(tagv_index),  .douta(tagv_way[2]),    .wea(we_way[2]),     .dina({tag, valid}),    .ena(1));
+    TAGV_RAM TAGV_WAY_3 (.clka(clk),    .addra(tagv_index),  .douta(tagv_way[3]),    .wea(we_way[3]),     .dina({tag, valid}),    .ena(1));
 
     DATA_RAM DATA_WAY0_BANK0 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][0]),    .wea(we_way[0]),     .dina(axi_data[0]),    .ena(1));
     DATA_RAM DATA_WAY0_BANK1 (.clka(clk),   .addra(index),  .douta(data_way_bank[0][1]),    .wea(we_way[0]),     .dina(axi_data[1]),    .ena(1));
@@ -75,12 +81,14 @@ module icache (
     DATA_RAM DATA_WAY3_BANK6 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][6]),    .wea(we_way[3]),     .dina(axi_data[6]),    .ena(1));
     DATA_RAM DATA_WAY3_BANK7 (.clka(clk),   .addra(index),  .douta(data_way_bank[3][7]),    .wea(we_way[3]),     .dina(axi_data[7]),    .ena(1));
 
-    assign  miss    = (!(|way_hit)) || (!ram_ready);
+    assign  miss    = (((!(|way_hit)) || (!ram_ready)) && rd_req) || (current_state == RSET) || (rst);
     assign  {tag,   index,  offset} = addr;
     assign  way_hit = {((tag == tagv_way[3][20:1]) && tagv_way[3][0]), 
                        ((tag == tagv_way[2][20:1]) && tagv_way[2][0]), 
                        ((tag == tagv_way[1][20:1]) && tagv_way[1][0]), 
                        ((tag == tagv_way[0][20:1]) && tagv_way[0][0])};
+    assign tagv_index   =   current_state == RSET ? reset_count : index;
+
     always@(*) begin
         case(way_hit)
         4'b0001:    rd_data =   data_way_bank[0][offset[4:2]];
@@ -96,7 +104,7 @@ module icache (
     //stage change
     always@(posedge clk) begin
         if(rst)
-            current_state   <=  IDLE;
+            current_state   <=  RSET;
         else
             current_state   <=  next_state;
     end
@@ -104,7 +112,9 @@ module icache (
     always@(*) begin
         case(current_state)
         IDLE:   begin
-            if((!(|way_hit)) && ram_ready)
+            if(rst)
+                next_state  =   RSET;
+            else if(((!(|way_hit)) && ram_ready) && rd_req)
                 next_state  =   REQ;
             else
                 next_state  =   IDLE;
@@ -120,17 +130,25 @@ module icache (
         WRIT:   begin
             next_state      =   IDLE;
         end
+
+        RSET:   begin
+            if(rst || reset_count < 7'b1111111)
+                next_state      =   RSET;
+            else
+                next_state      =   IDLE;
+        end
         default:    next_state  =   IDLE;
         endcase
     end
     //control signals
     always@(*) begin
+        valid           =   0;
         for(i = 0; i < 4; i++)
             we_way[i]   =   0;
         axi_rd_req      =   0;
         case(current_state)
         IDLE:   begin
-            if((!(|way_hit)) && ram_ready)
+            if(((!(|way_hit)) && ram_ready && rd_req) && !rst)
                 axi_rd_req  =   1;
         end
 
@@ -140,6 +158,13 @@ module icache (
 
         WRIT:   begin
             we_way[LRU_index[index]]    =   1;
+            valid                       =   1;
+        end
+
+        RSET:   begin
+            for(i = 0; i < 4; i++)
+                we_way[i]   =   1;
+            valid           =   0;
         end
         default:    ;
         endcase
@@ -170,4 +195,12 @@ module icache (
         end
     end
     assign ram_ready    =   (index == index_old) ? 1 : 0;
+
+    //reset count control
+    always@(posedge clk) begin
+        if(rst)
+            reset_count <=  7'b0;
+        else
+            reset_count <=  reset_count + 1;
+    end
 endmodule
