@@ -69,8 +69,7 @@ module IF_module
     input       [3:0]   instr_bid       ,
     input       [1:0]   instr_bresp     ,
     input               instr_bvalid    ,
-    output              instr_bready    
-
+    output              instr_bready
     );
     
     assign PC_add_4 = PCout + 4;
@@ -104,9 +103,12 @@ module IF_module
     wire            stall_uncached;
 
     assign stall = miss || stall_uncached;
-    assign instr_rd_req_cached      =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000) && (PCout < 32'h80000000 || PCout > 32'h87FFFFFF)) ? 1 : 0;
-    assign instr_rd_req_uncached    =   ((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000) || (PCout > 32'h7FFFFFFF && PCout < 32'h88000000)) ? is_newPC : 0;
-    assign instr                    =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000) && (PCout < 32'h80000000 || PCout > 32'h87FFFFFF)) ? instr_cached : instr_uncached;
+    assign instr_rd_req_cached      =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? 1 : 0;
+    assign instr_rd_req_uncached    =   ((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) ? is_newPC : 0;
+    assign instr                    =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? instr_cached : instr_uncached;
+    // assign instr_rd_req_cached      =   0;
+    // assign instr_rd_req_uncached    =   is_newPC ? 1 : 0;
+    // assign instr                    =   instr_uncached;
 
     reg [31:0] reg_instr;
     always@(posedge clk) begin
@@ -133,7 +135,7 @@ module IF_module
         .axi_gnt        (axi_gnt),
         .axi_data       (axi_rd_line),
         .axi_addr       (axi_addr),
-        .axi_rd_req     (axi_rd_req)
+        .axi_rd_req     (axi_rd_req),
     );
 
     axi instr_axi(

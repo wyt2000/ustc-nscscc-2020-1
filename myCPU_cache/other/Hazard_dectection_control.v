@@ -17,7 +17,7 @@ module Hazard_module(
     output reg StallF,StallD,StallE,StallM,StallW,
     output reg FlushD,FlushE,FlushM,FlushW,
     output reg [1:0] ForwardAD,ForwardBD,ForwardAE,ForwardBE
-);
+    );
     always@(*)
         if(rst || RsD == 0)                                         ForwardAD = 2'b00;
     	else if(RegWriteE && WriteRegE == RsD && MemtoRegE && RsD)  ForwardAD = 2'b01;//add+use,forwardtoID
@@ -39,8 +39,7 @@ module Hazard_module(
         else if(RegWriteW && WriteRegW == RtE && RtE)               ForwardBE = 2'b01;
     	else                                                        ForwardBE = 2'b00;
     
-    reg [3:0] State;
-    reg [3:0] next_state;
+    reg [3:0] State, next_state;
     always@(posedge clk) begin
         if(rst)
             State <= 4'b0000;
@@ -52,6 +51,7 @@ module Hazard_module(
         if(rst)                                                                                                 next_state = 4'b0000;
         else if ((Exception_clean || Exception_Stall) && (IF_stall || MEM_stall))                               next_state = 4'b1110;
         else if (Exception_clean || Exception_Stall)                                                            next_state = 4'b0001;//Exception situation (clean and Stall all the Registers)
+        else if ((WriteRegW[5] && !WriteRegW[6]) && RegWriteW)                                                  next_state = 4'b1111;//write_cp0 instruction in WB
         else if (MEM_stall)                                                                                     next_state = 4'b1101;//MEM operates RAM
         else if (MemReadM && ((WriteRegM == RsD) || (WriteRegM == RtD)) && RegWriteM && isaBranchInstruction)   next_state = 4'b0100;//lw+use(Branch),WB-->>EX
         else if (ALU_stall && !ALU_done)                                                                        next_state = 4'b0011; //stall requested by alu
@@ -61,6 +61,7 @@ module Hazard_module(
         else if (State == 4'b1001)                                                                              next_state = 4'b1010; //mul/div stall 2
         else if (IF_stall && !MEM_stall)                                                                        next_state = 4'b1100;//IF operates RAM
         else if (MemReadE && ((WriteRegE == RsD) || (WriteRegE == RtD)) && RegWriteE && isaBranchInstruction)   next_state = 4'b1100;
+        else if ((WriteRegE[5] && !WriteRegE[6]) && RegWriteE)                                                  next_state = 4'b1100;//write_cp0 instruction in EX
         else                                                                                                    next_state = 4'b0000;
     end
     always@(next_state) begin
@@ -75,6 +76,7 @@ module Hazard_module(
             4'b1100: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b110000100;
             4'b1101: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111110001;
             4'b1110: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111111110;
+            4'b1111: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111100001;
             default: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b000000000;
         endcase
     end

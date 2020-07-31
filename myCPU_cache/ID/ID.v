@@ -162,6 +162,6 @@ module ID_module(
             isBranch_old    <=  0;
         else if(!StallD)
             isBranch_old    <=  isBranch;
-        end
-
+    end
+    
 endmodule

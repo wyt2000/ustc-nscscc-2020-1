@@ -38,10 +38,10 @@ module icache (
     wire    [6 :0]  tagv_index;
     reg             valid;
 
-    localparam      IDLE    =   0;
-    localparam      REQ     =   1;
-    localparam      WRIT    =   2;
-    localparam      RSET    =   3;
+    localparam      IDLE    =   1;
+    localparam      REQ     =   2;
+    localparam      WRIT    =   3;
+    localparam      RSET    =   0;
 
     TAGV_RAM TAGV_WAY_0 (.clka(clk),    .addra(tagv_index),  .douta(tagv_way[0]),    .wea(we_way[0]),     .dina({tag, valid}),    .ena(1));
     TAGV_RAM TAGV_WAY_1 (.clka(clk),    .addra(tagv_index),  .douta(tagv_way[1]),    .wea(we_way[1]),     .dina({tag, valid}),    .ena(1));

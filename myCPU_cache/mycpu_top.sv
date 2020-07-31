@@ -436,7 +436,7 @@ typedef struct packed{
     logic  [3 :0] bid          ;
     logic  [1 :0] bresp        ;
     logic         bvalid       ;
-    logic        bready    ;   
+    logic        bready        ;   
 }axi_interface;
 
 module mycpu_top(
@@ -450,14 +450,14 @@ module mycpu_top(
     output [3 :0] arlen        ,
     output [2 :0] arsize       ,
     output [1 :0] arburst      ,
-    output [1 :0] arlock        ,
+    output [1 :0] arlock       ,
     output [3 :0] arcache      ,
     output [2 :0] arprot       ,
     output        arvalid      ,
     input         arready      ,
     //r           
     input  [3 :0] rid          ,
-    input  [31:0] rdata        ,
+     input  [31:0] rdata       ,
     input  [1 :0] rresp        ,
     input         rlast        ,
     input         rvalid       ,
@@ -471,7 +471,7 @@ module mycpu_top(
     output [1 :0] awlock       ,
     output [3 :0] awcache      ,
     output [2 :0] awprot       ,
-    output        awvalid      ,
+    output       awvalid       ,
     input         awready      ,
     //w          
     output [3 :0] wid          ,
@@ -1215,7 +1215,7 @@ module mycpu_top(
         .instr_bid                  (IF.instr_bid),
         .instr_bresp                (IF.instr_bresp),
         .instr_bvalid               (IF.instr_bvalid),
-        .instr_bready               (IF.instr_bready)
+        .instr_bready               (IF.instr_bready),
 	);
 	
 	ID_module ID_module(
@@ -1407,7 +1407,7 @@ module mycpu_top(
         .mem_data_ok               (MEM.mem_data_ok),
 
         .CLR                        (MEM.CLR),
-        .stall                      (MEM.stall)
+        .stall                      (MEM.stall),
 	);
 
 	WB_module WB_module(
@@ -1473,7 +1473,7 @@ module mycpu_top(
 		.ForwardAE                  (Hazard.ForwardAE),
 		.ForwardBE                  (Hazard.ForwardBE),
         .IF_stall                   (Hazard.IF_stall),
-        .MEM_stall                  (Hazard.MEM_stall)
+        .MEM_stall                  (Hazard.MEM_stall),
 	);
 
 	Exception_module Exception_module(

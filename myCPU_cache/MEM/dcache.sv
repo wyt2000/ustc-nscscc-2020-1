@@ -47,11 +47,11 @@ module dcache(
     reg     [6 :0]  reset_count;
     wire    [6 :0]  tagv_index;
 
-    localparam      IDLE    =   0;
-    localparam      SWPO    =   1;
-    localparam      SWPI    =   2;
-    localparam      WRIT    =   3;
-    localparam      RSET    =   4;
+    localparam      IDLE    =   1;
+    localparam      SWPO    =   2;
+    localparam      SWPI    =   3;
+    localparam      WRIT    =   4;
+    localparam      RSET    =   0;
 
     TAGVD_RAM TAGVD_WAY_0 (.clka(clk),    .addra(tagv_index),  .douta(tagvd_way[0]),    .wea(we_way[0]),     .dina({tag, valid, dirty}),    .ena(1));
     TAGVD_RAM TAGVD_WAY_1 (.clka(clk),    .addra(tagv_index),  .douta(tagvd_way[1]),    .wea(we_way[1]),     .dina({tag, valid, dirty}),    .ena(1));
