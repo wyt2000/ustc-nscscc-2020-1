@@ -135,7 +135,7 @@ module IF_module
         .axi_gnt        (axi_gnt),
         .axi_data       (axi_rd_line),
         .axi_addr       (axi_addr),
-        .axi_rd_req     (axi_rd_req),
+        .axi_rd_req     (axi_rd_req)
     );
 
     axi instr_axi(

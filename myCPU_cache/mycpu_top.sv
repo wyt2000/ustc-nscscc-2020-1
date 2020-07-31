@@ -1215,7 +1215,7 @@ module mycpu_top(
         .instr_bid                  (IF.instr_bid),
         .instr_bresp                (IF.instr_bresp),
         .instr_bvalid               (IF.instr_bvalid),
-        .instr_bready               (IF.instr_bready),
+        .instr_bready               (IF.instr_bready)
 	);
 	
 	ID_module ID_module(
@@ -1407,7 +1407,7 @@ module mycpu_top(
         .mem_data_ok               (MEM.mem_data_ok),
 
         .CLR                        (MEM.CLR),
-        .stall                      (MEM.stall),
+        .stall                      (MEM.stall)
 	);
 
 	WB_module WB_module(
@@ -1473,7 +1473,7 @@ module mycpu_top(
 		.ForwardAE                  (Hazard.ForwardAE),
 		.ForwardBE                  (Hazard.ForwardBE),
         .IF_stall                   (Hazard.IF_stall),
-        .MEM_stall                  (Hazard.MEM_stall),
+        .MEM_stall                  (Hazard.MEM_stall)
 	);
 
 	Exception_module Exception_module(
