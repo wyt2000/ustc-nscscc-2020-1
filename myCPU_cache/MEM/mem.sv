@@ -85,8 +85,8 @@ module MEM_module (
     input       [3:0]   data_bid       ,
     input       [1:0]   data_bresp     ,
     input               data_bvalid    ,
-    output              data_bready    
-
+    output              data_bready    ,
+    output      [2:0]   dcache_current
     );
 
     reg [3:0] calWE;
@@ -177,12 +177,19 @@ module MEM_module (
     wire    [31:0]  Memdata_cache,  Memdata_uncache;
     wire            stall_uncache;
 
-    assign MemRead_cache    =   (ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF) ? MemReadM : 0;
-    assign MemRead_uncache  =   (ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000) ? MemReadM : 0;
-    assign MemWrite_cache   =   (ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF) ? TrueMemWrite : 0;
-    assign MemWrite_uncache =   (ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000) ? TrueMemWrite : 0;
+    assign MemRead_cache    =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? MemReadM : 0;
+    assign MemRead_uncache  =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? MemReadM : 0;
+    assign MemWrite_cache   =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? TrueMemWrite : 0;
+    assign MemWrite_uncache =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? TrueMemWrite : 0;
 
-    assign Memdata          =   (ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF) ? Memdata_cache : Memdata_uncache;
+    assign Memdata          =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? Memdata_cache : Memdata_uncache;
+    // assign MemRead_cache    =   0;
+    // assign MemRead_uncache  =   MemReadM;
+    // assign MemWrite_cache   =   0;
+    // assign MemWrite_uncache =   TrueMemWrite;
+
+    // assign Memdata          =   Memdata_uncache;
+
     assign stall = miss || stall_uncache;
     dcache data_cache(
         .clk            (clk),
@@ -201,7 +208,8 @@ module MEM_module (
         .axi_rd_req     (axi_rd_req),
         .axi_rd_data    (axi_rd_line),
         .axi_wr_req     (axi_wr_req),
-        .axi_wr_data    (axi_wr_line)
+        .axi_wr_data    (axi_wr_line),
+        .current_state  (dcache_current)
     );
 
     axi data_axi(
