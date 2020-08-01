@@ -1,4 +1,5 @@
 `timescale 1ns / 1ps
+`define MAP_UNCACHED
 
 module MEM_module (
     input clk,
@@ -177,18 +178,20 @@ module MEM_module (
     wire    [31:0]  Memdata_cache,  Memdata_uncache;
     wire            stall_uncache;
 
-    assign MemRead_cache    =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? MemReadM : 0;
-    assign MemRead_uncache  =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? MemReadM : 0;
-    assign MemWrite_cache   =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? TrueMemWrite : 0;
-    assign MemWrite_uncache =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? TrueMemWrite : 0;
-
-    assign Memdata          =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? Memdata_cache : Memdata_uncache;
-    // assign MemRead_cache    =   0;
-    // assign MemRead_uncache  =   MemReadM;
-    // assign MemWrite_cache   =   0;
-    // assign MemWrite_uncache =   TrueMemWrite;
-
-    // assign Memdata          =   Memdata_uncache;
+    `ifdef MAP_UNCACHED
+        assign MemRead_cache    =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? MemReadM : 0;
+        assign MemRead_uncache  =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? MemReadM : 0;
+        assign MemWrite_cache   =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? TrueMemWrite : 0;
+        assign MemWrite_uncache =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? TrueMemWrite : 0;
+        assign Memdata          =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? Memdata_cache : Memdata_uncache;
+    
+    `else
+        assign MemRead_cache    =   0;
+        assign MemRead_uncache  =   MemReadM;
+        assign MemWrite_cache   =   0;
+        assign MemWrite_uncache =   TrueMemWrite;
+        assign Memdata          =   Memdata_uncache;
+    `endif
 
     assign stall = miss || stall_uncache;
     dcache data_cache(
