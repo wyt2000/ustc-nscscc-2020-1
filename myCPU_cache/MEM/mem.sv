@@ -85,7 +85,8 @@ module MEM_module (
     input       [3:0]   data_bid       ,
     input       [1:0]   data_bresp     ,
     input               data_bvalid    ,
-    output              data_bready
+    output              data_bready    ,
+    output      [2:0]   dcache_current
     );
 
     reg [3:0] calWE;
@@ -207,7 +208,8 @@ module MEM_module (
         .axi_rd_req     (axi_rd_req),
         .axi_rd_data    (axi_rd_line),
         .axi_wr_req     (axi_wr_req),
-        .axi_wr_data    (axi_wr_line)
+        .axi_wr_data    (axi_wr_line),
+        .current_state  (dcache_current)
     );
 
     axi data_axi(

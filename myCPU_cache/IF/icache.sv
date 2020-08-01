@@ -14,7 +14,8 @@ module icache (
     input               axi_gnt,
     input       [31:0]  axi_data[0:7],
     output      [31:0]  axi_addr,
-    output reg          axi_rd_req
+    output reg          axi_rd_req,
+    output reg  [1 :0]  current_state
 );
     int             i;
 
@@ -32,7 +33,7 @@ module icache (
 
     wire    [3 :0]  way_hit;
 
-    reg     [1 :0]  current_state, next_state;
+    reg     [1 :0]  next_state;
 
     reg     [6 :0]  reset_count;
     wire    [6 :0]  tagv_index;
@@ -112,14 +113,25 @@ module icache (
     always@(*) begin
         case(current_state)
         IDLE:   begin
-            if(rst)
+            if(rst)begin
                 next_state  =   RSET;
-            else if(((!(|way_hit)) && ram_ready) && rd_req)
-                next_state  =   REQ;
-            else
-                next_state  =   IDLE;
+            end
+            else begin
+                if(| way_hit) begin
+                    next_state  =   IDLE;
+                end
+                else if(~ ram_ready) begin
+                    next_state  =   IDLE;
+                end
+                else if(~ rd_req) begin
+                    next_state  =   IDLE;
+                end
+                else begin
+                    next_state  =   REQ;
+                end
+            end 
         end
-
+        
         REQ:    begin
             if(axi_gnt)
                 next_state  =   WRIT;

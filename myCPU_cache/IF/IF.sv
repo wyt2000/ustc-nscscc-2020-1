@@ -69,7 +69,8 @@ module IF_module
     input       [3:0]   instr_bid       ,
     input       [1:0]   instr_bresp     ,
     input               instr_bvalid    ,
-    output              instr_bready
+    output              instr_bready    ,  
+    output      [1:0]   icache_current
     );
     
     assign PC_add_4 = PCout + 4;
@@ -135,7 +136,8 @@ module IF_module
         .axi_gnt        (axi_gnt),
         .axi_data       (axi_rd_line),
         .axi_addr       (axi_addr),
-        .axi_rd_req     (axi_rd_req)
+        .axi_rd_req     (axi_rd_req),
+        .current_state  (icache_current)
     );
 
     axi instr_axi(

@@ -19,7 +19,9 @@ module dcache(
     output reg          axi_rd_req,
     input       [31:0]  axi_rd_data[0:7],
     output reg          axi_wr_req,
-    output reg  [31:0]  axi_wr_data[0:7]
+    output reg  [31:0]  axi_wr_data[0:7],
+
+    output reg  [2:0]   current_state
 );
 
     int             i;
@@ -42,7 +44,7 @@ module dcache(
     wire    [3 :0]  way_hit;
     wire    [1 :0]  way_num;
 
-    reg     [2 :0]  current_state, next_state;
+    reg     [2 :0]  next_state;
     
     reg     [6 :0]  reset_count;
     wire    [6 :0]  tagv_index;
@@ -122,16 +124,26 @@ module dcache(
     always@(*) begin
         case(current_state)
         IDLE:   begin
-            if(rst)
-                    next_state  =   RSET;
-            else if((!(|way_hit)) && ram_ready && (rd_req || wr_req)) begin
-                if(tagvd_way[LRU_index[index]][0] == 0)
-                    next_state  =   SWPI;
-                else
-                    next_state  =   SWPO;
+            if(rst) begin
+                next_state  =   RSET;
             end
-            else
+            else begin
+                if(| way_hit) begin
                     next_state  =   IDLE;
+                end
+                else if(~ ram_ready) begin
+                    next_state  =   IDLE;
+                end
+                else if(~ (rd_req | wr_req) ) begin
+                    next_state  =   IDLE;
+                end
+                else begin
+                    if(tagvd_way[LRU_index[index]][0] == 0)
+                        next_state  =   SWPI;
+                    else
+                        next_state  =   SWPO;
+                end
+            end
         end
 
         SWPO:   begin
