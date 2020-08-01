@@ -1,4 +1,4 @@
-`define MAP_UNCACHED
+`timescale 1ns / 1ps
 
 module IF_module
     #(parameter WIDTH=32)
@@ -71,7 +71,7 @@ module IF_module
     input       [3:0]   instr_bid       ,
     input       [1:0]   instr_bresp     ,
     input               instr_bvalid    ,
-    output              instr_bready    ,
+    output              instr_bready    ,  
 
 //==========pre_fetch AXI bus==========//
     //ar
@@ -114,8 +114,8 @@ module IF_module
     input       [3:0]   pre_fetch_bid       ,
     input       [1:0]   pre_fetch_bresp     ,
     input               pre_fetch_bvalid    ,
-    output              pre_fetch_bready    
-
+    output              pre_fetch_bready    ,
+    output      [1:0]   icache_current
     );
     
     assign PC_add_4 = PCout + 4;
@@ -147,7 +147,7 @@ module IF_module
     wire            instr_rd_req_cached, instr_rd_req_uncached;
     wire    [31:0]  instr_cached, instr_uncached;
     wire            stall_uncached;
-    wire    [19:0]  icache_tag;
+        wire    [19:0]  icache_tag;
     wire            icache_we_way[0:3];
     wire    [6 :0]  icache_tagv_index;
     wire            icache_valid;
@@ -160,17 +160,12 @@ module IF_module
     wire            buff_ready;
 
     assign stall = miss || stall_uncached;
-    
-    `ifdef MAP_UNCACHED
-        assign instr_rd_req_cached      =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? 1 : 0;
-        assign instr_rd_req_uncached    =   ((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) ? is_newPC : 0;
-        assign instr                    =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? instr_cached : instr_uncached;
-    
-    `else
-        assign instr_rd_req_cached      =   1;
-        assign instr_rd_req_uncached    =   0;
-        assign instr                    =   instr_cached;
-    `endif
+    assign instr_rd_req_cached      =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? 1 : 0;
+    assign instr_rd_req_uncached    =   ((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) ? is_newPC : 0;
+    assign instr                    =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? instr_cached : instr_uncached;
+    // assign instr_rd_req_cached      =   0;
+    // assign instr_rd_req_uncached    =   is_newPC ? 1 : 0;
+    // assign instr                    =   instr_uncached;
 
     reg [31:0] reg_instr;
     always@(posedge clk) begin
@@ -219,7 +214,8 @@ module IF_module
         .tag            (icache_tag),
         .we_way         (icache_we_way),
         .tagv_index     (icache_tagv_index),
-        .valid          (icache_valid)
+        .valid          (icache_valid),
+        .current_state  (icache_current)
     );
 
     axi instr_axi(
@@ -286,8 +282,8 @@ module IF_module
                     .PC             ( {3'b000, PCout[28:0]} )     ,
                     .stall          (stall_uncached)     
                     );
-                    
-        pre_fetch icache_pre_fetch(
+
+    pre_fetch icache_pre_fetch(
         .clk        (clk),
         .rst        (rst),
 
@@ -341,6 +337,6 @@ module IF_module
         .bvalid     (pre_fetch_bvalid),
         .bready     (pre_fetch_bready)
     );
-    
+
 
 endmodule

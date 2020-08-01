@@ -20,7 +20,8 @@ module icache (
     output      [19:0]  tag,
     output reg          we_way[0:3],
     output      [6 :0]  tagv_index,
-    output reg          valid
+    output reg          valid,
+    output reg  [1 :0]  current_state
 );
     int             i;
 
@@ -38,7 +39,7 @@ module icache (
 
     wire    [3 :0]  way_hit;
 
-    reg     [1 :0]  current_state, next_state;
+    reg     [1 :0]  next_state;
 
     reg     [6 :0]  reset_count;
     // wire    [6 :0]  tagv_index;
@@ -136,7 +137,7 @@ module icache (
                 end
             end 
         end
-
+        
         REQ:    begin
             if(icache_gnt)
                 next_state  =   WRIT;
