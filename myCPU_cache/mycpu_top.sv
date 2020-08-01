@@ -14,11 +14,11 @@ typedef struct packed {
     logic Error_happend;
     //output
     logic [31:0] PC_add_4;
-(* keep = "TRUE" *)     logic [31:0] PCout;
+    logic [31:0] PCout;
 
     logic is_newPC;
     
-(* keep = "TRUE" *)    logic [31:0] instr;
+    logic [31:0] instr;
     logic stall;
     
     logic inst_req;
@@ -554,12 +554,6 @@ module mycpu_top(
     wire   [3:0] awqos,  arqos;
     assign awqos = 4'b0000;
     assign arqos = 4'b0000;
-
-    ila_0 ila(
-        .clk        (clk),
-        .probe0     (IF.PCout),
-        .probe1     (IF.instr)
-    );
 
     AXI_Crossbar axi_bridge(
         .aclk           (aclk),
