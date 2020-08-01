@@ -39,6 +39,29 @@ module WB_module
     assign MemWrite = MemWriteW;
     assign is_ds_out = is_ds_in;
 
+    always @(*) begin
+        TrueMemData = Memdata;
+        case (MemReadTypeW[1:0])
+            2'b00: begin
+                case (aluout[1:0])
+                    2'b00: TrueMemData = MemReadTypeW[2] ? {{24{Memdata[7]}},Memdata[7:0]} : {24'b0,Memdata[7:0]};
+                    2'b01: TrueMemData = MemReadTypeW[2] ? {{24{Memdata[15]}},Memdata[15:8]} : {24'b0,Memdata[15:8]};
+                    2'b10: TrueMemData = MemReadTypeW[2] ? {{24{Memdata[23]}},Memdata[23:16]} : {24'b0,Memdata[23:16]};
+                    2'b11: TrueMemData = MemReadTypeW[2] ? {{24{Memdata[31]}},Memdata[31:24]} : {24'b0,Memdata[31:24]};
+                endcase
+            end
+            2'b01: begin
+                case (aluout[1:0])
+                    2'b00: TrueMemData = MemReadTypeW[2] ? {{16{Memdata[15]}},Memdata[15:0]} : {16'b0,Memdata[15:0]};
+                    2'b10: TrueMemData = MemReadTypeW[2] ? {{16{Memdata[31]}},Memdata[31:16]} : {16'b0,Memdata[31:16]};
+                endcase
+            end
+        endcase
+    end
+
+
+
+/*
     always@(*)
     begin
         TrueMemData = Memdata;
@@ -79,5 +102,5 @@ module WB_module
             end
         end
     end
-    
+*/    
 endmodule

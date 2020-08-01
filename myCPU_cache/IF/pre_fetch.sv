@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-
+`define PREFETCH_ENABLE
 module pre_fetch (
     input               clk,
     input               rst,
@@ -101,6 +101,7 @@ module pre_fetch (
     //next state logic
     always@(*) begin
         case(current_state)
+        `ifdef PREFETCH_ENABLE
         IDLE:   begin
             if(rst)
                 next_state  =   IDLE;
@@ -123,6 +124,7 @@ module pre_fetch (
             else
                 next_state  =   TRAN;
         end
+        `endif
         default:begin
             next_state  =   IDLE;
         end

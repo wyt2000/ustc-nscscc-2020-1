@@ -1,4 +1,5 @@
 `define MAP_UNCACHED
+`define PREFETCH_ENABLE
 `timescale 1ns / 1ps
 
 module IF_module
@@ -188,6 +189,7 @@ module IF_module
 
 //==============================arbitrate part start====================================
     always@(*) begin
+        `ifdef PREFETCH_ENABLE
         if(icache_addr == buff_addr) begin
             axi_addr    =   0;
             axi_rd_req  =   0;
@@ -195,11 +197,14 @@ module IF_module
             icache_gnt  =   buff_ready;
         end
         else begin
+        `endif
             axi_addr    =   icache_addr;
             axi_rd_req  =   icache_rd_req;
             icache_data =   axi_rd_line;
             icache_gnt  =   axi_gnt;
+        `ifdef PREFETCH_ENABLE
         end
+        `endif
     end
 //==============================arbitrate part end  ====================================
 
