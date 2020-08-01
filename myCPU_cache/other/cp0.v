@@ -50,14 +50,14 @@ module CP0
     reg temp;
     assign state=Status[1]?1'b0:1;
     assign allow_interrupt=Status[0];
-    always@(posedge clk or posedge rst)begin
+    
+    always@(posedge clk)begin
         if(rst)
             EPC<=0;
         else if(we[14])
             EPC<=epc;
         else if(waddr==14&&general_write_in)
             EPC<=epc;
-
     end
 
     always@(posedge clk) begin

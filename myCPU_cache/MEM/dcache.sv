@@ -19,9 +19,7 @@ module dcache(
     output reg          axi_rd_req,
     input       [31:0]  axi_rd_data[0:7],
     output reg          axi_wr_req,
-    output reg  [31:0]  axi_wr_data[0:7],
-
-    output reg  [2:0]   current_state
+    output reg  [31:0]  axi_wr_data[0:7]
 );
 
     int             i;
@@ -44,7 +42,7 @@ module dcache(
     wire    [3 :0]  way_hit;
     wire    [1 :0]  way_num;
 
-    reg     [2 :0]  next_state;
+    reg     [2 :0]  current_state, next_state;
     
     reg     [6 :0]  reset_count;
     wire    [6 :0]  tagv_index;
