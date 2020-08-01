@@ -19,9 +19,7 @@ module dcache(
     output reg          axi_rd_req,
     input       [31:0]  axi_rd_data[0:7],
     output reg          axi_wr_req,
-    output reg  [31:0]  axi_wr_data[0:7],
-
-    output reg  [2:0]   current_state
+    output reg  [31:0]  axi_wr_data[0:7]
 );
 
     int             i;
@@ -44,16 +42,16 @@ module dcache(
     wire    [3 :0]  way_hit;
     wire    [1 :0]  way_num;
 
-    reg     [2 :0]  next_state;
+    reg     [2 :0]  current_state, next_state;
     
     reg     [6 :0]  reset_count;
     wire    [6 :0]  tagv_index;
 
-    localparam      IDLE    =   1;
-    localparam      SWPO    =   2;
-    localparam      SWPI    =   3;
-    localparam      WRIT    =   4;
-    localparam      RSET    =   0;
+    localparam      IDLE    =   0;
+    localparam      SWPO    =   1;
+    localparam      SWPI    =   2;
+    localparam      WRIT    =   3;
+    localparam      RSET    =   4;
 
     TAGVD_RAM TAGVD_WAY_0 (.clka(clk),    .addra(tagv_index),  .douta(tagvd_way[0]),    .wea(we_way[0]),     .dina({tag, valid, dirty}),    .ena(1));
     TAGVD_RAM TAGVD_WAY_1 (.clka(clk),    .addra(tagv_index),  .douta(tagvd_way[1]),    .wea(we_way[1]),     .dina({tag, valid, dirty}),    .ena(1));
@@ -124,26 +122,16 @@ module dcache(
     always@(*) begin
         case(current_state)
         IDLE:   begin
-            if(rst) begin
-                next_state  =   RSET;
+            if(rst)
+                    next_state  =   RSET;
+            else if((!(|way_hit)) && ram_ready && (rd_req || wr_req)) begin
+                if(tagvd_way[LRU_index[index]][0] == 0)
+                    next_state  =   SWPI;
+                else
+                    next_state  =   SWPO;
             end
-            else begin
-                if(| way_hit) begin
+            else
                     next_state  =   IDLE;
-                end
-                else if(~ ram_ready) begin
-                    next_state  =   IDLE;
-                end
-                else if(~ (rd_req | wr_req) ) begin
-                    next_state  =   IDLE;
-                end
-                else begin
-                    if(tagvd_way[LRU_index[index]][0] == 0)
-                        next_state  =   SWPI;
-                    else
-                        next_state  =   SWPO;
-                end
-            end
         end
 
         SWPO:   begin
