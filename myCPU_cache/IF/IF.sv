@@ -159,7 +159,8 @@ module IF_module
     wire    [31:0]  buff_addr;
     wire    [31:0]  buff_data[0:7];
     wire            buff_ready;
-
+    
+     assign stall = miss || stall_uncached;
     `ifdef MAP_UNCACHED
         assign instr_rd_req_cached      =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? 1 : 0;
         assign instr_rd_req_uncached    =   ((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) ? is_newPC : 0;
