@@ -1,6 +1,4 @@
 `define MAP_UNCACHED
-`define PREFETCH_ENABLE
-`timescale 1ns / 1ps
 
 module IF_module
     #(parameter WIDTH=32)
@@ -73,7 +71,7 @@ module IF_module
     input       [3:0]   instr_bid       ,
     input       [1:0]   instr_bresp     ,
     input               instr_bvalid    ,
-    output              instr_bready    ,  
+    output              instr_bready    ,
 
 //==========pre_fetch AXI bus==========//
     //ar
@@ -116,8 +114,8 @@ module IF_module
     input       [3:0]   pre_fetch_bid       ,
     input       [1:0]   pre_fetch_bresp     ,
     input               pre_fetch_bvalid    ,
-    output              pre_fetch_bready    ,
-    output      [1:0]   icache_current
+    output              pre_fetch_bready    
+
     );
     
     assign PC_add_4 = PCout + 4;
@@ -143,25 +141,26 @@ module IF_module
 //==================================================================================//
     wire            miss;
     wire            axi_gnt;
-    wire    [31:0]  axi_rd_line[0:7];
+    wire    [31:0]  axi_rd_line[0:15];
     reg     [31:0]  axi_addr;
     reg             axi_rd_req;
     wire            instr_rd_req_cached, instr_rd_req_uncached;
     wire    [31:0]  instr_cached, instr_uncached;
     wire            stall_uncached;
-        wire    [19:0]  icache_tag;
+    wire    [18:0]  icache_tag;
     wire            icache_we_way[0:3];
     wire    [6 :0]  icache_tagv_index;
     wire            icache_valid;
     reg             icache_gnt;
-    reg     [31:0]  icache_data[0:7];
+    reg     [31:0]  icache_data[0:15];
     wire    [31:0]  icache_addr;
     wire            icache_rd_req;
     wire    [31:0]  buff_addr;
-    wire    [31:0]  buff_data[0:7];
+    wire    [31:0]  buff_data[0:15];
     wire            buff_ready;
+
+    assign stall = miss || stall_uncached;
     
-     assign stall = miss || stall_uncached;
     `ifdef MAP_UNCACHED
         assign instr_rd_req_cached      =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? 1 : 0;
         assign instr_rd_req_uncached    =   ((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) ? is_newPC : 0;
@@ -189,7 +188,6 @@ module IF_module
 
 //==============================arbitrate part start====================================
     always@(*) begin
-        `ifdef PREFETCH_ENABLE
         if(icache_addr == buff_addr) begin
             axi_addr    =   0;
             axi_rd_req  =   0;
@@ -197,14 +195,11 @@ module IF_module
             icache_gnt  =   buff_ready;
         end
         else begin
-        `endif
             axi_addr    =   icache_addr;
             axi_rd_req  =   icache_rd_req;
             icache_data =   axi_rd_line;
             icache_gnt  =   axi_gnt;
-        `ifdef PREFETCH_ENABLE
         end
-        `endif
     end
 //==============================arbitrate part end  ====================================
 
@@ -224,11 +219,10 @@ module IF_module
         .tag            (icache_tag),
         .we_way         (icache_we_way),
         .tagv_index     (icache_tagv_index),
-        .valid          (icache_valid),
-        .current_state  (icache_current)
+        .valid          (icache_valid)
     );
 
-    axi instr_axi(
+    axi #(4) instr_axi(
         .gnt        (axi_gnt),
         .addr       (axi_addr),
         .rd_req     (axi_rd_req),
@@ -292,8 +286,8 @@ module IF_module
                     .PC             ( {3'b000, PCout[28:0]} )     ,
                     .stall          (stall_uncached)     
                     );
-
-    pre_fetch icache_pre_fetch(
+                    
+        pre_fetch icache_pre_fetch(
         .clk        (clk),
         .rst        (rst),
 
@@ -347,6 +341,6 @@ module IF_module
         .bvalid     (pre_fetch_bvalid),
         .bready     (pre_fetch_bready)
     );
-
+    
 
 endmodule

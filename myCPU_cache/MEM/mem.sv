@@ -86,8 +86,7 @@ module MEM_module (
     input       [3:0]   data_bid       ,
     input       [1:0]   data_bresp     ,
     input               data_bvalid    ,
-    output              data_bready    ,
-    output      [2:0]   dcache_current
+    output              data_bready
     );
 
     reg [3:0] calWE;
@@ -168,10 +167,10 @@ module MEM_module (
 //==================================================================================//
     wire            miss;
     wire            axi_gnt;
-    wire    [31:0]  axi_rd_line[0:7];
+    wire    [31:0]  axi_rd_line[0:15];
     wire    [31:0]  axi_addr;
     wire            axi_rd_req;
-    wire    [31:0]  axi_wr_line[0:7];
+    wire    [31:0]  axi_wr_line[0:15];
     wire            axi_wr_req;
     wire            MemRead_cache, MemRead_uncache;
     wire            MemWrite_cache, MemWrite_uncache;
@@ -211,11 +210,10 @@ module MEM_module (
         .axi_rd_req     (axi_rd_req),
         .axi_rd_data    (axi_rd_line),
         .axi_wr_req     (axi_wr_req),
-        .axi_wr_data    (axi_wr_line),
-        .current_state  (dcache_current)
+        .axi_wr_data    (axi_wr_line)
     );
 
-    axi data_axi(
+    axi #(4) data_axi(
         .gnt        (axi_gnt),
         .addr       (axi_addr),
         .rd_req     (axi_rd_req),

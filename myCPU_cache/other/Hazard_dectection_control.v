@@ -16,9 +16,8 @@ module Hazard_module(
     input IF_stall,MEM_stall,
     output reg StallF,StallD,StallE,StallM,StallW,
     output reg FlushD,FlushE,FlushM,FlushW,
-    output reg [1:0] ForwardAD,ForwardBD,ForwardAE,ForwardBE,
-    output reg [3:0] next_state
-);
+    output reg [1:0] ForwardAD,ForwardBD,ForwardAE,ForwardBE
+    );
     always@(*)
         if(rst || RsD == 0)                                         ForwardAD = 2'b00;
     	else if(RegWriteE && WriteRegE == RsD && MemtoRegE && RsD)  ForwardAD = 2'b01;//add+use,forwardtoID
@@ -40,14 +39,14 @@ module Hazard_module(
         else if(RegWriteW && WriteRegW == RtE && RtE)               ForwardBE = 2'b01;
     	else                                                        ForwardBE = 2'b00;
     
-    reg [3:0] State;
+    reg [3:0] State, next_state;
     always@(posedge clk) begin
         if(rst)
             State <= 4'b0000;
         else
             State <= next_state;
     end
-
+    
     always@(*) begin
         if(rst)                                                                                                 next_state = 4'b0000;
         else if ((Exception_clean || Exception_Stall) && (IF_stall || MEM_stall))                               next_state = 4'b1110;
@@ -81,5 +80,6 @@ module Hazard_module(
             default: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b000000000;
         endcase
     end
-   
+
+        
 endmodule // Hazard_detection_control

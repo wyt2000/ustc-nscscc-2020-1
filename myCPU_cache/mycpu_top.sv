@@ -72,7 +72,6 @@ typedef struct packed {
     logic       [1:0]   instr_bresp     ;
     logic               instr_bvalid    ;
     logic               instr_bready    ;
-
 //========pre fetch axi bus========
     //ar
     logic       [3:0]   pre_fetch_arid      ;
@@ -268,21 +267,21 @@ typedef struct packed {
     //========data axi bus========
     //ar
     logic       [3:0]   data_arid      ;
-       logic       [31:0]  data_araddr    ;
+    logic       [31:0]  data_araddr    ;
     logic       [3:0]   data_arlen     ;
     logic       [2:0]   data_arsize    ;
     logic       [1:0]   data_arburst   ;
     logic       [1:0]   data_arlock    ;
     logic       [3:0]   data_arcache   ;
     logic       [2:0]   data_arprot    ;
-       logic               data_arvalid   ;
+    logic               data_arvalid   ;
     logic               data_arready   ;
     //r
     logic       [3:0]   data_rid       ;
     logic       [31:0]  data_rdata     ;
     logic       [1:0]   data_rresp     ;
-       logic               data_rlast     ;
-       logic               data_rvalid    ;
+    logic               data_rlast     ;
+    logic               data_rvalid    ;
     logic               data_rready    ;
     //aw
     logic       [3:0]   data_awid      ;
@@ -293,7 +292,7 @@ typedef struct packed {
     logic       [1:0]   data_awlock    ;
     logic       [3:0]   data_awcache   ;
     logic       [2:0]   data_awprot    ;
-       logic               data_awvalid   ;
+    logic               data_awvalid   ;
     logic               data_awready   ;
     //w
     logic       [3:0]   data_wid       ;
@@ -480,7 +479,7 @@ typedef struct packed{
     logic  [3 :0] bid          ;
     logic  [1 :0] bresp        ;
     logic         bvalid       ;
-    logic        bready    ;   
+    logic        bready        ;   
 }axi_interface;
 
 module mycpu_top(
@@ -494,14 +493,14 @@ module mycpu_top(
     output [3 :0] arlen        ,
     output [2 :0] arsize       ,
     output [1 :0] arburst      ,
-    output [1 :0] arlock        ,
+    output [1 :0] arlock       ,
     output [3 :0] arcache      ,
     output [2 :0] arprot       ,
-     output        arvalid      ,
+    output        arvalid      ,
     input         arready      ,
     //r           
     input  [3 :0] rid          ,
-     input  [31:0] rdata        ,
+     input  [31:0] rdata       ,
     input  [1 :0] rresp        ,
     input         rlast        ,
     input         rvalid       ,
@@ -515,7 +514,7 @@ module mycpu_top(
     output [1 :0] awlock       ,
     output [3 :0] awcache      ,
     output [2 :0] awprot       ,
-    output        awvalid      ,
+    output       awvalid       ,
     input         awready      ,
     //w          
     output [3 :0] wid          ,
@@ -536,10 +535,6 @@ module mycpu_top(
 	output [31:0] debug_wb_rf_wdata
 	);
 
-    wire [1:0]   icache_current;
-    wire [2:0]   dcache_current;
-    wire [3:0]   Hazard_next;
-
 	logic rst;
 
 	IF_interface IF;
@@ -554,7 +549,6 @@ module mycpu_top(
     wire   [3:0] awqos,  arqos;
     assign awqos = 4'b0000;
     assign arqos = 4'b0000;
-
     AXI_Crossbar axi_bridge(
         .aclk           (aclk),
         .aresetn        (aresetn),
@@ -1307,9 +1301,8 @@ module mycpu_top(
         .pre_fetch_bid                  (IF.pre_fetch_bid),
         .pre_fetch_bresp                (IF.pre_fetch_bresp),
         .pre_fetch_bvalid               (IF.pre_fetch_bvalid),
-        .pre_fetch_bready               (IF.pre_fetch_bready),
+        .pre_fetch_bready               (IF.pre_fetch_bready)
 
-        .icache_current                 (icache_current)
 	);
 	
 	ID_module ID_module(
@@ -1501,8 +1494,7 @@ module mycpu_top(
         .mem_data_ok               (MEM.mem_data_ok),
 
         .CLR                        (MEM.CLR),
-        .stall                      (MEM.stall),
-        .dcache_current             (dcache_current)
+        .stall                      (MEM.stall)
 	);
 
 	WB_module WB_module(
@@ -1568,8 +1560,7 @@ module mycpu_top(
 		.ForwardAE                  (Hazard.ForwardAE),
 		.ForwardBE                  (Hazard.ForwardBE),
         .IF_stall                   (Hazard.IF_stall),
-        .MEM_stall                  (Hazard.MEM_stall),
-        .next_state                 (Hazard_next)
+        .MEM_stall                  (Hazard.MEM_stall)
 	);
 
 	Exception_module Exception_module(

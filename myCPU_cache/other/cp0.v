@@ -50,6 +50,7 @@ module CP0
     reg temp;
     assign state=Status[1]?1'b0:1;
     assign allow_interrupt=Status[0];
+    
     always@(posedge clk)begin
         if(rst)
             EPC<=0;
