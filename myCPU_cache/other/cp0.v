@@ -48,15 +48,13 @@ module CP0
     assign compare_data=0;
 
     reg temp;
-    assign state=Status[1]?1'b0:1;
-    assign allow_interrupt=Status[0];
+    assign state = Status[1]?1'b0:1;
+    assign allow_interrupt = Status[0];
     
     always@(posedge clk)begin
         if(rst)
             EPC<=0;
-        else if(we[14])
-            EPC<=epc;
-        else if(waddr==14&&general_write_in)
+        else if(we[14] || (waddr == 14 && general_write_in) )
             EPC<=epc;
     end
 
@@ -76,20 +74,15 @@ module CP0
     always@(posedge clk) begin
         if(rst)
             BADVADDR<=0;
-        else if(we[8])
+        else if(we[8] || (waddr == 8 && general_write_in) )
             BADVADDR<=BADADDR; 
-        else if(waddr==8&&general_write_in)
-            BADVADDR<=BADADDR;
     end
 
     always@(posedge clk) begin
         if(rst)
             prid<=0;
-        else if(we[15]) 
+        else if(we[15] || (waddr == 15 && general_write_in) ) 
             prid<=pridin;
-        else if(waddr==15&&general_write_in)
-            prid<=pridin;
-        else prid<=prid;
     end
 
     always@(posedge clk) begin
@@ -118,10 +111,7 @@ module CP0
             configure[31:16]<=0;
             configure[14:0]<=0;
         end
-        else if(we[16])begin
-            configure<=configuredata;
-        end
-        else if(waddr==16&&general_write_in)begin
+        else if(we[16] || (waddr == 16 && general_write_in) )begin
             configure<=configuredata;
         end
     end
@@ -131,21 +121,17 @@ module CP0
             cause<=0;
         else if(we[13])begin
             cause[31]<=Branch_delay;
-            cause[15]<=(Status[0]&&Status[15]&&(Status[1]==0))?hardware_interruption[5]:1'b0;
-            cause[14]<=(Status[0]&&Status[14]&&(Status[1]==0))?hardware_interruption[4]:1'b0;
-            cause[13]<=(Status[0]&&Status[13]&&(Status[1]==0))?hardware_interruption[3]:1'b0;
-            cause[12]<=(Status[0]&&Status[12]&&(Status[1]==0))?hardware_interruption[2]:1'b0;
-            cause[11]<=(Status[0]&&Status[11]&&(Status[1]==0))?hardware_interruption[1]:1'b0;
-            cause[10]<=(Status[0]&&Status[10]&&(Status[1]==0))?hardware_interruption[0]:1'b0;
-            cause[9]<=(Status[0]&&Status[9]&&(Status[1]==0))?software_interruption[1]:1'b0;
-            cause[8]<=(Status[0]&&Status[8]&&(Status[1]==0))?software_interruption[0]:1'b0;
+            cause[15]<=(Status[0]&&(Status[1]==0))?hardware_interruption[5]:1'b0;
+            cause[14]<=(Status[0]&&(Status[1]==0))?hardware_interruption[4]:1'b0;
+            cause[13]<=(Status[0]&&(Status[1]==0))?hardware_interruption[3]:1'b0;
+            cause[12]<=(Status[0]&&(Status[1]==0))?hardware_interruption[2]:1'b0;
+            cause[11]<=(Status[0]&&(Status[1]==0))?hardware_interruption[1]:1'b0;
+            cause[10]<=(Status[0]&&(Status[1]==0))?hardware_interruption[0]:1'b0;
             cause[6:2]<=Exception_code;
         end 
         else if(waddr==13&&general_write_in)begin
-            cause[31]<=Branch_delay;
             cause[9]<=software_interruption[1];
             cause[8]<=software_interruption[0];
-            cause[6:2]<=Exception_code;
         end
     end
 

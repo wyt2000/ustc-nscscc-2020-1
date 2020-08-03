@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-//`define MAP_UNCACHED
+`define MAP_UNCACHED
 
 module MEM_module (
     input clk,
