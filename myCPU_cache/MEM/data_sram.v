@@ -60,7 +60,7 @@ module data_sram
 		.rst(rst),
         .Flush(Flush),
 		.en(en),
-		.d((true_empty ? addr : fifo_data[67:36])),
+		.d((empty ? addr : fifo_data[67:36])),
 		.q(reg_addr)
 	);
 
@@ -69,7 +69,7 @@ module data_sram
 		.rst(rst),
         .Flush(Flush),
 		.en(en),
-		.d((true_empty ? wdata : fifo_data[35:4])),
+		.d((empty ? wdata : fifo_data[35:4])),
 		.q(reg_wdata)
 	);
 
@@ -78,7 +78,7 @@ module data_sram
 		.rst(rst),
         .Flush(Flush),
 		.en(en),
-		.d(true_empty ? calWE : fifo_data[3:0]),
+		.d(empty ? calWE : fifo_data[3:0]),
 		.q(reg_calWE)
 	);
 
@@ -87,7 +87,7 @@ module data_sram
         .rst(rst),
         .Flush(Flush),
         .en(en),
-        .d(true_empty ? RD : WR),
+        .d(empty ? RD : WR),
         .q(reg_req_type)
     );
 
@@ -101,7 +101,7 @@ module data_sram
     always@(*) begin
         case(current_state)
             IDLE: begin
-                if(!true_empty || MemRead) begin
+                if(!empty || (MemRead && true_empty)) begin
                         next_state = HDSK;
                 end
                 else begin
@@ -140,12 +140,12 @@ module data_sram
         en          = 0;
         case (current_state)
             IDLE: begin
-                if(!true_empty || MemRead) begin
+                if((!empty || (MemRead && true_empty))) begin
                     en          =   1;
                 end
                 if((full && MemWrite) || MemRead)
                     stall       =   1;
-                if(!true_empty)
+                if(!empty)
                     rd_en       =   1;
             end
 
