@@ -121,12 +121,12 @@ module CP0
             cause<=0;
         else if(we[13])begin
             cause[31]<=Branch_delay;
-            cause[15]<=(Status[0]&&(Status[1]==0))?hardware_interruption[5]:1'b0;
-            cause[14]<=(Status[0]&&(Status[1]==0))?hardware_interruption[4]:1'b0;
-            cause[13]<=(Status[0]&&(Status[1]==0))?hardware_interruption[3]:1'b0;
-            cause[12]<=(Status[0]&&(Status[1]==0))?hardware_interruption[2]:1'b0;
-            cause[11]<=(Status[0]&&(Status[1]==0))?hardware_interruption[1]:1'b0;
-            cause[10]<=(Status[0]&&(Status[1]==0))?hardware_interruption[0]:1'b0;
+            cause[15]<=(Status[0]&&Status[15]&&(Status[1]==0))?hardware_interruption[5]:1'b0;
+            cause[14]<=(Status[0]&&Status[14]&&(Status[1]==0))?hardware_interruption[4]:1'b0;
+            cause[13]<=(Status[0]&&Status[13]&&(Status[1]==0))?hardware_interruption[3]:1'b0;
+            cause[12]<=(Status[0]&&Status[12]&&(Status[1]==0))?hardware_interruption[2]:1'b0;
+            cause[11]<=(Status[0]&&Status[11]&&(Status[1]==0))?hardware_interruption[1]:1'b0;
+            cause[10]<=(Status[0]&&Status[10]&&(Status[1]==0))?hardware_interruption[0]:1'b0;
             cause[6:2]<=Exception_code;
         end 
         else if(waddr==13&&general_write_in)begin
