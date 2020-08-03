@@ -18,25 +18,27 @@ module Hazard_module(
     output reg FlushD,FlushE,FlushM,FlushW,
     output reg [1:0] ForwardAD,ForwardBD,ForwardAE,ForwardBE
     );
+
     always@(*)
         if(rst || RsD == 0)                                         ForwardAD = 2'b00;
-    	else if(RegWriteE && WriteRegE == RsD && MemtoRegE && RsD)  ForwardAD = 2'b01;//add+use,forwardtoID
-    	else if(RegWriteM && WriteRegM == RsD && MemtoRegM && RsD)  ForwardAD = 2'b10;//add+nop+Branch
+    	else if(RegWriteE && WriteRegE == RsD && MemtoRegE)         ForwardAD = 2'b01;  //EX -> ID
+    	else if(RegWriteM && WriteRegM == RsD/* && MemtoRegM*/)     ForwardAD = 2'b10;  //MEM -> ID
     	else                                                        ForwardAD = 2'b00;
     always@(*)
     	if(rst || RtD == 0)                                         ForwardBD = 2'b00;
-        else if(RegWriteE && WriteRegE == RtD && MemtoRegE && RtD)  ForwardBD = 2'b01;
-    	else if(RegWriteM && WriteRegM == RtD && MemtoRegM && RtD)  ForwardBD = 2'b10;//add+nop+Branch
+        else if(RegWriteE && WriteRegE == RtD && MemtoRegE)         ForwardBD = 2'b01;  //EX -> ID
+    	else if(RegWriteM && WriteRegM == RtD/* && MemtoRegM */)    ForwardBD = 2'b10;  //MEM -> ID
     	else                                                        ForwardBD = 2'b00;
+    
     always@(*)
         if(rst || RsE == 0)                                         ForwardAE = 2'b00;
-    	else if(RegWriteM && WriteRegM == RsE && MemtoRegM && RsE)  ForwardAE = 2'b10;//add+use(non-Branch)
-        else if(RegWriteW && WriteRegW == RsE && RsE)               ForwardAE = 2'b01;//add+nop+use(non-branch)
-    	else ForwardAE=2'b00;
+    	else if(RegWriteM && WriteRegM == RsE/* && MemtoRegM */)    ForwardAE = 2'b10;  //MEM -> EX
+        else if(RegWriteW && WriteRegW == RsE)                      ForwardAE = 2'b01;  //WB -> EX
+    	else                                                        ForwardAE = 2'b00;
     always@(*)
         if(rst || RtE == 0)                                         ForwardBE = 2'b00;
-    	else if(RegWriteM && WriteRegM == RtE && MemtoRegM && RtE)  ForwardBE = 2'b10;
-        else if(RegWriteW && WriteRegW == RtE && RtE)               ForwardBE = 2'b01;
+    	else if(RegWriteM && WriteRegM == RtE/* && MemtoRegM */)    ForwardBE = 2'b10;  //MEM -> EX
+        else if(RegWriteW && WriteRegW == RtE)                      ForwardBE = 2'b01;  //WB -> EX
     	else                                                        ForwardBE = 2'b00;
     
     reg [3:0] State, next_state;

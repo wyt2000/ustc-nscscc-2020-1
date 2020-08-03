@@ -308,6 +308,7 @@ typedef struct packed {
     logic               data_bready    ;
 
     logic stall;
+    logic [31:0] WritetoRFdata;
 
 } MEM_interface;
 
@@ -336,6 +337,8 @@ typedef struct packed {
     logic is_ds_in;
     logic is_ds_out;
 	logic [31:0] EPCD;
+    logic [31:0] WritetoRFdatain;
+
 } WB_interface;
 
 typedef struct packed {
@@ -1189,6 +1192,15 @@ module mycpu_top(
         .q(WB.Memdata)
     );
 
+    register #(32) MEM_WB_WritetoRFdata (
+        .clk(clk),
+		.rst(rst),
+        .Flush(0),
+		.en(~Hazard.StallW),
+        .d(MEM.WritetoRFdata),
+        .q(WB.WritetoRFdatain)
+    );
+
 	IF_module IF_module(
 		.clk                        (clk),
 		.rst                        (rst),
@@ -1437,9 +1449,7 @@ module mycpu_top(
 		.MemWriteW					(MEM.MemWriteW),
         .is_ds_in                   (MEM.is_ds_in),
         .is_ds_out                  (MEM.is_ds_out),
-        
-        .Memdata                    (MEM.Memdata),
-
+        .WritetoRFdata              (MEM.WritetoRFdata),
         //========MEM_AXI_BUS========
         //ar
         .data_arid                 (MEM.data_arid),
@@ -1508,7 +1518,8 @@ module mycpu_top(
 		.HI_LO_writeenablein        (WB.HI_LO_writeenablein),
 		.WritetoRFaddrout           (WB.WritetoRFaddrout),
 		.HI_LO_writeenableout       (WB.HI_LO_writeenableout),
-		.WritetoRFdata              (WB.WritetoRFdata),
+		.WritetoRFdatain            (WB.WritetoRFdatain),
+        .WritetoRFdata              (WB.WritetoRFdata),
 		.RegWrite                   (WB.RegWrite),
 		.PCin						(WB.PCin),
 		.PCout						(WB.PCout),

@@ -4,6 +4,7 @@ module WB_module
 		input [WIDTH-1:0] aluout,
         input [WIDTH-1:0] Memdata,
 		input [6:0] WritetoRFaddrin,
+        input [31:0] WritetoRFdatain,
 		input MemtoRegW,
 		input RegWriteW,
 		input [63:0] HILO_data,
@@ -28,9 +29,7 @@ module WB_module
 
 	reg [31:0] TrueMemData;
 	assign HI_LO_writeenableout=HI_LO_writeenablein;
-	wire [WIDTH-1:0] WritetoRFtemp;
-	assign WritetoRFtemp = MemtoRegW?aluout:TrueMemData; 
-	assign WritetoRFdata = WritetoRFtemp;
+	assign WritetoRFdata = WritetoRFdatain;
 	assign WritetoRFaddrout = WritetoRFaddrin;
 	assign WriteinRF_HI_LO_data = HILO_data;
 	assign RegWrite = (exception_in == 0 || (exception_in == 6 && EPCD[1:0] == 2'b00) )? RegWriteW : 0;
@@ -38,46 +37,5 @@ module WB_module
     assign exception_out = exception_in;
     assign MemWrite = MemWriteW;
     assign is_ds_out = is_ds_in;
-
-    always@(*)
-    begin
-        TrueMemData = Memdata;
-        if (MemReadTypeW[1:0]==2'b00)
-        begin
-            if (aluout[1:0]==2'b00)
-            begin
-                if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[7:0]};
-                else TrueMemData={{24{Memdata[7]}},Memdata[7:0]};
-            end
-            else if (aluout[1:0]==2'b01) 
-            begin
-                if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[15:8]};
-                else TrueMemData={{24{Memdata[15]}},Memdata[15:8]};
-            end
-            else if (aluout[1:0]==2'b10)
-            begin
-                if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[23:16]};
-                else TrueMemData={{24{Memdata[23]}},Memdata[23:16]};
-            end
-            else if (aluout[1:0]==2'b11)
-            begin
-                if (MemReadTypeW[2]==0) TrueMemData={24'b0,Memdata[31:24]};
-                else TrueMemData={{24{Memdata[31]}},Memdata[31:24]};
-            end
-        end
-        else if (MemReadTypeW[1:0]==2'b01)
-        begin
-            if (aluout[1:0]==2'b00)
-            begin
-                if (MemReadTypeW[2]==0) TrueMemData={16'b0,Memdata[15:0]};
-                else TrueMemData={{16{Memdata[15]}},Memdata[15:0]};
-            end
-            else if (aluout[1:0]==2'b10)
-            begin
-                if (MemReadTypeW[2]==0) TrueMemData={16'b0,Memdata[31:16]};
-                else TrueMemData={{16{Memdata[31]}},Memdata[31:16]};
-            end
-        end
-    end
     
 endmodule

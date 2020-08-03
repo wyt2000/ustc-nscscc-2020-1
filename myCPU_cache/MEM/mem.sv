@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`define MAP_UNCACHED
+//`define MAP_UNCACHED
 
 module MEM_module (
     input clk,
@@ -31,7 +31,7 @@ module MEM_module (
     input is_ds_in,
     output is_ds_out,
     
-    output [31:0] Memdata,
+    output [31:0] WritetoRFdata,
 
     output          mem_req,
     output          mem_wr,
@@ -91,7 +91,9 @@ module MEM_module (
 
     reg [3:0] calWE;
     reg [31:0] TrueRamData;
+    reg [31:0] Memdata;
     reg [31:0] reg_Memdata;
+    reg [31:0] TrueMemData;
     reg TrueMemWrite;
 
     reg     [3:0] old_exception;
@@ -152,7 +154,7 @@ module MEM_module (
         end
     end
 
-    assign MemtoRegW=MemtoRegM;
+    assign MemtoRegW = MemtoRegM;
     assign HI_LO_write_enableW=HI_LO_write_enableM;
     assign RegWriteW=RegWriteM;
     assign WriteRegisterW=WriteRegister;
@@ -163,6 +165,7 @@ module MEM_module (
     assign exception_out = exception_in;
     assign MemWriteW = MemWriteM;
     assign is_ds_out = is_ds_in;
+    assign WritetoRFdata = MemtoRegM ? ALUout : TrueMemData;
     
 //==================================================================================//
     wire            miss;
@@ -185,11 +188,11 @@ module MEM_module (
         assign Memdata          =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? Memdata_cache : Memdata_uncache;
     
     `else
-        assign MemRead_cache    =   0;
-        assign MemRead_uncache  =   MemReadM;
-        assign MemWrite_cache   =   0;
-        assign MemWrite_uncache =   TrueMemWrite;
-        assign Memdata          =   Memdata_uncache;
+        assign MemRead_cache    =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? MemReadM : 0;
+        assign MemRead_uncache  =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? MemReadM : 0;
+        assign MemWrite_cache   =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? TrueMemWrite : 0;
+        assign MemWrite_uncache =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? TrueMemWrite : 0;
+        assign Memdata          =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? Memdata_cache : Memdata_uncache;
     `endif
 
     assign stall = miss || stall_uncache;
@@ -297,5 +300,25 @@ module MEM_module (
                         .CLR            (CLR)           ,
                         .stall          (stall_uncache)         
                         );
-                        
+    
+    always @(*) begin
+        TrueMemData = Memdata;
+        case (MemReadType[1:0])
+            2'b00: begin
+                case (ALUout[1:0])
+                    2'b00: TrueMemData = MemReadType[2] ? {{24{Memdata[7]}},Memdata[7:0]} : {24'b0,Memdata[7:0]};
+                    2'b01: TrueMemData = MemReadType[2] ? {{24{Memdata[15]}},Memdata[15:8]} : {24'b0,Memdata[15:8]};
+                    2'b10: TrueMemData = MemReadType[2] ? {{24{Memdata[23]}},Memdata[23:16]} : {24'b0,Memdata[23:16]};
+                    2'b11: TrueMemData = MemReadType[2] ? {{24{Memdata[31]}},Memdata[31:24]} : {24'b0,Memdata[31:24]};
+                endcase
+            end
+            2'b01: begin
+                case (ALUout[1:0])
+                    2'b00: TrueMemData = MemReadType[2] ? {{16{Memdata[15]}},Memdata[15:0]} : {16'b0,Memdata[15:0]};
+                    2'b10: TrueMemData = MemReadType[2] ? {{16{Memdata[31]}},Memdata[31:16]} : {16'b0,Memdata[31:16]};
+                endcase
+            end
+        endcase
+    end
+      
 endmodule
