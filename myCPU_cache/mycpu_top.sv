@@ -127,8 +127,8 @@ typedef struct packed {
     logic [31:0] ResultW;
     logic HI_LO_write_enable_from_WB;
     logic [63:0] HI_LO_data;
-    logic [31:0] ALUoutE;
-    logic [31:0] ALUoutM;
+    logic [31:0] ForwardMEM;
+    logic [31:0] ForwardWB;
     logic [1:0] ForwardAD;
     logic [1:0] ForwardBD;
     logic [31:0] PCin;
@@ -659,8 +659,8 @@ module mycpu_top(
 	assign ID.ResultW                       = WB.WritetoRFdata;
 	assign ID.HI_LO_write_enable_from_WB    = WB.HI_LO_writeenableout;
 	assign ID.HI_LO_data                    = WB.WriteinRF_HI_LO_data;
-	assign ID.ALUoutE                       = EX.ALUResult;
-	assign ID.ALUoutM                       = MEM.ALUoutW;
+	assign ID.ForwardMEM                    = MEM.ALUout;
+	assign ID.ForwardWB                     = WB.WritetoRFdata;
 	assign ID.ForwardAD                     = Hazard.ForwardAD;
 	assign ID.ForwardBD                     = Hazard.ForwardBD;
 	assign ID.Exception_EXL					= Exception.EXL;
@@ -1327,8 +1327,8 @@ module mycpu_top(
 		.HI_LO_data                 (ID.HI_LO_data),
 		.HI_LO_write_enable_from_WB (ID.HI_LO_write_enable_from_WB),
 		.RegWriteW                  (ID.RegWriteW),
-		.ALUoutE                    (ID.ALUoutE),
-		.ALUoutM                    (ID.ALUoutM),
+		.ForwardMEM                 (ID.ForwardMEM),
+		.ForwardWB                  (ID.ForwardWB),
 		.ForwardAD                  (ID.ForwardAD),
 		.ForwardBD                  (ID.ForwardBD),
 		.ALUOp                      (ID.ALUOp),
@@ -1557,6 +1557,7 @@ module mycpu_top(
 		.MemtoRegM                  (Hazard.MemtoRegM),
 		.RegWriteW                  (Hazard.RegWriteW),
 		.WriteRegW                  (Hazard.WriteRegW),
+        .MemtoRegW                  (WB.MemtoRegW),
 		.StallF                     (Hazard.StallF),
 		.StallD                     (Hazard.StallD),
 		.StallE                     (Hazard.StallE),

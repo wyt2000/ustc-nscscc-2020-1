@@ -1,8 +1,8 @@
 module WB_module
 	#(parameter WIDTH=32)
 	(
-		input [WIDTH-1:0] aluout,
-        input [WIDTH-1:0] Memdata,
+		input [31:0] aluout,
+		input [31:0] Memdata,
 		input [6:0] WritetoRFaddrin,
         input [31:0] WritetoRFdatain,
 		input MemtoRegW,

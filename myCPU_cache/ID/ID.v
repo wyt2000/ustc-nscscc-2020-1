@@ -19,11 +19,11 @@ module ID_module(
     input HI_LO_write_enable_from_WB,
     input RegWriteW,
 
-    //from EX
-    input [31:0] ALUoutE,
-
     //from MEM
-    input [31:0] ALUoutM,
+    input [31:0] ForwardMEM,
+
+    //from WB
+    input [31:0] ForwardWB,
 
     //from Hazard Unit
     input [1:0] ForwardAD,
@@ -94,8 +94,8 @@ module ID_module(
     assign PCout = PCin;
 
     //mux
-    assign RsValue = ForwardAD[1] ?  ALUoutM : (ForwardAD[0] ? ALUoutE : Read_data_1);
-    assign RtValue = ForwardBD[1] ?  ALUoutM : (ForwardBD[0] ? ALUoutE : Read_data_2);
+    assign RsValue = ForwardAD[1] ?  ForwardMEM : (ForwardAD[0] ? ForwardWB : Read_data_1);
+    assign RtValue = ForwardBD[1] ?  ForwardMEM : (ForwardBD[0] ? ForwardWB : Read_data_2);
 
     Control_Unit CPU_CTL(.Op(instr[31:26]),
                         .func(instr[5:0]),

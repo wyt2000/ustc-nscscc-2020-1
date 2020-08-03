@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`define mul_cycle 5
+`define mul_cycle 6
 
 module multiplier_control(
     input clk,    
