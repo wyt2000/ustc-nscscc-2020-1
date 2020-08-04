@@ -251,8 +251,6 @@ typedef struct packed {
     logic is_ds_in;
     logic is_ds_out;
 
-    logic [31:0] Memdata;
-
     logic mem_req;
     logic mem_wr;
     logic [1:0] mem_size;
@@ -315,7 +313,6 @@ typedef struct packed {
 typedef struct packed {
     //input
     logic [31:0] aluout;
-    logic [31:0] Memdata;
     logic MemtoRegW;
     logic RegWriteW;
     logic [6:0] WritetoRFaddrin;
@@ -418,9 +415,6 @@ typedef struct packed{
 } Exception_interface;
 
 typedef struct packed{
-    logic         clk;
-    logic         resetn; 
-
     //inst sram-like 
     logic         inst_req     ;
     logic         inst_wr      ;
@@ -1183,15 +1177,6 @@ module mycpu_top(
         .q(WB.is_ds_in)
     );
 
-    register #(32) MEM_WB_Memdata (
-        .clk(clk),
-		.rst(rst),
-        .Flush(0),
-		.en(~Hazard.StallW),
-        .d(MEM.Memdata),
-        .q(WB.Memdata)
-    );
-
     register #(32) MEM_WB_WritetoRFdata (
         .clk(clk),
 		.rst(rst),
@@ -1509,7 +1494,6 @@ module mycpu_top(
 
 	WB_module WB_module(
 		.aluout                     (WB.aluout),
-		.Memdata                    (WB.Memdata),
 		.WritetoRFaddrin            (WB.WritetoRFaddrin),
 		.MemtoRegW                  (WB.MemtoRegW),
 		.RegWriteW                  (WB.RegWriteW),

@@ -2,7 +2,6 @@ module WB_module
 	#(parameter WIDTH=32)
 	(
 		input [31:0] aluout,
-		input [31:0] Memdata,
 		input [6:0] WritetoRFaddrin,
         input [31:0] WritetoRFdatain,
 		input MemtoRegW,
@@ -27,7 +26,6 @@ module WB_module
         output is_ds_out
 	);
 
-	reg [31:0] TrueMemData;
 	assign HI_LO_writeenableout=HI_LO_writeenablein;
 	assign WritetoRFdata = WritetoRFdatain;
 	assign WritetoRFaddrout = WritetoRFaddrin;
