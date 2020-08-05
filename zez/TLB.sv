@@ -1,4 +1,26 @@
-module iTLB(
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 2020/08/05 19:16:10
+// Design Name: 
+// Module Name: iTLB
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module TLB(
 	input clk,
 	input rst,
 	
@@ -110,7 +132,7 @@ always@(*) begin
 	end
 end
 
-assign phy_addr={PFN,valow};
+assign phy_addr=(i_kseg3 | i_ksseg | i_useg) ? {PFN,valow}: logic_addr;
 
 reg [7:0] LRU [0:31];
 reg [4:0] writereg;
