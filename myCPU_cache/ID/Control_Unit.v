@@ -68,6 +68,22 @@ module Control_Unit(
             //SW
             MemReadType = 3'b010;
         end
+        `OP_LWL: begin
+            //LWL
+            MemReadType = 3'b011;
+        end
+        `OP_LWR: begin
+            //LWR
+            MemReadType = 3'b111;
+        end
+        `OP_SWL: begin
+            //SWL
+            MemReadType = 3'b011;
+        end
+        `OP_SWR: begin
+            //SWR
+            MemReadType = 3'b111;
+        end
         default: ;
         endcase
     end

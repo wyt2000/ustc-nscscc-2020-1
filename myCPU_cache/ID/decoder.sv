@@ -84,6 +84,10 @@ module decoder(
             `OP_BELSE:                      ALUop = `ALU_ADDU;
             `OP_MUL:                        ALUop = `ALU_MUL;
             `OP_CACHE,`OP_BEQL:             ALUop = `ALU_NOP;
+            `OP_LWL:                        ALUop = `ALU_LWL;
+            `OP_LWR:                        ALUop = `ALU_LWR;
+            `OP_SWL:                        ALUop = `ALU_SWL;
+            `OP_SWR:                        ALUop = `ALU_SWR;
         endcase
     end
 
@@ -138,7 +142,9 @@ module decoder(
             `OP_JAL,`OP_BEQ,
             `OP_BNE,`OP_BGTZ,
             `OP_BLEZ,`OP_CACHE,
-            `OP_BEQL:
+            `OP_BEQL,`OP_LWL,
+            `OP_LWR,`OP_SWL,
+            `OP_SWR:
                 exception = 0;
             `OP_LUI:
                 if(rs == 0) exception = 0;

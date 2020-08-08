@@ -23,7 +23,8 @@ module register_file(
     input       [1:0]   software_interruption,
     input       [31:0]  epc,
     input       [31:0]  BADADDR,
-    input               Branch_delay
+    input               Branch_delay,
+    input       [3:0]   reg_file_byte_we
     );
 
     wire                    timer_int_data;
@@ -86,8 +87,12 @@ module register_file(
 
     assign reg_file_we = regwrite & ~(write_addr[5] | write_addr[6]);
     always@(posedge clk) begin
-        if(reg_file_we && (|write_addr))
-                reg_file[write_addr[4:0]] <= write_data;
+        if(reg_file_we && (|write_addr)) begin
+            if(reg_file_byte_we[0]) reg_file[write_addr[4:0]][7:0]      <= write_data[7:0];
+            if(reg_file_byte_we[1]) reg_file[write_addr[4:0]][15:8]     <= write_data[15:8];
+            if(reg_file_byte_we[2]) reg_file[write_addr[4:0]][23:16]    <= write_data[23:16];
+            if(reg_file_byte_we[3]) reg_file[write_addr[4:0]][31:24]    <= write_data[31:24];
+        end
         reg_file[0] <=  0;
     end
 

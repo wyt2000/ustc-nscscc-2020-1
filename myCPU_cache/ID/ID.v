@@ -80,7 +80,8 @@ module ID_module(
     //is_ds
     output is_ds,
 
-    input StallD
+    input StallD,
+    input [3:0] reg_file_byte_we
     );
 
     wire Branch_taken, RegWriteCD, RegWriteBD;
@@ -136,7 +137,8 @@ module ID_module(
                            .software_interruption(software_interruption),
                            .epc(EPCin),
                            .BADADDR(BADADDR),
-                           .Branch_delay(Branch_delay)
+                           .Branch_delay(Branch_delay),
+                           .reg_file_byte_we(reg_file_byte_we)
                            );
 
     Branch_judge brch_jdg(.Op(instr[31:26]),

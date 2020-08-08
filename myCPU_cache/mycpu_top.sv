@@ -174,6 +174,7 @@ typedef struct packed {
     logic Branch_delay;
     logic is_ds;
     logic StallD;
+    logic [3:0] reg_file_byte_we;
 } ID_interface;
 
 typedef struct packed {
@@ -307,7 +308,7 @@ typedef struct packed {
 
     logic stall;
     logic [31:0] WritetoRFdata;
-
+    logic [3:0] reg_file_byte_we;
 } MEM_interface;
 
 typedef struct packed {
@@ -335,6 +336,7 @@ typedef struct packed {
     logic is_ds_out;
 	logic [31:0] EPCD;
     logic [31:0] WritetoRFdatain;
+    logic [3:0] reg_file_byte_we;
 
 } WB_interface;
 
@@ -656,6 +658,7 @@ module mycpu_top(
 	assign IF.StallF                        = Hazard.StallF;
 	assign IF.Error_happend					= Exception.Stall;
 
+    assign ID.reg_file_byte_we              = WB.reg_file_byte_we;
 	assign ID.RegWriteW                     = WB.RegWrite;
 	assign ID.WriteRegW                     = WB.WritetoRFaddrout;
 	assign ID.ResultW                       = WB.WritetoRFdata;
@@ -1194,6 +1197,15 @@ module mycpu_top(
         .q(WB.WritetoRFdatain)
     );
 
+    register #(4) MEM_WB_reg_file_byte_we (
+        .clk(clk),
+		.rst(rst),
+        .Flush(0),
+		.en(~Hazard.StallW),
+        .d(MEM.reg_file_byte_we),
+        .q(WB.reg_file_byte_we)
+    );
+
 	IF_module IF_module(
 		.clk                        (clk),
 		.rst                        (rst),
@@ -1365,7 +1377,8 @@ module mycpu_top(
     	.cause_data					(ID.cause),
 		.isBranch					(ID.isBranch),
         .is_ds                      (ID.is_ds),
-        .StallD                     (ID.StallD)
+        .StallD                     (ID.StallD),
+        .reg_file_byte_we           (ID.reg_file_byte_we)
 	);
 
 	EX_module EX_module(
@@ -1497,7 +1510,8 @@ module mycpu_top(
         .mem_data_ok               (MEM.mem_data_ok),
 
         .CLR                        (MEM.CLR),
-        .stall                      (MEM.stall)
+        .stall                      (MEM.stall),
+        .reg_file_byte_we           (MEM.reg_file_byte_we)
 	);
 
 	WB_module WB_module(

@@ -23,6 +23,10 @@
 `define OP_MUL          6'b011100
 `define OP_CACHE        6'b101111
 `define OP_BEQL         6'b010100
+`define OP_LWL          6'b100010
+`define OP_LWR          6'b100110
+`define OP_SWL          6'b101010
+`define OP_SWR          6'b101110
 
 `define OP_ZERO         6'b000000
 `define FUNC_ADD        6'b100000
