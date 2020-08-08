@@ -57,9 +57,10 @@ module decoder(
                     `FUNC_MTHI,`FUNC_MTLO:  ALUop = `ALU_ADDU;
                 endcase
             `OP_PRIV:                       begin   //changed by jbz 7.8.2020
-                                            ALUop = `ALU_ADD; 
-                                            if(rs == `FUNC_ERET)
-                                                ALUop = `ALU_ERET;
+                                                ALUop = `ALU_ADD; 
+                                                if (rs == `FUNC_ERET)
+                                                    if (func == `ERET_LAST) ALUop = `ALU_ERET;
+                                                    else ALUop = `ALU_NOP;
                                             end
             `OP_ADDI:                       ALUop = `ALU_ADDI;
             `OP_ADDIU:                      ALUop = `ALU_ADDIU;
@@ -82,6 +83,7 @@ module decoder(
             `OP_BGTZ,`OP_BLEZ,
             `OP_BELSE:                      ALUop = `ALU_ADDU;
             `OP_MUL:                        ALUop = `ALU_MUL;
+            `OP_CACHE,`OP_BEQL:             ALUop = `ALU_NOP;
         endcase
     end
 
@@ -116,7 +118,12 @@ module decoder(
             `OP_PRIV:
                 case (rs)
                     `FUNC_ERET:
-                        if(rt == 0 && rd == 0 && sa == 0 && func == 6'b011000) exception = 0;
+                        case (func)
+                            `ERET_LAST, `TLBP_LAST,
+                            `TLBR_LAST, `TLBWI_LAST,
+                            `TLBWR_LAST:
+                                if (rt == 0 && rd == 0 && sa == 0) exception = 0;                                
+                        endcase
                     `FUNC_MFC0,`FUNC_MTC0:
                         if(sa == 0 && func[5:3] == 0) exception = 0;
                 endcase
@@ -130,7 +137,8 @@ module decoder(
             `OP_SW,`OP_J,
             `OP_JAL,`OP_BEQ,
             `OP_BNE,`OP_BGTZ,
-            `OP_BLEZ:
+            `OP_BLEZ,`OP_CACHE,
+            `OP_BEQL:
                 exception = 0;
             `OP_LUI:
                 if(rs == 0) exception = 0;

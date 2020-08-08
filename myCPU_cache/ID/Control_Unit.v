@@ -107,7 +107,10 @@ module Control_Unit(
            (Op == `OP_ZERO && func == `FUNC_SYSCALL) ||
            Op == `OP_SB ||
            Op == `OP_SH ||
-           Op == `OP_SW
+           Op == `OP_SW ||
+           Op == `OP_CACHE ||
+           Op == `OP_BEQL ||
+           (Op == `OP_PRIV && func != `ERET_LAST)
            )
            RegWriteCD = 0;
     end

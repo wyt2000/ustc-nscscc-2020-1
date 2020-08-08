@@ -188,11 +188,11 @@ module MEM_module (
         assign Memdata          =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? Memdata_cache : Memdata_uncache;
     
     `else
-        assign MemRead_cache    =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? MemReadM : 0;
-        assign MemRead_uncache  =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? MemReadM : 0;
-        assign MemWrite_cache   =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? TrueMemWrite : 0;
-        assign MemWrite_uncache =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? TrueMemWrite : 0;
-        assign Memdata          =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? Memdata_cache : Memdata_uncache;
+        assign MemRead_cache    =   0;
+        assign MemRead_uncache  =   MemReadM;
+        assign MemWrite_cache   =   0;
+        assign MemWrite_uncache =   TrueMemWrite;
+        assign Memdata          =   Memdata_uncache;
     `endif
 
     assign stall = miss || stall_uncache;

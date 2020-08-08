@@ -84,7 +84,7 @@ module register_file(
         if (read_addr_2 == 7'b0) read_data_2 = 32'b0;
     end
 
-    assign reg_file_we = regwrite & ~(write_addr[5] & write_addr[6]);
+    assign reg_file_we = regwrite & ~(write_addr[5] | write_addr[6]);
     always@(posedge clk) begin
         if(reg_file_we && (|write_addr))
                 reg_file[write_addr[4:0]] <= write_data;

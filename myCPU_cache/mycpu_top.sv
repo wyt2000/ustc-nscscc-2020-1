@@ -14,11 +14,11 @@ typedef struct packed {
     logic Error_happend;
     //output
     logic [31:0] PC_add_4;
-    logic [31:0] PCout;
+(* keep = "TRUE" *)        logic [31:0] PCout;
 
     logic is_newPC;
     
-    logic [31:0] instr;
+(* keep = "TRUE" *)        logic [31:0] instr;
     logic stall;
     
     logic inst_req;
@@ -326,9 +326,9 @@ typedef struct packed {
     logic HI_LO_writeenableout;
     logic [63:0] WriteinRF_HI_LO_data;
     logic RegWrite;
-    logic [31:0] PCout;
+(* keep = "TRUE" *)    logic [31:0] PCout;
     logic [3:0] exception_in;
-    logic [3:0] exception_out;
+(* keep = "TRUE" *)    logic [3:0] exception_out;
     logic MemWrite;
     logic MemWriteW;
     logic is_ds_in;
@@ -531,7 +531,15 @@ module mycpu_top(
 	output [4:0] debug_wb_rf_wnum,
 	output [31:0] debug_wb_rf_wdata
 	);
-
+/*
+    ila_0 ila(
+        .clk        (clk),
+        .probe0     (IF.PCout),
+        .probe1     (IF.instr),
+        .probe2     (WB.PCout),
+        .probe3     (WB.exception_out)
+    );
+*/
 	logic rst;
 
 	IF_interface IF;
