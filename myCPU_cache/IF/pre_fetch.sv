@@ -5,7 +5,7 @@ module pre_fetch (
     input               rst,
 
     //connect with icache
-    input       [19:0]  tag,
+    input       [18:0]  tag,
     input               we_way[0:3],
     input       [6 :0]  tagv_index,
     input               valid,
@@ -17,7 +17,7 @@ module pre_fetch (
 
     //connect with arbitrate
     output reg  [31:0]  buff_addr,
-    output reg  [31:0]  buff_data[0:7],
+    output reg  [31:0]  buff_data[0:15],
     output reg          buff_ready,
 
     //AXI request
@@ -69,12 +69,12 @@ module pre_fetch (
     localparam          HDSK    =   1;
     localparam          TRAN    =   2;
 
-    localparam  BURST_LENGTH    =   8;
+    localparam  BURST_LENGTH    =   16;
     localparam  BURST_TYPE_FIXED=   2'B00;
     localparam  BURST_TYPE_INCR =   2'B01;
     localparam  BURST_TYPE_WRAP =   2'B10;
 
-    wire        [20:0]  tagv_way[0:3];
+    wire        [19:0]  tagv_way[0:3];
     wire        [3 :0]  way_hit;
 
     reg         [1 :0]  current_state,  next_state;
@@ -85,10 +85,10 @@ module pre_fetch (
     BUFF_TAGV_RAM   MIRROR_WAY_2(.addra(tagv_index),    .clka(clk), .dina({tag, valid}),    .wea(we_way[2]),    .ena(1),    .addrb({tagv_index + 1}),   .clkb(clk), .doutb(tagv_way[2]),   .enb(1));
     BUFF_TAGV_RAM   MIRROR_WAY_3(.addra(tagv_index),    .clka(clk), .dina({tag, valid}),    .wea(we_way[3]),    .ena(1),    .addrb({tagv_index + 1}),   .clkb(clk), .doutb(tagv_way[3]),   .enb(1));
 
-    assign  way_hit = {tagv_way[3][20:1] == rd_addr[31:12] && tagv_way[3][0],
-                       tagv_way[2][20:1] == rd_addr[31:12] && tagv_way[2][0],
-                       tagv_way[1][20:1] == rd_addr[31:12] && tagv_way[1][0],
-                       tagv_way[0][20:1] == rd_addr[31:12] && tagv_way[0][0]};
+    assign  way_hit = {tagv_way[3][19:1] == rd_addr[31:13] && tagv_way[3][0],
+                       tagv_way[2][19:1] == rd_addr[31:13] && tagv_way[2][0],
+                       tagv_way[1][19:1] == rd_addr[31:13] && tagv_way[1][0],
+                       tagv_way[0][19:1] == rd_addr[31:13] && tagv_way[0][0]};
 
 //==========state machine begin==========//
     //state change
@@ -101,28 +101,28 @@ module pre_fetch (
     //next state logic
     always@(*) begin
         case(current_state)
-        IDLE:   begin
-            if(rst)
-                next_state  =   IDLE;
-            else if((!(|way_hit) && !miss && rd_req))
-                next_state  =   HDSK;
-            else
-                next_state  =   IDLE;
-        end
+        // IDLE:   begin
+        //     if(rst)
+        //         next_state  =   IDLE;
+        //     else if((!(|way_hit) && !miss && rd_req))
+        //         next_state  =   HDSK;
+        //     else
+        //         next_state  =   IDLE;
+        // end
 
-        HDSK:   begin
-            if(arvalid && arready)
-                next_state  =   TRAN;
-            else
-                next_state  =   HDSK;
-        end
+        // HDSK:   begin
+        //     if(arvalid && arready)
+        //         next_state  =   TRAN;
+        //     else
+        //         next_state  =   HDSK;
+        // end
 
-        TRAN:   begin
-            if(count == BURST_LENGTH - 1 && rlast && rvalid && rready)
-                next_state  =   IDLE;
-            else
-                next_state  =   TRAN;
-        end
+        // TRAN:   begin
+        //     if(count == BURST_LENGTH - 1 && rlast && rvalid && rready)
+        //         next_state  =   IDLE;
+        //     else
+        //         next_state  =   TRAN;
+        // end
         default:begin
             next_state  =   IDLE;
         end
@@ -151,7 +151,7 @@ module pre_fetch (
         if(rst)
             buff_addr   <=  0;
         if((!(|way_hit) && !miss && rd_req) && current_state == IDLE)
-            buff_addr   <=  {rd_addr[31:5] + 1, 5'b00000};
+            buff_addr   <=  {rd_addr[31:6] + 1, 6'b00000};
     end
 
     //buff ready
@@ -168,7 +168,7 @@ module pre_fetch (
     always@(posedge clk) begin
         if(rst) begin
             count   <=  0;
-            for(i = 0; i < 8; i++) begin
+            for(i = 0; i < 16; i++) begin
                 buff_data[i]    <=  0;
             end
         end
@@ -208,32 +208,5 @@ module pre_fetch (
     assign wlast    =   0;
     assign wvalid   =   0;
     assign bready   =   0;
-    // always@(*) begin
-    //     arid        =   0;
-    //     arlen       =   BURST_LENGTH - 1;
-    //     arsize      =   2;
-    //     arburst     =   BURST_TYPE_INCR;
-    //     arlock      =   0;
-    //     arcache     =   0;
-    //     arprot      =   0;
-
-    //     awid        =   4'b0;
-    //     awaddr      =   32'b0;
-    //     awlen       =   8'b0;
-    //     awsize      =   0;
-    //     awburst     =   0;
-    //     awlock      =   0;
-    //     awcache     =   0;
-    //     awprot      =   0;
-    //     awvalid     =   0;
-
-    //     wid         =   0;
-    //     wdata       =   0;
-    //     wstrb       =   0;
-    //     wlast       =   0;
-    //     wvalid      =   0;
-
-    //     bready      =   1;
-    // end
 
 endmodule

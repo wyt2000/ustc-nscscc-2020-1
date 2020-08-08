@@ -18,7 +18,9 @@ module Control_Unit(
     output reg ALUSrcDB,
     output reg RegDstD,
     output reg Imm_sel,
-    output reg isBranch
+    output reg isBranch,
+    output reg TLB_we,
+    output reg [1:0] TLB_CP0we
 );
 
     //HI_LO_write_enableD
@@ -211,6 +213,25 @@ module Control_Unit(
            func == `FUNC_JALR
         ))
             isBranch = 1;
+    end
+
+    //TLB_we
+    always@(*) begin
+        TLB_we = 0;
+        if(Op == `OP_PRIV && func == `FUNC_TLBWI)
+            TLB_we = 1;
+    end
+
+    //TLB_CP0we
+    always@(*) begin
+        TLB_CP0we = 0;
+        if(Op == `OP_PRIV) begin
+            case(func)
+            `FUNC_TLBR: TLB_CP0we = 1;
+            `FUNC_TLBP: TLB_CP0we = 2;
+            default:    TLB_CP0we = 0;
+            endcase
+        end
     end
 
 endmodule

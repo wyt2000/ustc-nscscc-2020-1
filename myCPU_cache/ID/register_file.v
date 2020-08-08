@@ -23,7 +23,18 @@ module register_file(
     input       [1:0]   software_interruption,
     input       [31:0]  epc,
     input       [31:0]  BADADDR,
-    input               Branch_delay
+    input               Branch_delay,
+    input       [31:0]  Index_in,
+    input       [31:0]  EntryLo0_in,
+    input       [31:0]  EntryLo1_in,
+    input       [31:0]  PageMask_in,
+    input       [31:0]  EntryHi_in,
+    output      [31:0]  Index_data,
+    output      [31:0]  EntryLo0_data,
+    output      [31:0]  EntryLo1_data,
+    output      [31:0]  PageMask_data,
+    output      [31:0]  EntryHi_data
+
     );
 
     wire                    timer_int_data;
@@ -84,7 +95,7 @@ module register_file(
         if (read_addr_2 == 7'b0) read_data_2 = 32'b0;
     end
 
-    assign reg_file_we = regwrite & ~(write_addr[5] & write_addr[6]);
+    assign reg_file_we = regwrite & ~(write_addr[5] | write_addr[6]);
     always@(posedge clk) begin
         if(reg_file_we && (|write_addr))
                 reg_file[write_addr[4:0]] <= write_data;
@@ -145,6 +156,16 @@ module register_file(
                       .prid_data(prid_data),
                       .BADVADDR_data(BADVADDR_data),//output
                       .allow_interrupt(allow_interrupt),//output    
-                      .state(STATE)//output
+                      .state(STATE),//output
+                      .Index_in(Index_in),
+                      .EntryLo0_in(EntryLo0_in),
+                      .EntryLo1_in(EntryLo1_in),
+                      .PageMask_in(PageMask_in),
+                      .EntryHi_in(EntryHi_in),
+                      .Index_data(Index_data),
+                      .EntryLo0_data(EntryLo0_data),
+                      .EntryLo1_data(EntryLo1_data),
+                      .PageMask_data(PageMask_data),
+                      .EntryHi_data(EntryHi_data)    
                     );
 endmodule

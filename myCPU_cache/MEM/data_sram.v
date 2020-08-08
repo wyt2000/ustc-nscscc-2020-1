@@ -24,24 +24,43 @@ module data_sram
     output  reg    stall
 );
 
-    parameter IDLE  =   2'b00;
-    parameter HDSK  =   2'b01;
-    parameter WAIT  =   2'b10;
+    localparam IDLE  =   2'b00;
+    localparam HDSK  =   2'b01;
+    localparam WAIT  =   2'b10;
+
+    localparam  RD   =   0;
+    localparam  WR   =   1;
 
     reg     [1:0]   current_state, next_state;
     reg     Flush;
+    wire    reg_req_type;
     wire     [31:0]  reg_addr, reg_wdata;
     wire     [3:0]   reg_calWE;
-    wire     en;
+    wire     full, empty, true_empty;
+    reg     en, rd_en;
+    wire    [67:0]  fifo_data;
+    wire    [4:0] data_count;
 
-    assign en = MemRead | MemWrite;
+    assign true_empty = !(|data_count);
+
+    UNCACHED_FIFO BUFFER (
+        .clk(clk),
+        .srst(rst),
+        .full(full),
+        .din({addr, wdata, calWE}),
+        .wr_en(MemWrite && !full),
+        .empty(empty),
+        .dout(fifo_data),
+        .rd_en(rd_en),
+        .data_count(data_count)
+    );
 
     register #(32) _reg_addr (
 		.clk(clk),
 		.rst(rst),
         .Flush(Flush),
 		.en(en),
-		.d(addr),
+		.d((empty ? addr : fifo_data[67:36])),
 		.q(reg_addr)
 	);
 
@@ -50,7 +69,7 @@ module data_sram
 		.rst(rst),
         .Flush(Flush),
 		.en(en),
-		.d(wdata),
+		.d((empty ? wdata : fifo_data[35:4])),
 		.q(reg_wdata)
 	);
 
@@ -59,9 +78,18 @@ module data_sram
 		.rst(rst),
         .Flush(Flush),
 		.en(en),
-		.d(calWE),
+		.d(empty ? calWE : fifo_data[3:0]),
 		.q(reg_calWE)
 	);
+
+    register #(1) _reg_req_type (
+        .clk(clk),
+        .rst(rst),
+        .Flush(Flush),
+        .en(en),
+        .d(empty ? RD : WR),
+        .q(reg_req_type)
+    );
 
     always@(posedge clk) begin
         if(rst)
@@ -73,13 +101,8 @@ module data_sram
     always@(*) begin
         case(current_state)
             IDLE: begin
-                if(en) begin
-                    if(data_addr_ok) begin
-                        next_state = WAIT;
-                    end
-                    else begin
+                if(!empty || (MemRead && true_empty)) begin
                         next_state = HDSK;
-                    end
                 end
                 else begin
                     next_state = IDLE;
@@ -113,65 +136,26 @@ module data_sram
         data_addr   = 0;
         data_wdata  = 0;
         Flush       = 0;
+        rd_en       = 0;
+        en          = 0;
         case (current_state)
             IDLE: begin
-                if(en) begin
-                    data_req = 1;
-                    CLR = 1;
-                    stall = 1;
-                    data_addr[28:2] =  addr[28:2];
-                    if(MemWrite) begin
-                        data_wdata      =  wdata;
-                        data_wr         =  1;
-                    end
-                    case(calWE)
-                            4'b0001: begin
-                                data_size       =  2'b00;
-                                data_addr[1:0]  =  2'b00;
-                            end
-
-                            4'b0010: begin
-                                data_size       =  2'b00;
-                                data_addr[1:0]  =  2'b01;
-                            end
-
-                            4'b0100: begin
-                                data_size       =  2'b00;
-                                data_addr[1:0]  =  2'b10;
-                            end
-
-                            4'b1000: begin
-                                data_size       =  2'b00;
-                                data_addr[1:0]  =  2'b11;
-                            end
-
-                            4'b0011: begin
-                                data_size       =  2'b01;
-                                data_addr[1:0]  =  2'b00;
-                            end
-
-                            4'b1100: begin
-                                data_size       =  2'b01;
-                                data_addr[1:0]  =  2'b10;
-                            end
-
-                            4'b1111: begin
-                                data_size       =  2'b10;
-                                data_addr[1:0]  =  2'b00;
-                            end
-                    endcase
+                if((!empty || (MemRead && true_empty))) begin
+                    en          =   1;
                 end
-                else begin
-                    Flush = 1;
-                end
+                if((full && MemWrite) || MemRead)
+                    stall       =   1;
+                if(!empty)
+                    rd_en       =   1;
             end
 
             HDSK: begin
                 data_req    = 1;
-                CLR         = 1;
-                stall       = 1;
                 data_addr[28:2] =  reg_addr[28:2];
-                if(MemWrite) begin
+                if((full && MemWrite) || reg_req_type ==  RD || MemRead) begin
+                    stall           =   1;
+                end
+                if(reg_req_type ==  WR) begin
                     data_wdata      =  reg_wdata;
                     data_wr         =  1;
                 end
@@ -208,9 +192,7 @@ module data_sram
             end
 
             WAIT: begin
-                Flush   = 1;
-                if (!data_data_ok) begin
-                    CLR     = 1;
+                if (((reg_req_type == RD) && !data_data_ok) || (full && MemWrite) || (MemRead && reg_req_type == WR)) begin
                     stall   = 1;
                 end
             end

@@ -29,7 +29,9 @@ module Exception_module(
     output reg exception_occur,
     output reg [4:0] ExcCode,
     input StallW,
-    input FlushW
+    input FlushW,
+    input TLB_we,
+    input [1:0] TLB_CP0we
     );
 
     wire PCError;
@@ -47,13 +49,20 @@ module Exception_module(
     assign PCError                          = (pc[1:0]!=2'b00 || (isERET && EPCD[1:0]!=2'b00)) ? 1 : 0;
     assign old_IE                           = Status[0];
     assign Status_EXL                       = Status[1];
-    assign we[7:0]                          = 0;
-    assign we[11:9]                         = 0;
-    assign we[31:15]                        = 0;
+    assign we[0]                            = TLB_CP0we == 2 ? 1 : 0;
+    assign we[1]                            = 0;
+    assign we[3:2]                          = TLB_CP0we == 1 ? 2'b11 : 2'b00;
+    assign we[4]                            = 0;
+    assign we[5]                            = TLB_CP0we == 1 ? 1 : 0;
+    assign we[7:6]                          = 0;
     assign we[8]                            = (StallW && !FlushW) ? 0 : exception_occur && (address_error || PCError);
+    assign we[9]                            = 0;
+    assign we[10]                           = TLB_CP0we == 1 ? 1 : 0;
+    assign we[11]                           = 0;
     assign we[12]                           = (StallW && !FlushW) ? 0 : exception_occur || (isERET && !PCError);
     assign we[13]                           = (StallW && !FlushW) ? 0 : exception_occur;
     assign we[14]                           = (StallW && !FlushW) ? 0 : exception_occur;
+    assign we[31:15]                        = 0;
     assign Cause_IP                         = {hardware_abortion, software_abortion};
     assign new_Status_EXL                   = exception_occur;
     assign new_Cause_BD1                    = is_ds;

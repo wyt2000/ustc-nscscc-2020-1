@@ -58,6 +58,9 @@
 `define FUNC_ERET       5'b10000
 `define FUNC_MFC0       5'b00000
 `define FUNC_MTC0       5'b00100
+`define FUNC_TLBP       6'b001000
+`define FUNC_TLBR       6'b000001
+`define FUNC_TLBWI      6'b000010
 
 `define OP_BELSE        6'b000001 
 `define FUNC_BGEZ       6'b000001

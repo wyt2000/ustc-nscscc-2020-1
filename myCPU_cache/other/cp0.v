@@ -27,8 +27,26 @@ module CP0
         output [WIDTH-1:0] prid_data,
         output [WIDTH-1:0] BADVADDR_data,
         output allow_interrupt,
-        output state//user mode:0 kernel mode:1
+        output state,//user mode:0 kernel mode:1
+
+        input [31:0] Index_in,
+        input [31:0] EntryLo0_in,
+        input [31:0] EntryLo1_in,
+        input [31:0] PageMask_in,
+        input [31:0] EntryHi_in,
+
+        output [31:0] Index_data,
+        output [31:0] EntryLo0_data,
+        output [31:0] EntryLo1_data,
+        output [31:0] PageMask_data,
+        output [31:0] EntryHi_data
 );  
+
+    reg [31:0]      Index;  //0
+    reg [31:0]      EntryLo0;//2
+    reg [31:0]      EntryLo1;//3
+    reg [31:0]      PageMask;//5
+    reg [31:0]      EntryHi;//10
 
     reg [WIDTH-1:0] Readdata;
     reg [WIDTH-1:0] BADVADDR;//8 deal with the exception such as TLB miss and address error
@@ -46,18 +64,65 @@ module CP0
     assign configure_data=configure;
     assign prid_data=prid;
     assign compare_data=0;
+    assign Index_data   =   Index;
+    assign EntryLo0_data=   EntryLo0;
+    assign EntryLo1_data=   EntryLo1;
+    assign PageMask_data=   PageMask;
+    assign EntryHi_data =   EntryHi;
 
     reg temp;
-    assign state=Status[1]?1'b0:1;
-    assign allow_interrupt=Status[0];
-    always@(posedge clk or posedge rst)begin
+    assign state = Status[1]?1'b0:1;
+    assign allow_interrupt = Status[0];
+    
+    always@(posedge clk) begin
+        if(rst)
+            Index   <=  32'b0;
+        else if(we[0]) begin
+            Index[31]   <=  Index_in[31];
+            Index[4:0]  <=  Index_in[4:0];
+        end
+        else if(waddr == 0 && general_write_in)
+            Index[4:0]  <=  Index_in[4:0];
+    end
+
+    always@(posedge clk) begin
+        if(rst)
+            EntryLo0    <=  32'b0;
+        else if(we[2] || (waddr == 2 && general_write_in)) begin
+            EntryLo0[25:0]  <=  EntryLo0_in[25:0];
+        end
+    end
+
+    always@(posedge clk) begin
+        if(rst)
+            EntryLo1    <=  32'b0;
+        else if(we[3] || (waddr == 3 && general_write_in)) begin
+            EntryLo1[25:0]  <=  EntryLo1_in[25:0];
+        end
+    end
+
+    always@(posedge clk) begin
+        if(rst)
+            PageMask    <=  32'd0;
+        else if(we[5] || (waddr == 5 && general_write_in)) begin
+            PageMask[24:13] <=  PageMask_in[24:13];
+        end
+    end
+
+    always@(posedge clk) begin
+        if(rst)
+            EntryHi     <=  32'b0;
+        else if(we[10] || (waddr == 10 && general_write_in)) begin
+            EntryHi[31:13]  <=  EntryHi_in[31:13];
+            EntryHi[7:0]    <=  EntryHi_in[7:0];
+        end
+    end
+
+    always@(posedge clk)begin
         if(rst)
             EPC<=0;
-        else if(we[14])
+        else if(we[14] || (waddr == 14 && general_write_in) )
             EPC<=epc;
-        else if(waddr==14&&general_write_in)
-            EPC<=epc;
-
     end
 
     always@(posedge clk) begin
@@ -76,20 +141,15 @@ module CP0
     always@(posedge clk) begin
         if(rst)
             BADVADDR<=0;
-        else if(we[8])
+        else if(we[8] || (waddr == 8 && general_write_in) )
             BADVADDR<=BADADDR; 
-        else if(waddr==8&&general_write_in)
-            BADVADDR<=BADADDR;
     end
 
     always@(posedge clk) begin
         if(rst)
             prid<=0;
-        else if(we[15]) 
+        else if(we[15] || (waddr == 15 && general_write_in) ) 
             prid<=pridin;
-        else if(waddr==15&&general_write_in)
-            prid<=pridin;
-        else prid<=prid;
     end
 
     always@(posedge clk) begin
@@ -118,10 +178,7 @@ module CP0
             configure[31:16]<=0;
             configure[14:0]<=0;
         end
-        else if(we[16])begin
-            configure<=configuredata;
-        end
-        else if(waddr==16&&general_write_in)begin
+        else if(we[16] || (waddr == 16 && general_write_in) )begin
             configure<=configuredata;
         end
     end
@@ -137,15 +194,11 @@ module CP0
             cause[12]<=(Status[0]&&Status[12]&&(Status[1]==0))?hardware_interruption[2]:1'b0;
             cause[11]<=(Status[0]&&Status[11]&&(Status[1]==0))?hardware_interruption[1]:1'b0;
             cause[10]<=(Status[0]&&Status[10]&&(Status[1]==0))?hardware_interruption[0]:1'b0;
-            cause[9]<=(Status[0]&&Status[9]&&(Status[1]==0))?software_interruption[1]:1'b0;
-            cause[8]<=(Status[0]&&Status[8]&&(Status[1]==0))?software_interruption[0]:1'b0;
             cause[6:2]<=Exception_code;
         end 
         else if(waddr==13&&general_write_in)begin
-            cause[31]<=Branch_delay;
             cause[9]<=software_interruption[1];
             cause[8]<=software_interruption[0];
-            cause[6:2]<=Exception_code;
         end
     end
 
@@ -162,6 +215,11 @@ module CP0
             5'b01110:Readdata=EPC;
             5'b01111:Readdata=prid;
             5'b10000:Readdata=configure;
+            5'd0    :Readdata=Index;
+            5'd2    :Readdata=EntryLo0;
+            5'd3    :Readdata=EntryLo1;
+            5'd5    :Readdata=PageMask;
+            5'd10   :Readdata=EntryHi;
             default:Readdata=32'hFFFFFFFF;
             endcase
         end
@@ -200,7 +258,19 @@ module cp0_up
         output [WIDTH-1:0] prid_data,
         output [WIDTH-1:0] BADVADDR_data,
         output allow_interrupt,
-        output state//user mode:0 kernel mode:1
+        output state,//user mode:0 kernel mode:1
+
+        input [31:0] Index_in,
+        input [31:0] EntryLo0_in,
+        input [31:0] EntryLo1_in,
+        input [31:0] PageMask_in,
+        input [31:0] EntryHi_in,
+
+        output [31:0] Index_data,
+        output [31:0] EntryLo0_data,
+        output [31:0] EntryLo1_data,
+        output [31:0] PageMask_data,
+        output [31:0] EntryHi_data
 	);
     reg [5:0] r_hardware_interruption;//6 hardware break
     reg [1:0] r_software_interruption;//2 software interruption
@@ -214,7 +284,12 @@ module cp0_up
     reg r_IE;
     reg r_Branch_delay;
     reg [4:0] r_Exception_code; 
-
+    reg [31:0] r_Index;
+    reg [31:0] r_EntryLo0;
+    reg [31:0] r_EntryLo1;
+    reg [31:0] r_PageMask;
+    reg [31:0] r_EntryHi;
+         
     always@(*) begin
         r_hardware_interruption              = we[13] ? hardware_interruption : 0;
         r_software_interruption              = we[13] ? software_interruption : 0;
@@ -228,6 +303,11 @@ module cp0_up
         r_IE                                 = we[12] ? IE : 0;
         r_Branch_delay                       = we[13] ? Branch_delay : 0;
         r_Exception_code                     = we[13] ? Exception_code : 0;
+        r_Index                              = we[0]  ? Index_in : 0;
+        r_EntryLo0                           = we[2]  ? EntryLo0_in : 0;
+        r_EntryLo1                           = we[3]  ? EntryLo1_in : 0;
+        r_PageMask                           = we[5]  ? PageMask_in : 0;
+        r_EntryHi                            = we[10] ? EntryHi_in : 0;
         if(we == 0) begin
             case(waddr)
                 5'b01000: r_BADADDR                      = writedata;
@@ -244,6 +324,11 @@ module cp0_up
                     r_software_interruption              = writedata[9:8];
                     r_Exception_code                     = writedata[6:2];
                 end
+                5'b00000: r_Index                        = writedata;
+                5'b00010: r_EntryLo0                     = writedata;
+                5'b00011: r_EntryLo1                     = writedata;
+                5'b00101: r_PageMask                     = writedata;
+                5'b01010: r_EntryHi                      = writedata;
             endcase
         end
     end
@@ -275,7 +360,19 @@ module cp0_up
         .prid_data(prid_data),
         .BADVADDR_data(BADVADDR_data),
         .allow_interrupt(allow_interrupt),
-        .state(state)//user mode:0 kernel mode:1
+        .state(state),//user mode:0 kernel mode:1
+
+        .Index_in(r_Index),
+        .EntryLo0_in(r_EntryLo0),
+        .EntryLo1_in(r_EntryLo1),
+        .PageMask_in(r_PageMask),
+        .EntryHi_in(r_EntryHi),
+
+        .Index_data(Index_data),
+        .EntryLo0_data(EntryLo0_data),
+        .EntryLo1_data(EntryLo1_data),
+        .PageMask_data(PageMask_data),
+        .EntryHi_data(EntryHi_data)
     );  
 
 endmodule

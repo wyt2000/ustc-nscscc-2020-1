@@ -19,11 +19,11 @@ module ID_module(
     input HI_LO_write_enable_from_WB,
     input RegWriteW,
 
-    //from EX
-    input [31:0] ALUoutE,
-
     //from MEM
-    input [31:0] ALUoutM,
+    input [31:0] ForwardMEM,
+
+    //from WB
+    input [31:0] ForwardWB,
 
     //from Hazard Unit
     input [1:0] ForwardAD,
@@ -50,6 +50,8 @@ module ID_module(
         output ALUSrcDA,
         output ALUSrcDB,
         output RegDstD,
+        output TLB_we,
+        output [1:0] TLB_CP0we,
         //output Imm_sel_and_Branch_taken,
         output Imm_sel,
         //outputs from reg_file
@@ -80,7 +82,19 @@ module ID_module(
     //is_ds
     output is_ds,
 
-    input StallD
+    input StallD,
+
+    input  [31:0] Index_in,
+    input  [31:0] EntryLo0_in,
+    input  [31:0] EntryLo1_in,
+    input  [31:0] PageMask_in,
+    input  [31:0] EntryHi_in,
+
+    output [31:0] Index_data,
+    output [31:0] EntryLo0_data,
+    output [31:0] EntryLo1_data,
+    output [31:0] PageMask_data,
+    output [31:0] EntryHi_data
     );
 
     wire Branch_taken, RegWriteCD, RegWriteBD;
@@ -94,8 +108,8 @@ module ID_module(
     assign PCout = PCin;
 
     //mux
-    assign RsValue = ForwardAD[1] ?  ALUoutM : (ForwardAD[0] ? ALUoutE : Read_data_1);
-    assign RtValue = ForwardBD[1] ?  ALUoutM : (ForwardBD[0] ? ALUoutE : Read_data_2);
+    assign RsValue = ForwardAD[1] ?  ForwardMEM : (ForwardAD[0] ? ForwardWB : Read_data_1);
+    assign RtValue = ForwardBD[1] ?  ForwardMEM : (ForwardBD[0] ? ForwardWB : Read_data_2);
 
     Control_Unit CPU_CTL(.Op(instr[31:26]),
                         .func(instr[5:0]),
@@ -111,7 +125,9 @@ module ID_module(
                         .ALUSrcDB(ALUSrcDB),
                         .RegDstD(RegDstD),
                         .Imm_sel(Imm_sel),
-                        .isBranch(isBranch)
+                        .isBranch(isBranch),
+                        .TLB_we(TLB_we),
+                        .TLB_CP0we(TLB_CP0we)
     );
 
     register_file reg_file(.clk(clk),
@@ -136,7 +152,17 @@ module ID_module(
                            .software_interruption(software_interruption),
                            .epc(EPCin),
                            .BADADDR(BADADDR),
-                           .Branch_delay(Branch_delay)
+                           .Branch_delay(Branch_delay),
+                           .Index_in(Index_in),
+                           .EntryLo0_in(EntryLo0_in),
+                           .EntryLo1_in(EntryLo1_in),
+                           .PageMask_in(PageMask_in),
+                           .EntryHi_in(EntryHi_in),
+                           .Index_data(Index_data),
+                           .EntryLo0_data(EntryLo0_data),
+                           .EntryLo1_data(EntryLo1_data),
+                           .PageMask_data(PageMask_data),
+                           .EntryHi_data(EntryHi_data)    
                            );
 
     Branch_judge brch_jdg(.Op(instr[31:26]),

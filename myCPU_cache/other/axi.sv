@@ -6,11 +6,11 @@ module axi
     output  reg                 gnt                         ,
     input              [31: 0]  addr                        ,
     input                       rd_req                      ,
-    output  reg        [31: 0]  rd_line [8]                 , 
+    output  reg        [31: 0]  rd_line [0:(1<<LINE_ADDR_LEN) - 1], 
     input                       wr_req                      ,
-    input              [31: 0]  wr_line [8]                 , 
-
-//AXI
+    input              [31: 0]  wr_line [0:(1<<LINE_ADDR_LEN) - 1],
+    
+    //AXI
     //global
     input         aclk         ,
     input         aresetn      ,
@@ -79,7 +79,7 @@ module axi
     reg [31 :0] Start_Address;
     // reg [31 :0] write_data[BURST_LENGTH];
     reg         request_type;
-    reg [3  :0] count;
+    reg [4  :0] count;
     reg [1  :0] current_state,  next_state;
 
     //save request information
@@ -176,7 +176,7 @@ module axi
     always@(posedge aclk) begin
         if(!aresetn) begin
             count   <=  0;
-            for(i = 0; i < 8; i++) begin
+            for(i = 0; i < BURST_LENGTH; i++) begin
                 rd_line[i]    <=  0;
             end
         end

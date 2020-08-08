@@ -58,7 +58,7 @@ module decoder(
                 endcase
             `OP_PRIV:                       begin   //changed by jbz 7.8.2020
                                             ALUop = `ALU_ADD; 
-                                            if(rs == `FUNC_ERET)
+                                            if(rs == `FUNC_ERET && func == `ERET_LAST)
                                                 ALUop = `ALU_ERET;
                                             end
             `OP_ADDI:                       ALUop = `ALU_ADDI;
@@ -115,8 +115,12 @@ module decoder(
                     endcase
             `OP_PRIV:
                 case (rs)
-                    `FUNC_ERET:
-                        if(rt == 0 && rd == 0 && sa == 0 && func == 6'b011000) exception = 0;
+                    `FUNC_ERET: begin
+                        if(rt == 0 && rd == 0 && sa == 0 && func == `ERET_LAST) exception = 0;
+                        if(rt == 0 && rd == 0 && sa == 0 && func == `FUNC_TLBP) exception = 0;
+                        if(rt == 0 && rd == 0 && sa == 0 && func == `FUNC_TLBR) exception = 0;
+                        if(rt == 0 && rd == 0 && sa == 0 && func == `FUNC_TLBWI) exception = 0;
+                    end
                     `FUNC_MFC0,`FUNC_MTC0:
                         if(sa == 0 && func[5:3] == 0) exception = 0;
                 endcase
