@@ -55,8 +55,8 @@ module Hazard_module(
         else if (Exception_clean || Exception_Stall)                                                            next_state = 4'b0001;// Exception situation (clean and Stall all the Registers)
         else if ((WriteRegW[5] && !WriteRegW[6]) && RegWriteW)                                                  next_state = 4'b1111;// write_cp0 instruction in WB
         else if (MEM_stall)                                                                                     next_state = 4'b1101;// MEM operates RAM
+        else if (MemReadM && ((WriteRegM == RsE) || (WriteRegM == RtE)) && RegWriteM && WriteRegM)              next_state = 4'b0101;// R-Type: wait MemData to WB
         else if (MemReadM && ((WriteRegM == RsD) || (WriteRegM == RtD)) && RegWriteM && isaBranchInstruction)   next_state = 4'b0100;// Branch: wait MemData to WB
-        else if (MemReadM && ((WriteRegM == RsE) || (WriteRegM == RtE)) && RegWriteM && WriteRegM)              next_state = 4'b0100;// R-Type: wait MemData to WB
         else if (ALU_stall && !ALU_done)                                                                        next_state = 4'b0011;// stall requested by alu
         else if ((WriteRegM[5] && !WriteRegM[6]) && RegWriteM)                                                  next_state = 4'b1000;// write_cp0 instruction in MEM
         else if (State == 4'b0011)                                                                              next_state = 4'b1001;// mul/div stall 1
@@ -70,7 +70,7 @@ module Hazard_module(
         case (next_state)
             4'b0000: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b000000000;
             4'b0001: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111111111;
-            4'b0100: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111000010;
+            4'b0100: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b110000100;
             4'b0011: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111110001;
             4'b1000: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b110000100;
             4'b1001: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b110000100;
@@ -79,6 +79,7 @@ module Hazard_module(
             4'b1101: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111110001;
             4'b1110: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111111110;
             4'b1111: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111100001;
+            4'b0101: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b111000010;
             default: {StallF,StallD,StallE,StallM,StallW,FlushD,FlushE,FlushM,FlushW} = 9'b000000000;
         endcase
     end

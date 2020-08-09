@@ -244,7 +244,7 @@ typedef struct packed {
     logic [63:0] HI_LO_dataW;
     logic [31:0] ALUoutW;
     logic [6:0] WriteRegisterW;
-    logic [31:0] PCout;
+(* keep = "TRUE" *)        logic [31:0] PCout;
     logic [2:0] MemReadTypeW;
     logic [3:0] exception_in;
     logic [3:0] exception_out;
@@ -307,7 +307,7 @@ typedef struct packed {
     logic               data_bready    ;
 
     logic stall;
-    logic [31:0] WritetoRFdata;
+(* keep = "TRUE" *)        logic [31:0] WritetoRFdata;
     logic [3:0] reg_file_byte_we;
 } MEM_interface;
 
@@ -329,7 +329,7 @@ typedef struct packed {
     logic RegWrite;
 (* keep = "TRUE" *)    logic [31:0] PCout;
     logic [3:0] exception_in;
-(* keep = "TRUE" *)    logic [3:0] exception_out;
+    logic [3:0] exception_out;
     logic MemWrite;
     logic MemWriteW;
     logic is_ds_in;
@@ -499,7 +499,7 @@ module mycpu_top(
     input         arready      ,
     //r           
     input  [3 :0] rid          ,
-     input  [31:0] rdata       ,
+    input  [31:0] rdata        ,
     input  [1 :0] rresp        ,
     input         rlast        ,
     input         rvalid       ,
@@ -538,8 +538,9 @@ module mycpu_top(
         .clk        (clk),
         .probe0     (IF.PCout),
         .probe1     (IF.instr),
-        .probe2     (WB.PCout),
-        .probe3     (WB.exception_out)
+        .probe2     (MEM.ALUout),
+        .probe3     (MEM.WritetoRFdata),
+        .probe4     (WB.PCout)
     );
 
 	logic rst;
