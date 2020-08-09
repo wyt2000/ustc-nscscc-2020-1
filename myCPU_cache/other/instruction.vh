@@ -57,6 +57,7 @@
 `define FUNC_MTLO       6'b010011  
 `define FUNC_BREAK      6'b001101
 `define FUNC_SYSCALL    6'b001100
+`define FUNC_SYNC       6'b001111
 
 `define OP_PRIV         6'b010000
 `define ERET_LAST       6'b011000

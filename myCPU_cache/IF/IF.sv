@@ -167,9 +167,9 @@ module IF_module
         assign instr                    =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? instr_cached : instr_uncached;
     
     `else
-        assign instr_rd_req_cached      =   0;
-        assign instr_rd_req_uncached    =   is_newPC;
-        assign instr                    =   instr_uncached;
+        assign instr_rd_req_cached      =   1;
+        assign instr_rd_req_uncached    =   0;
+        assign instr                    =   instr_cached;
     `endif
 
     reg [31:0] reg_instr;

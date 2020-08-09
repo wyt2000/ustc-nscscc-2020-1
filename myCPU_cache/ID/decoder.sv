@@ -55,6 +55,7 @@ module decoder(
                     `FUNC_JR,`FUNC_JALR,
                     `FUNC_MFHI,`FUNC_MFLO,
                     `FUNC_MTHI,`FUNC_MTLO:  ALUop = `ALU_ADDU;
+                    `FUNC_SYNC:             ALUop = `ALU_NOP;
                 endcase
             `OP_PRIV:                       begin   //changed by jbz 7.8.2020
                                                 ALUop = `ALU_ADD; 
@@ -117,7 +118,9 @@ module decoder(
                     `FUNC_MFHI,`FUNC_MFLO:
                         if(rs == 0 && rt == 0 && sa == 0) exception = 0;
                     `FUNC_BREAK,`FUNC_SYSCALL:
-                        exception = 0;     
+                        exception = 0;
+                    `FUNC_SYNC:
+                        if(rs == 0 && rt == 0 && rd == 0) exception = 0;    
                     endcase
             `OP_PRIV:
                 case (rs)
