@@ -55,9 +55,11 @@ module Exception_module(
     assign old_IE                           = Status[0];
     assign Status_EXL                       = Status[1];
     assign we[7:0]                          = 0;
-    assign we[11:9]                         = 0;
+	assign we[9]							= 0;
+    assign we[11]                           = 0;
     assign we[31:15]                        = 0;
     assign we[8]                            = (StallW && !FlushW) ? 0 : exception_occur && (address_error || PCError);
+	assign we[10]							= (StallW && !FlushW) ? 0 : (refill || invalid || modified);
     assign we[12]                           = (StallW && !FlushW) ? 0 : exception_occur || (isERET && !PCError);
     assign we[13]                           = (StallW && !FlushW) ? 0 : exception_occur;
     assign we[14]                           = (StallW && !FlushW) ? 0 : exception_occur;
@@ -101,6 +103,9 @@ module Exception_module(
         else if (overflow_error)                                         exception_occur = 1;
         else if (syscall)                                                exception_occur = 1;
         else if (_break)                                                 exception_occur = 1;
+		else if (invalid)                                                exception_occur = 1;
+		else if (refill)                                                 exception_occur = 1;
+		else if (modified)                                               exception_occur = 1;			
         else                                                             exception_occur = 0;
     end
 
