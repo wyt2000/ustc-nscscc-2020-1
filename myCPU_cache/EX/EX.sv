@@ -26,7 +26,7 @@ module EX_module(
     input [31:0] ForwardMEM,
     input [31:0] ForwardWB,
     input [31:0] PCin,
-    input exceptionD,
+    input [3:0] exceptionD,
     input is_ds_in,
     input TLB_we_in,
     input [1:0] TLB_CP0we_in,

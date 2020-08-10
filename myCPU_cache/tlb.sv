@@ -145,9 +145,11 @@ module tlb_module (
         end
     endgenerate
     assign  instr_paddr = instr_vaddr[12] ? {PFN1[instr_hit_num], instr_vaddr[11:0]} : {PFN0[instr_hit_num], instr_vaddr[11:0]};
-    assign  instr_avalid= instr_vaddr[12] ? CDV1[instr_hit_num][1] : CDV0[instr_hit_num][1];
-    assign  instr_amiss = (|instr_hit);
-    assign  instr_acache= instr_vaddr[12] ? CDV1[instr_hit_num][5:3] : CDV0[instr_hit_num][5:3];
+    assign  instr_avalid= instr_amiss     ? 0 : 
+                          instr_vaddr[12] ? CDV1[instr_hit_num][0] : CDV0[instr_hit_num][0];
+    assign  instr_amiss = !(|instr_hit);
+    assign  instr_acache= instr_amiss     ? 0 : 
+                          instr_vaddr[12] ? CDV1[instr_hit_num][4:2] : CDV0[instr_hit_num][4:4];
     always@(*) begin
         case(instr_hit)
         32'b0000_0000_0000_0000_0000_0000_0000_0001:    instr_hit_num = 5'd0;
@@ -193,12 +195,15 @@ module tlb_module (
         end
     endgenerate
     assign  data_paddr = data_vaddr[12] ? {PFN1[data_hit_num], data_vaddr[11:0]} : {PFN0[data_hit_num], data_vaddr[11:0]};
-    assign  data_avalid= data_vaddr[12] ? CDV1[data_hit_num][1] : CDV0[data_hit_num][1];
-    assign  data_amiss = (|data_hit);
-    assign  data_adirty= data_vaddr[12] ? CDV1[data_hit_num][2] : CDV0[data_hit_num][2];
-    assign  data_acache= data_vaddr[12] ? CDV1[data_hit_num][5:3] : CDV0[data_hit_num][5:3];
+    assign  data_avalid= data_amiss     ? 0 :
+                         data_vaddr[12] ? CDV1[data_hit_num][0] : CDV0[data_hit_num][0];
+    assign  data_amiss = !(|data_hit);
+    assign  data_adirty= data_amiss     ? 0 :
+                         data_vaddr[12] ? CDV1[data_hit_num][1] : CDV0[data_hit_num][1];
+    assign  data_acache= data_amiss     ? 3'd0 :
+                         data_vaddr[12] ? CDV1[data_hit_num][4:2] : CDV0[data_hit_num][4:2];
     always@(*) begin
-        case(instr_hit)
+        case(data_hit)
         32'b0000_0000_0000_0000_0000_0000_0000_0001:    data_hit_num = 5'd0;
         32'b0000_0000_0000_0000_0000_0000_0000_0010:    data_hit_num = 5'd1;
         32'b0000_0000_0000_0000_0000_0000_0000_0100:    data_hit_num = 5'd2;

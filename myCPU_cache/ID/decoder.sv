@@ -3,12 +3,13 @@
 `include "../other/instruction.vh"
 module decoder(
     input [31:0] ins,
+    input [3:0] exceptionF,
     output logic [5:0] ALUop,
     output logic [6:0] Rs,
     output logic [6:0] Rt,
     output logic [6:0] Rd,
     output logic [15:0] imm,
-    output logic exception
+    output logic [3:0] exception
     );
     wire [5:0] op;
     wire [4:0] rs;
@@ -86,7 +87,12 @@ module decoder(
     end
 
     always_comb begin : set_exception 
-        exception = 1;
+        // exception = 1;
+        if(exceptionF != 0) begin
+            exception   =   exceptionF;
+        end
+        else begin
+        exception = `EXP_RESERVED;
         case (op)
             `OP_ZERO:
                 case (func)
@@ -144,6 +150,7 @@ module decoder(
                 if(sa == 0 && func == 6'b000010) exception = 0;                           
         endcase
         if(ins == 32'b0) exception = 0;
+        end
     end
 
     always_comb begin : set_Register

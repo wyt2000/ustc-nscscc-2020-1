@@ -1,3 +1,4 @@
+`include "../other/aluop.vh"
 `define MAP_UNCACHED
 
 module IF_module
@@ -121,13 +122,17 @@ module IF_module
     input       [31:0]  instr_paddr,
     input               instr_avalid,
     input               instr_amiss,
-    input       [2 :0]  instr_acache
+    input       [2 :0]  instr_acache,
+
+    output reg  [3 :0]  exception,
+    input               TLB_Refill
 
     );
     
     assign PC_add_4 = PCout + 4;
     always@(posedge clk) begin
         if(rst) PCout <= 32'hbfc0_0000;
+        else if(TLB_Refill && !stall)    PCout <= 32'hbfc0_0200;
         else if(Error_happend && !stall) PCout <= 32'hbfc0_0380;
         else if(StallF) PCout <= PCout;
         else if(EPC_sel == 1)             PCout <= EPC;
@@ -175,6 +180,7 @@ module IF_module
         // assign instr_rd_req_uncached    =   ((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) ? is_newPC : 0;
         // assign instr                    =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? instr_cached : instr_uncached;
         always@(*) begin
+            exception   =   0;
             if((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) begin
                 instr_rd_req_cached     =   0;
                 instr_rd_req_uncached   =   is_newPC;
@@ -187,7 +193,7 @@ module IF_module
                 instr                   =   instr_cached;
                 rd_addr                 =   {3'b000, PCout[28:0]};
             end
-            else begin
+            else if(instr_avalid && ~instr_amiss) begin
                 if(instr_acache == 3'd3) begin
                     instr_rd_req_cached     =   1;
                     instr_rd_req_uncached   =   0;
@@ -201,12 +207,23 @@ module IF_module
                     rd_addr                 =   instr_paddr;
                 end
             end
+            else begin
+                instr_rd_req_cached     =   0;
+                instr_rd_req_uncached   =   0;
+                instr                   =   0;
+                rd_addr                 =   0;
+                if(instr_amiss)
+                    exception           =   `EXP_ITLBR;
+                else if(~instr_avalid)
+                    exception           =   `EXP_ITLBI;
+            end
         end
     `else
         // assign instr_rd_req_cached      =   1;
         // assign instr_rd_req_uncached    =   0;
         // assign instr                    =   instr_cached;
         always@(*) begin
+            exception   =   0;
             instr_rd_req_cached     =   1;
             instr_rd_req_uncached   =   0;
             instr                   =   instr_cached;

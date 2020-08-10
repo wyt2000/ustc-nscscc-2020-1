@@ -11,6 +11,7 @@ module ID_module(
     //from IF/ID reg
     input [31:0] pc_plus_4,
     input [31:0] PCin,
+    input [3:0]  exceptionF,
 
     //from WB
     input [6:0] WriteRegW,
@@ -73,7 +74,7 @@ module ID_module(
     output [31:0] Branch_addr,
     output [31:0] Jump_addr,
     //to Exception_module
-    output exception,
+    output [3:0] exception,
     //to Harzard unit
     output isBranch,
     //epc
@@ -174,6 +175,7 @@ module ID_module(
                           .branch_taken(Branch_taken));
 
     decoder dcd(.ins(instr[31:0]),
+                .exceptionF(exceptionF),
                .ALUop(ALUOp),
                .Rs(Rs),
                .Rt(Rt),

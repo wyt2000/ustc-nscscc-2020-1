@@ -6,7 +6,7 @@ module alu(
     input rst,
     input [31:0] a, b,
     input [5:0] op,
-    input exceptionD,					
+    input [3:0] exceptionD,					
     output logic [31:0] result,
     output logic [3:0]  exception,
     output logic [63:0] hilo,
@@ -152,7 +152,10 @@ module alu(
     end
     
     always_comb begin : set_exception
-        if(exceptionD) exception = 8;
+        if(((op == `ALU_LH || op == `ALU_LHU || op == `ALU_SH) && result[0] != 1'b0) ||
+           ((op == `ALU_LW || op == `ALU_SW) && result[1:0] != 2'b00))
+           exception = `EXP_ADDRERR;
+        else if(exceptionD != 0) exception = exceptionD;
         else begin
             exception = 0;
             case (op)
@@ -172,12 +175,12 @@ module alu(
                 exception = `EXP_BREAK;
             `ALU_SYSCALL:
                 exception = `EXP_SYSCALL;
-            `ALU_LH, `ALU_LHU, `ALU_SH:
-                if(result[0] != 1'b0)
-                    exception = `EXP_ADDRERR;
-            `ALU_LW, `ALU_SW:
-                if(result[1:0] != 2'b00)
-                    exception = `EXP_ADDRERR;
+            // `ALU_LH, `ALU_LHU, `ALU_SH:
+            //     if(result[0] != 1'b0)
+            //         exception = `EXP_ADDRERR;
+            // `ALU_LW, `ALU_SW:
+            //     if(result[1:0] != 2'b00)
+            //         exception = `EXP_ADDRERR;
             `ALU_NOP:
                 exception = `EXP_NOP;
             `ALU_ERET:

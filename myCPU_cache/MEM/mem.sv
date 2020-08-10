@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 `define MAP_UNCACHED
+`include "../other/aluop.vh"
 
 module MEM_module (
     input clk,
@@ -25,7 +26,7 @@ module MEM_module (
     output [2:0] MemReadTypeW,
     //exception
     input [3:0] exception_in,
-    output [3:0] exception_out,
+    output reg [3:0] exception_out,
     output MemWriteW,
     //is_ds
     input is_ds_in,
@@ -174,13 +175,12 @@ module MEM_module (
     assign PCout = PCin;
     assign ALUoutW = ALUout;
     assign MemReadTypeW = MemReadType;
-    assign exception_out = exception_in;
+    // assign exception_out = exception_in;
     assign MemWriteW = MemWriteM;
     assign is_ds_out = is_ds_in;
     assign WritetoRFdata = MemtoRegM ? ALUout : TrueMemData;
     assign TLB_we_out = TLB_we_in;
     assign TLB_CP0we_out = TLB_CP0we_in;
-    
 //==================================================================================//
     wire            miss;
     wire            axi_gnt;
@@ -189,9 +189,9 @@ module MEM_module (
     wire            axi_rd_req;
     wire    [31:0]  axi_wr_line[0:15];
     wire            axi_wr_req;
-    reg            MemRead_cache, MemRead_uncache;
-    reg            MemWrite_cache, MemWrite_uncache;
-    reg    [31:0]  Memdata_cache,  Memdata_uncache;
+    reg             MemRead_cache, MemRead_uncache;
+    reg             MemWrite_cache, MemWrite_uncache;
+    reg    [31:0]   Memdata_cache,  Memdata_uncache;
     wire            stall_uncache;
     reg     [31:0]  rd_addr;
 
@@ -202,39 +202,50 @@ module MEM_module (
         // assign MemWrite_uncache =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? TrueMemWrite : 0;
         // assign Memdata          =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? Memdata_cache : Memdata_uncache;
         always@(*) begin
+            exception_out       =   exception_in;
+            MemRead_cache       =   0;
+            MemRead_uncache     =   0;
+            MemWrite_cache      =   0;
+            MemWrite_uncache    =   0;
+            Memdata             =   0;
+            rd_addr             =   0;
             if((ALUout > 32'h9FFF_FFFF && ALUout < 32'hC000_0000)) begin
-                MemRead_cache       =   0;
                 MemRead_uncache     =   MemReadM;
-                MemWrite_cache      =   0;
                 MemWrite_uncache    =   TrueMemWrite;
                 Memdata             =   Memdata_uncache;
                 rd_addr             =   {3'b000, ALUout[28:0]};
             end
             else if((ALUout > 32'h7FFF_FFFF && ALUout < 32'hA000_0000)) begin
                 MemRead_cache       =   MemReadM;
-                MemRead_uncache     =   0;
                 MemWrite_cache      =   TrueMemWrite;
-                MemWrite_uncache    =   0;
                 Memdata             =   Memdata_cache;
                 rd_addr             =   {3'b000, ALUout[28:0]};
             end
-            else begin
-                if(data_acache == 3'd3) begin
-                    MemRead_cache   =   MemReadM;
-                    MemRead_uncache =   0;
-                    MemWrite_cache  =   TrueMemWrite;
-                    MemWrite_uncache=   0;
-                    Memdata         =   Memdata_cache;
-                    rd_addr         =   data_paddr;
+            else if(data_avalid && ~data_amiss) begin
+                if(~(TrueMemWrite && ~data_adirty)) begin
+                    if(data_acache == 3'd3) begin
+                        MemRead_cache   =   MemReadM;
+                        MemWrite_cache  =   TrueMemWrite;
+                        Memdata         =   Memdata_cache;
+                        rd_addr         =   data_paddr;
+                    end
+                    else begin
+                        MemRead_uncache =   MemReadM;
+                        MemWrite_uncache=   TrueMemWrite;
+                        Memdata         =   Memdata_uncache;
+                        rd_addr         =   data_paddr;
+                    end
                 end
                 else begin
-                    MemRead_cache   =   0;
-                    MemRead_uncache =   MemReadM;
-                    MemWrite_cache  =   0;
-                    MemWrite_uncache=   TrueMemWrite;
-                    Memdata         =   Memdata_uncache;
-                    rd_addr         =   data_paddr;
+                    if(exception_in == 0 && TrueMemWrite)
+                        exception_out = `EXP_DTLBM;
                 end
+            end
+            else begin
+                if(data_amiss && exception_in == 0 && (MemReadM || TrueMemWrite))
+                    exception_out = `EXP_DTLBR;
+                else if(exception_in == 0 && ~data_avalid && (MemReadM || TrueMemWrite))
+                    exception_out = `EXP_DTLBI;
             end
         end
     `else
@@ -244,6 +255,7 @@ module MEM_module (
         // assign MemWrite_uncache =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? TrueMemWrite : 0;
         // assign Memdata          =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? Memdata_cache : Memdata_uncache;
         always@(*) begin
+            exception_out           =   exception_in;
             MemRead_cache           =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? MemReadM : 0;
             MemRead_uncache         =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? MemReadM : 0;
             MemWrite_cache          =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? TrueMemWrite : 0;
@@ -254,6 +266,7 @@ module MEM_module (
     `endif
 
     assign stall = miss || stall_uncache;
+    assign data_vaddr = ALUout;
     dcache data_cache(
         .clk            (clk),
         .rst            (rst),

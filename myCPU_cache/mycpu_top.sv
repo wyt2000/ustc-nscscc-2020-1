@@ -120,6 +120,9 @@ typedef struct packed {
     logic               instr_avalid;
     logic               instr_amiss;
     logic       [2:0]   instr_acache;
+
+    logic       [3:0]   exception;
+    logic               TLB_Refill;
 } IF_interface; 
 
 typedef struct packed {
@@ -166,7 +169,7 @@ typedef struct packed {
     logic new_IE;
     logic [31:0] Jump_addr;
     logic [31:0] Branch_addr;
-    logic exception;
+    logic [3:0] exception;
     logic isBranch;
     logic [31:0] PCout;
     logic [31:0]  Status;
@@ -192,6 +195,8 @@ typedef struct packed {
     logic [31:0] EntryLo1_data;
     logic [31:0] PageMask_data;
     logic [31:0] EntryHi_data;
+
+    logic [3:0] exceptionF;
 } ID_interface;
 
 typedef struct packed {
@@ -236,7 +241,7 @@ typedef struct packed {
     logic [3:0] exception;
     logic stall;
     logic [31:0] PCout;
-    logic exceptionD;
+    logic [3:0] exceptionD;
     logic is_ds_in;
     logic is_ds_out;
     logic TLB_we_in;
@@ -450,6 +455,20 @@ typedef struct packed{
     logic FlushW;
     logic TLB_we;
     logic [1:0] TLB_CP0we;
+    logic [3:0] exception;
+    logic [31:0] Index_in;
+    logic [31:0] EntryLo0_in;
+    logic [31:0] EntryLo1_in;
+    logic [31:0] PageMask_in;
+    logic [31:0] EntryHi_in;
+    logic [31:0] Index_out;
+    logic [31:0] EntryLo0_out;
+    logic [31:0] EntryLo1_out;
+    logic [31:0] PageMask_out;
+    logic [31:0] EntryHi_out;
+    // logic TLB_Refill;
+    // logic TLB_Invalid;
+    // logic TLB_Modified;
 } Exception_interface;
 
 typedef struct packed{
@@ -723,6 +742,7 @@ module mycpu_top(
     assign IF.instr_avalid                  = tlb.instr_avalid;
     assign IF.instr_amiss                   = tlb.instr_amiss;
     assign IF.instr_acache                  = tlb.instr_acache;
+    assign IF.TLB_Refill                    = (Exception.exception == `EXP_ITLBR || Exception.exception == `EXP_DTLBR) ? 1 : 0;
 
 	assign ID.RegWriteW                     = WB.RegWrite;
 	assign ID.WriteRegW                     = WB.WritetoRFaddrout;
@@ -743,11 +763,16 @@ module mycpu_top(
 	assign ID.hardware_interruption			= ext_int;
 	assign ID.BADADDR						= Exception.BadVAddr;
     assign ID.StallD                        = Hazard.StallD;
-    assign ID.Index_in                      = tlb.result_Index;
-    assign ID.EntryLo0_in                   = tlb.rd_EntryLo0;
-    assign ID.EntryLo1_in                   = tlb.rd_EntryLo1;
-    assign ID.PageMask_in                   = tlb.rd_PageMask;
-    assign ID.EntryHi_in                    = tlb.rd_EntryHi;
+    assign ID.Index_in                      = Exception.Index_out;
+    assign ID.EntryLo0_in                   = Exception.EntryLo0_out;
+    assign ID.EntryLo1_in                   = Exception.EntryLo1_out;
+    assign ID.PageMask_in                   = Exception.PageMask_out;
+    assign ID.EntryHi_in                    = Exception.EntryHi_out;
+    // assign ID.Index_in                      = tlb.result_Index;
+    // assign ID.EntryLo0_in                   = tlb.rd_EntryLo0;
+    // assign ID.EntryLo1_in                   = tlb.rd_EntryLo1;
+    // assign ID.PageMask_in                   = tlb.rd_PageMask;
+    // assign ID.EntryHi_in                    = tlb.rd_EntryHi;
 
 	assign EX.ForwardMEM                    = MEM.ALUout;
 	assign EX.ForwardWB                     = WB.WritetoRFdata;
@@ -796,7 +821,7 @@ module mycpu_top(
 	assign Exception._break					= (WB.exception_out == `EXP_BREAK)		? 1 : 0;
 	assign Exception.syscall				= (WB.exception_out == `EXP_SYSCALL)	? 1 : 0;
     assign Exception.address_error          = (WB.exception_out == `EXP_ADDRERR)   	? 1 : 0;
-	assign Exception.ErrorAddr				= (WB.exception_out == `EXP_ADDRERR)	? WB.aluout : 0;
+	assign Exception.ErrorAddr				= /*(WB.exception_out == `EXP_ADDRERR)	? */WB.aluout/* : 0*/;
 	assign Exception.isERET 				= (WB.exception_out == `EXP_ERET)   	? 1 : 0;
 	assign Exception.reserved				= (WB.exception_out == `EXP_RESERVED)	? 1 : 0;
 	assign Exception.MemWrite 				= WB.MemWrite;
@@ -810,6 +835,16 @@ module mycpu_top(
     assign Exception.FlushW                 = Hazard.FlushW;
     assign Exception.TLB_we                 = WB.TLB_we_out;
     assign Exception.TLB_CP0we              = WB.TLB_CP0we_out;
+    assign Exception.exception              = WB.exception_out;
+    assign Exception.Index_in               = tlb.result_Index;
+    assign Exception.EntryLo0_in            = tlb.rd_EntryLo0;
+    assign Exception.EntryLo1_in            = tlb.rd_EntryLo1;
+    assign Exception.PageMask_in            = tlb.rd_PageMask;
+    assign Exception.EntryHi_in             = tlb.rd_EntryHi;
+
+    // assign Exception.TLB_Refill             = (WB.exception_out == `EXP_TLBR)       ? 1 : 0;
+    // assign Exception.TLB_Invalid            = (WB.exception_out == `EXP_TLBI)       ? 1 : 0;
+    // assign Exception.TLB_Modified           = (WB.exception_out == `EXP_TLBM)       ? 1 : 0;
     
     assign axi.inst_req                     = IF.inst_req;
     assign axi.inst_wr                      = IF.inst_wr;
@@ -861,6 +896,14 @@ module mycpu_top(
         .q(ID.instr)
     );
 
+    register #(4) IF_ID_exceptionF (
+		.clk(clk),
+		.rst(rst),
+		.Flush(Hazard.FlushD),
+		.en(~Hazard.StallD),
+        .d(IF.exception),
+        .q(ID.exceptionF)
+    );
 	// ID/EX registers
 
 	register #(6) ID_EX_ALUControl (
@@ -1034,7 +1077,7 @@ module mycpu_top(
 		.q(EX.PCin)
 	);
 
-	register #(1) ID_EX_exception (
+	register #(4) ID_EX_exception (
 		.clk(clk),
 		.rst(rst),
         .Flush(Hazard.FlushE),
@@ -1454,7 +1497,10 @@ module mycpu_top(
         .instr_paddr                    (IF.instr_paddr),
         .instr_avalid                   (IF.instr_avalid),
         .instr_amiss                    (IF.instr_amiss),
-        .instr_acache                   (IF.instr_acache)
+        .instr_acache                   (IF.instr_acache),
+
+        .exception                      (IF.exception),
+        .TLB_Refill                     (IF.TLB_Refill)
 
 	);
 	
@@ -1527,7 +1573,9 @@ module mycpu_top(
         .EntryLo0_data              (ID.EntryLo0_data),
         .EntryLo1_data              (ID.EntryLo1_data),
         .PageMask_data              (ID.PageMask_data),
-        .EntryHi_data               (ID.EntryHi_data)
+        .EntryHi_data               (ID.EntryHi_data),
+
+        .exceptionF                 (ID.exceptionF)
 	);
 
 	EX_module EX_module(
@@ -1782,7 +1830,21 @@ module mycpu_top(
         .StallW                     (Exception.StallW),
         .FlushW                     (Exception.FlushW),
         .TLB_we                     (Exception.TLB_we),
-        .TLB_CP0we                  (Exception.TLB_CP0we)
+        .TLB_CP0we                  (Exception.TLB_CP0we),
+        .exception                  (Exception.exception),
+        .Index_in                   (Exception.Index_in),
+        .EntryLo0_in                (Exception.EntryLo0_in),
+        .EntryLo1_in                (Exception.EntryLo1_in),
+        .PageMask_in                (Exception.PageMask_in),
+        .EntryHi_in                 (Exception.EntryHi_in),
+        .Index_out                  (Exception.Index_out),
+        .EntryLo0_out               (Exception.EntryLo0_out),
+        .EntryLo1_out               (Exception.EntryLo1_out),
+        .PageMask_out               (Exception.PageMask_out),
+        .EntryHi_out                (Exception.EntryHi_out)
+        // .TLB_Refill                 (Exception.TLB_Refill),
+        // .TLB_Invalid                (Exception.TLB_Invalid),
+        // .TLB_Modified               (Exception.TLB_Modified)
 	);
 
     cpu_axi_interface cpu_axi_interface(
