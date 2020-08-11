@@ -432,20 +432,20 @@ typedef struct packed{
     logic reserved;
     logic [5:0] hardware_abortion;//硬件中断
     logic [1:0] software_abortion;//软件中断
-    logic [31:0] Status;//Status寄存器当前的�?
-    logic [31:0] Cause;//Cause寄存器当前的�?
+    logic [31:0] Status;//Status寄存器当前的值
+    logic [31:0] Cause;//Cause寄存器当前的值
     logic [31:0] pc;//错误指令pc
     //output
     logic [31:0] BadVAddr;//输出置BadVaddr
     logic [31:0] EPC;//输出置EPC
     //epc
     logic [31:0] we;//写使能字
-    logic Branch_delay;//给cause寄存器赋新�??
-    logic Stall;//异常发生（Stall，Clear�?
+    logic Branch_delay;//给cause寄存器赋新值
+    logic Stall;//异常发生（Stall，Clear值
     logic EXL;
     logic [7:0] enable;
-    logic new_Status_IE;//给Status寄存器赋新�??
-    logic [7:0] Status_IM;//给Status寄存器赋新�??
+    logic new_Status_IE;//给Status寄存器赋新值
+    logic [7:0] Status_IM;//给Status寄存器赋新值
     logic [4:0] ExcCode;//异常编码
     logic [31:0] ErrorAddr;
     logic isERET;
@@ -617,7 +617,7 @@ module mycpu_top(
 	output [4:0] debug_wb_rf_wnum,
 	output [31:0] debug_wb_rf_wdata
 	);
-/*    
+ /*   
     ila_0 ila(
         .clk        (clk),
         .probe0     (IF.PCout),
@@ -1806,7 +1806,9 @@ module mycpu_top(
 		.ForwardAE                  (Hazard.ForwardAE),
 		.ForwardBE                  (Hazard.ForwardBE),
         .IF_stall                   (Hazard.IF_stall),
-        .MEM_stall                  (Hazard.MEM_stall)
+        .MEM_stall                  (Hazard.MEM_stall),
+        .EX_HILOwe                  (EX.hiloWrite_i),
+        .MEM_HILOwe                 (MEM.HI_LO_write_enableM)
 	);
 
 	Exception_module Exception_module(
