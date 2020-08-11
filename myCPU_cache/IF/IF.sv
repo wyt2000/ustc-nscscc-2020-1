@@ -1,3 +1,4 @@
+`include "../other/aluop.vh"
 `define MAP_UNCACHED
 
 module IF_module
@@ -17,7 +18,7 @@ module IF_module
     output reg [WIDTH-1:0] PCout,
     output is_newPC,
     
-    output  [31:0]  instr,
+    output reg [31:0]  instr,
 
     output          stall,
 
@@ -114,13 +115,24 @@ module IF_module
     input       [3:0]   pre_fetch_bid       ,
     input       [1:0]   pre_fetch_bresp     ,
     input               pre_fetch_bvalid    ,
-    output              pre_fetch_bready    
+    output              pre_fetch_bready    ,
+
+    //TLB ports
+    output      [31:0]  instr_vaddr,
+    input       [31:0]  instr_paddr,
+    input               instr_avalid,
+    input               instr_amiss,
+    input       [2 :0]  instr_acache,
+
+    output reg  [3 :0]  exception,
+    input               TLB_Refill
 
     );
     
     assign PC_add_4 = PCout + 4;
     always@(posedge clk) begin
         if(rst) PCout <= 32'hbfc0_0000;
+        else if(TLB_Refill && !stall)    PCout <= 32'hbfc0_0200;
         else if(Error_happend && !stall) PCout <= 32'hbfc0_0380;
         else if(StallF) PCout <= PCout;
         else if(EPC_sel == 1)             PCout <= EPC;
@@ -144,7 +156,7 @@ module IF_module
     wire    [31:0]  axi_rd_line[0:15];
     reg     [31:0]  axi_addr;
     reg             axi_rd_req;
-    wire            instr_rd_req_cached, instr_rd_req_uncached;
+    reg             instr_rd_req_cached, instr_rd_req_uncached;
     wire    [31:0]  instr_cached, instr_uncached;
     wire            stall_uncached;
     wire    [18:0]  icache_tag;
@@ -158,18 +170,65 @@ module IF_module
     wire    [31:0]  buff_addr;
     wire    [31:0]  buff_data[0:15];
     wire            buff_ready;
+    reg     [31:0]  rd_addr;
 
     assign stall = miss || stall_uncached;
+    assign instr_vaddr  =   PCout;
     
     `ifdef MAP_UNCACHED
-        assign instr_rd_req_cached      =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? 1 : 0;
-        assign instr_rd_req_uncached    =   ((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) ? is_newPC : 0;
-        assign instr                    =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? instr_cached : instr_uncached;
-    
+        // assign instr_rd_req_cached      =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? 1 : 0;
+        // assign instr_rd_req_uncached    =   ((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) ? is_newPC : 0;
+        // assign instr                    =   ((PCout > 32'hBFFF_FFFF || PCout < 32'hA000_0000)) ? instr_cached : instr_uncached;
+        always@(*) begin
+            exception   =   0;
+            if((PCout > 32'h9FFF_FFFF && PCout < 32'hC000_0000)) begin
+                instr_rd_req_cached     =   0;
+                instr_rd_req_uncached   =   is_newPC;
+                instr                   =   instr_uncached;
+                rd_addr                 =   {3'b000, PCout[28:0]};
+            end
+            else if((PCout > 32'h7FFF_FFFF && PCout < 32'hA000_0000)) begin
+                instr_rd_req_cached     =   1;
+                instr_rd_req_uncached   =   0;
+                instr                   =   instr_cached;
+                rd_addr                 =   {3'b000, PCout[28:0]};
+            end
+            else if(instr_avalid && ~instr_amiss) begin
+                if(instr_acache == 3'd3) begin
+                    instr_rd_req_cached     =   1;
+                    instr_rd_req_uncached   =   0;
+                    instr                   =   instr_cached;
+                    rd_addr                 =   instr_paddr;
+                end
+                else begin
+                    instr_rd_req_cached     =   0;
+                    instr_rd_req_uncached   =   is_newPC;
+                    instr                   =   instr_uncached;
+                    rd_addr                 =   instr_paddr;
+                end
+            end
+            else begin
+                instr_rd_req_cached     =   0;
+                instr_rd_req_uncached   =   0;
+                instr                   =   0;
+                rd_addr                 =   0;
+                if(instr_amiss)
+                    exception           =   `EXP_ITLBR;
+                else if(~instr_avalid)
+                    exception           =   `EXP_ITLBI;
+            end
+        end
     `else
-        assign instr_rd_req_cached      =   1;
-        assign instr_rd_req_uncached    =   0;
-        assign instr                    =   instr_cached;
+        // assign instr_rd_req_cached      =   1;
+        // assign instr_rd_req_uncached    =   0;
+        // assign instr                    =   instr_cached;
+        always@(*) begin
+            exception   =   0;
+            instr_rd_req_cached     =   1;
+            instr_rd_req_uncached   =   0;
+            instr                   =   instr_cached;
+            rd_addr                 =   {3'b000, PCout[28:0]};
+        end
     `endif
 
     reg [31:0] reg_instr;
@@ -189,10 +248,10 @@ module IF_module
 //==============================arbitrate part start====================================
     always@(*) begin
         if(icache_addr == buff_addr) begin
-            axi_addr    =   0;
-            axi_rd_req  =   0;
-            icache_data =   buff_data;
-            icache_gnt  =   buff_ready;
+             axi_addr    =   0;
+             axi_rd_req  =   0;
+             icache_data =   buff_data;
+             icache_gnt  =   buff_ready;
         end
         else begin
             axi_addr    =   icache_addr;
@@ -207,7 +266,7 @@ module IF_module
         .clk            (clk),
         .rst            (rst),
         .miss           (miss),
-        .addr           ({3'b000, PCout[28:0]}),
+        .addr           (rd_addr),
         .rd_req         (instr_rd_req_cached),
         .rd_data        (instr_cached),
 
@@ -283,7 +342,7 @@ module IF_module
                     .inst_data_ok   (inst_data_ok)  ,
                     
                     .is_newPC       (instr_rd_req_uncached)  ,
-                    .PC             ( {3'b000, PCout[28:0]} )     ,
+                    .PC             (rd_addr)     ,
                     .stall          (stall_uncached)     
                     );
                     
@@ -298,7 +357,7 @@ module IF_module
         .miss       (miss),
 
         .rd_req     (instr_rd_req_cached),
-        .rd_addr    ({3'b000, PCout[28:0]}),
+        .rd_addr    (rd_addr),
 
         .buff_addr  (buff_addr),
         .buff_data  (buff_data),

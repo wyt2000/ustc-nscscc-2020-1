@@ -26,8 +26,10 @@ module EX_module(
     input [31:0] ForwardMEM,
     input [31:0] ForwardWB,
     input [31:0] PCin,
-    input exceptionD,
+    input [3:0] exceptionD,
     input is_ds_in,
+    input TLB_we_in,
+    input [1:0] TLB_CP0we_in,
     output hiloWrite_o,
     output [2:0] MemReadType_o,
     output RegWrite_o,
@@ -44,7 +46,9 @@ module EX_module(
     output [6:0] WriteRegister,
     output [31:0] PCout,
     output MemRead_o,
-    output is_ds_out
+    output is_ds_out,
+    output TLB_we_out,
+    output [1:0] TLB_CP0we_out
     );
     
     wire [31:0] imm_o;
@@ -66,6 +70,8 @@ module EX_module(
     assign PCout = PCin;
     assign MemRead_o = MemRead_i;
     assign is_ds_out = is_ds_in;
+    assign TLB_CP0we_out = TLB_CP0we_in;
+    assign TLB_we_out = TLB_we_in;
 
     //mux
     assign imm_o = immSel ? PCplus8 : imm;

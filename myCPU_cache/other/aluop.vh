@@ -6,6 +6,12 @@
 `define EXP_ERET        6
 `define EXP_NOP         7
 `define EXP_RESERVED    8
+`define EXP_ITLBR       9
+`define EXP_ITLBI       10
+`define EXP_ITLBM       11
+`define EXP_DTLBR       12
+`define EXP_DTLBI       13
+`define EXP_DTLBM       14
 
 `define ALU_NOP         0
 `define ALU_ADD         1

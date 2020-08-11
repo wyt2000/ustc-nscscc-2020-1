@@ -11,6 +11,7 @@ module ID_module(
     //from IF/ID reg
     input [31:0] pc_plus_4,
     input [31:0] PCin,
+    input [3:0]  exceptionF,
 
     //from WB
     input [6:0] WriteRegW,
@@ -50,6 +51,8 @@ module ID_module(
         output ALUSrcDA,
         output ALUSrcDB,
         output RegDstD,
+        output TLB_we,
+        output [1:0] TLB_CP0we,
         //output Imm_sel_and_Branch_taken,
         output Imm_sel,
         //outputs from reg_file
@@ -71,7 +74,7 @@ module ID_module(
     output [31:0] Branch_addr,
     output [31:0] Jump_addr,
     //to Exception_module
-    output exception,
+    output [3:0] exception,
     //to Harzard unit
     output isBranch,
     //epc
@@ -81,7 +84,19 @@ module ID_module(
     output is_ds,
 
     input StallD,
-    input [3:0] reg_file_byte_we
+    input [3:0] reg_file_byte_we,
+
+    input  [31:0] Index_in,
+    input  [31:0] EntryLo0_in,
+    input  [31:0] EntryLo1_in,
+    input  [31:0] PageMask_in,
+    input  [31:0] EntryHi_in,
+
+    output [31:0] Index_data,
+    output [31:0] EntryLo0_data,
+    output [31:0] EntryLo1_data,
+    output [31:0] PageMask_data,
+    output [31:0] EntryHi_data
     );
 
     wire Branch_taken, RegWriteCD, RegWriteBD;
@@ -112,7 +127,9 @@ module ID_module(
                         .ALUSrcDB(ALUSrcDB),
                         .RegDstD(RegDstD),
                         .Imm_sel(Imm_sel),
-                        .isBranch(isBranch)
+                        .isBranch(isBranch),
+                        .TLB_we(TLB_we),
+                        .TLB_CP0we(TLB_CP0we)
     );
 
     register_file reg_file(.clk(clk),
@@ -138,7 +155,17 @@ module ID_module(
                            .epc(EPCin),
                            .BADADDR(BADADDR),
                            .Branch_delay(Branch_delay),
-                           .reg_file_byte_we(reg_file_byte_we)
+                           .reg_file_byte_we(reg_file_byte_we),
+                           .Index_in(Index_in),
+                           .EntryLo0_in(EntryLo0_in),
+                           .EntryLo1_in(EntryLo1_in),
+                           .PageMask_in(PageMask_in),
+                           .EntryHi_in(EntryHi_in),
+                           .Index_data(Index_data),
+                           .EntryLo0_data(EntryLo0_data),
+                           .EntryLo1_data(EntryLo1_data),
+                           .PageMask_data(PageMask_data),
+                           .EntryHi_data(EntryHi_data)    
                            );
 
     Branch_judge brch_jdg(.Op(instr[31:26]),
@@ -150,6 +177,7 @@ module ID_module(
                           .branch_taken(Branch_taken));
 
     decoder dcd(.ins(instr[31:0]),
+                .exceptionF(exceptionF),
                .ALUop(ALUOp),
                .Rs(Rs),
                .Rt(Rt),

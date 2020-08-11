@@ -3,12 +3,13 @@
 `include "../other/instruction.vh"
 module decoder(
     input [31:0] ins,
+    input [3:0] exceptionF,
     output logic [5:0] ALUop,
     output logic [6:0] Rs,
     output logic [6:0] Rt,
     output logic [6:0] Rd,
     output logic [15:0] imm,
-    output logic exception
+    output logic [3:0] exception
     );
     wire [5:0] op;
     wire [4:0] rs;
@@ -58,10 +59,9 @@ module decoder(
                     `FUNC_SYNC:             ALUop = `ALU_NOP;
                 endcase
             `OP_PRIV:                       begin   //changed by jbz 7.8.2020
-                                                ALUop = `ALU_ADD; 
-                                                if (rs == `FUNC_ERET)
-                                                    if (func == `ERET_LAST) ALUop = `ALU_ERET;
-                                                    else ALUop = `ALU_NOP;
+                                            ALUop = `ALU_ADD; 
+                                            if(rs == `FUNC_ERET && func == `ERET_LAST)
+                                                ALUop = `ALU_ERET;
                                             end
             `OP_ADDI:                       ALUop = `ALU_ADDI;
             `OP_ADDIU:                      ALUop = `ALU_ADDIU;
@@ -93,7 +93,12 @@ module decoder(
     end
 
     always_comb begin : set_exception 
-        exception = 1;
+        // exception = 1;
+        if(exceptionF != 0) begin
+            exception   =   exceptionF;
+        end
+        else begin
+        exception = `EXP_RESERVED;
         case (op)
             `OP_ZERO:
                 case (func)
@@ -120,17 +125,16 @@ module decoder(
                     `FUNC_BREAK,`FUNC_SYSCALL:
                         exception = 0;
                     `FUNC_SYNC:
-                        if(rs == 0 && rt == 0 && rd == 0) exception = 0;    
+                        if(rs == 0 && rt == 0 && rd == 0) exception = 0;         
                     endcase
             `OP_PRIV:
                 case (rs)
-                    `FUNC_ERET:
-                        case (func)
-                            `ERET_LAST, `TLBP_LAST,
-                            `TLBR_LAST, `TLBWI_LAST,
-                            `TLBWR_LAST:
-                                if (rt == 0 && rd == 0 && sa == 0) exception = 0;                                
-                        endcase
+                    `FUNC_ERET: begin
+                        if(rt == 0 && rd == 0 && sa == 0 && func == `ERET_LAST) exception = 0;
+                        if(rt == 0 && rd == 0 && sa == 0 && func == `FUNC_TLBP) exception = 0;
+                        if(rt == 0 && rd == 0 && sa == 0 && func == `FUNC_TLBR) exception = 0;
+                        if(rt == 0 && rd == 0 && sa == 0 && func == `FUNC_TLBWI) exception = 0;
+                    end
                     `FUNC_MFC0,`FUNC_MTC0:
                         if(sa == 0 && func[5:3] == 0) exception = 0;
                 endcase
@@ -157,6 +161,7 @@ module decoder(
                 if(sa == 0 && func == 6'b000010) exception = 0;                           
         endcase
         if(ins == 32'b0) exception = 0;
+        end
     end
 
     always_comb begin : set_Register

@@ -18,7 +18,9 @@ module Control_Unit(
     output reg ALUSrcDB,
     output reg RegDstD,
     output reg Imm_sel,
-    output reg isBranch
+    output reg isBranch,
+    output reg TLB_we,
+    output reg [1:0] TLB_CP0we
 );
 
     //HI_LO_write_enableD
@@ -114,28 +116,22 @@ module Control_Unit(
     always@(*) begin
         RegWriteCD = 1;
         if(Op == `OP_BELSE ||
-           Op == `OP_BEQ ||
-           Op == `OP_BNE ||
-           Op == `OP_BGTZ ||
-           Op == `OP_BLEZ ||
-           Op == `OP_J ||
-           (Op == `OP_ZERO && func == `FUNC_JR) ||
-           (Op == `OP_ZERO && func == `FUNC_BREAK) ||
-           (Op == `OP_ZERO && func == `FUNC_SYSCALL) ||
-           (Op == `OP_ZERO && func == `FUNC_SYNC) ||
-           Op == `OP_SB ||
-           Op == `OP_SH ||
-           Op == `OP_SW ||
-           Op == `OP_CACHE ||
-           Op == `OP_BEQL ||
-           (Op == `OP_PRIV && 
-                (   func == `TLBP_LAST ||
-                    func == `TLBR_LAST ||
-                    func == `TLBWI_LAST ||
-                    func == `TLBWR_LAST
-                )
+            Op == `OP_BEQ ||
+            Op == `OP_BNE ||
+            Op == `OP_BGTZ ||
+            Op == `OP_BLEZ ||
+            Op == `OP_J ||
+            (Op == `OP_ZERO && func == `FUNC_JR) ||
+            (Op == `OP_ZERO && func == `FUNC_BREAK) ||
+            (Op == `OP_ZERO && func == `FUNC_SYSCALL) ||
+            (Op == `OP_ZERO && func == `FUNC_SYNC) ||
+            Op == `OP_SB ||
+            Op == `OP_SH ||
+            Op == `OP_SW ||
+            Op == `OP_CACHE ||
+            Op == `OP_BEQL ||
+            (Op == `OP_PRIV && func == `FUNC_TLBWR) //tlbwr -> nop
            )
-        )
            RegWriteCD = 0;
     end
 
@@ -238,6 +234,25 @@ module Control_Unit(
            func == `FUNC_JALR
         ))
             isBranch = 1;
+    end
+
+    //TLB_we
+    always@(*) begin
+        TLB_we = 0;
+        if(Op == `OP_PRIV && func == `FUNC_TLBWI)
+            TLB_we = 1;
+    end
+
+    //TLB_CP0we
+    always@(*) begin
+        TLB_CP0we = 0;
+        if(Op == `OP_PRIV) begin
+            case(func)
+            `FUNC_TLBR: TLB_CP0we = 1;
+            `FUNC_TLBP: TLB_CP0we = 2;
+            default:    TLB_CP0we = 0;
+            endcase
+        end
     end
 
 endmodule

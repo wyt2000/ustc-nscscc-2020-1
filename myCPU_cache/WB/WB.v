@@ -14,6 +14,9 @@ module WB_module
         input [3:0] exception_in,
         input MemWriteW,
         input is_ds_in,
+        input TLB_we_in,
+        input [1:0] TLB_CP0we_in,
+
 		output [63:0] WriteinRF_HI_LO_data,
 		output [6:0] WritetoRFaddrout,
 		output HI_LO_writeenableout,
@@ -23,7 +26,11 @@ module WB_module
         output [3:0] exception_out,
         output MemWrite,
         //is_ds
-        output is_ds_out
+        output is_ds_out,
+
+        output TLB_we_out,
+        output [1:0] TLB_CP0we_out
+
 	);
 
 	assign HI_LO_writeenableout=HI_LO_writeenablein;
@@ -35,5 +42,6 @@ module WB_module
     assign exception_out = exception_in;
     assign MemWrite = MemWriteW;
     assign is_ds_out = is_ds_in;
-    
+    assign TLB_we_out = TLB_we_in;
+    assign TLB_CP0we_out = TLB_CP0we_in;
 endmodule

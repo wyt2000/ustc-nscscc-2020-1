@@ -115,8 +115,15 @@ typedef struct packed {
     logic               pre_fetch_bvalid    ;
     logic               pre_fetch_bready    ;
 
+    logic       [31:0]  instr_vaddr;
+    logic       [31:0]  instr_paddr;
+    logic               instr_avalid;
+    logic               instr_amiss;
+    logic       [2:0]   instr_acache;
 
-} IF_interface;
+    logic       [3:0]   exception;
+    logic               TLB_Refill;
+} IF_interface; 
 
 typedef struct packed {
     //input
@@ -138,6 +145,8 @@ typedef struct packed {
     logic ALUSrcDA;
     logic ALUSrcDB;
     logic RegDstD;
+    logic TLB_we;
+    logic [1:0] TLB_CP0we;
     logic MemReadD;
     logic [2:0] MemReadType;
     logic MemWriteD;
@@ -160,7 +169,7 @@ typedef struct packed {
     logic new_IE;
     logic [31:0] Jump_addr;
     logic [31:0] Branch_addr;
-    logic exception;
+    logic [3:0] exception;
     logic isBranch;
     logic [31:0] PCout;
     logic [31:0]  Status;
@@ -175,6 +184,20 @@ typedef struct packed {
     logic is_ds;
     logic StallD;
     logic [3:0] reg_file_byte_we;
+
+    logic [31:0] Index_in;
+    logic [31:0] EntryLo0_in;
+    logic [31:0] EntryLo1_in;
+    logic [31:0] PageMask_in;
+    logic [31:0] EntryHi_in;
+
+    logic [31:0] Index_data;
+    logic [31:0] EntryLo0_data;
+    logic [31:0] EntryLo1_data;
+    logic [31:0] PageMask_data;
+    logic [31:0] EntryHi_data;
+
+    logic [3:0] exceptionF;
 } ID_interface;
 
 typedef struct packed {
@@ -219,9 +242,13 @@ typedef struct packed {
     logic [3:0] exception;
     logic stall;
     logic [31:0] PCout;
-    logic exceptionD;
+    logic [3:0] exceptionD;
     logic is_ds_in;
     logic is_ds_out;
+    logic TLB_we_in;
+    logic TLB_we_out;
+    logic [1:0] TLB_CP0we_in;
+    logic [1:0] TLB_CP0we_out;
 } EX_interface;
 
 typedef struct packed {
@@ -251,6 +278,10 @@ typedef struct packed {
     logic MemWriteW;
     logic is_ds_in;
     logic is_ds_out;
+    logic TLB_we_in;
+    logic TLB_we_out;
+    logic [1:0] TLB_CP0we_in;
+    logic [1:0] TLB_CP0we_out;
 
     logic mem_req;
     logic mem_wr;
@@ -309,6 +340,12 @@ typedef struct packed {
     logic stall;
 (* keep = "TRUE" *)        logic [31:0] WritetoRFdata;
     logic [3:0] reg_file_byte_we;
+    logic [31:0] data_vaddr;
+    logic [31:0] data_paddr;
+    logic        data_avalid;
+    logic        data_amiss;
+    logic        data_adirty;
+    logic [2:0]  data_acache;
 } MEM_interface;
 
 typedef struct packed {
@@ -337,6 +374,10 @@ typedef struct packed {
 	logic [31:0] EPCD;
     logic [31:0] WritetoRFdatain;
     logic [3:0] reg_file_byte_we;
+    logic TLB_we_in;
+    logic TLB_we_out;
+    logic [1:0] TLB_CP0we_in;
+    logic [1:0] TLB_CP0we_out;
 
 } WB_interface;
 
@@ -391,20 +432,20 @@ typedef struct packed{
     logic reserved;
     logic [5:0] hardware_abortion;//硬件中断
     logic [1:0] software_abortion;//软件中断
-    logic [31:0] Status;//Status寄存器当前的值
-    logic [31:0] Cause;//Cause寄存器当前的值
+    logic [31:0] Status;//Status寄存器当前的�?
+    logic [31:0] Cause;//Cause寄存器当前的�?
     logic [31:0] pc;//错误指令pc
     //output
     logic [31:0] BadVAddr;//输出置BadVaddr
     logic [31:0] EPC;//输出置EPC
     //epc
     logic [31:0] we;//写使能字
-    logic Branch_delay;//给cause寄存器赋新值
-    logic Stall;//异常发生（Stall，Clear）
+    logic Branch_delay;//给cause寄存器赋新�??
+    logic Stall;//异常发生（Stall，Clear�?
     logic EXL;
     logic [7:0] enable;
-    logic new_Status_IE;//给Status寄存器赋新值
-    logic [7:0] Status_IM;//给Status寄存器赋新值
+    logic new_Status_IE;//给Status寄存器赋新�??
+    logic [7:0] Status_IM;//给Status寄存器赋新�??
     logic [4:0] ExcCode;//异常编码
     logic [31:0] ErrorAddr;
     logic isERET;
@@ -414,6 +455,19 @@ typedef struct packed{
 	logic _break;
     logic StallW;
     logic FlushW;
+    logic TLB_we;
+    logic [1:0] TLB_CP0we;
+    logic [3:0] exception;
+    logic [31:0] Index_in;
+    logic [31:0] EntryLo0_in;
+    logic [31:0] EntryLo1_in;
+    logic [31:0] PageMask_in;
+    logic [31:0] EntryHi_in;
+    logic [31:0] Index_out;
+    logic [31:0] EntryLo0_out;
+    logic [31:0] EntryLo1_out;
+    logic [31:0] PageMask_out;
+    logic [31:0] EntryHi_out;
 } Exception_interface;
 
 typedef struct packed{
@@ -481,6 +535,36 @@ typedef struct packed{
     logic        bready        ;   
 }axi_interface;
 
+typedef struct packed{
+    logic           we;
+    logic   [4 :0]  Index_in;
+    logic   [31:0]  EntryHi_in;
+    logic   [31:0]  PageMask_in;
+    logic   [31:0]  EntryLo0_in;
+    logic   [31:0]  EntryLo1_in;
+
+    logic   [4 :0]  rd_Index;
+    logic   [31:0]  rd_EntryHi;
+    logic   [31:0]  rd_PageMask;
+    logic   [31:0]  rd_EntryLo0;
+    logic   [31:0]  rd_EntryLo1;
+
+    logic   [31:0]  result_Index;
+
+    logic   [31:0]  instr_vaddr;
+    logic   [31:0]  instr_paddr;
+    logic           instr_avalid;
+    logic           instr_amiss;
+    logic   [2 :0]  instr_acache;
+
+    logic   [31:0]  data_vaddr;
+    logic   [31:0]  data_paddr;
+    logic           data_avalid;
+    logic           data_amiss;
+    logic           data_adirty;
+    logic   [2 :0]  data_acache;
+}tlb_interface;
+
 module mycpu_top(
 	input aclk,
 	input aresetn,
@@ -499,7 +583,7 @@ module mycpu_top(
     input         arready      ,
     //r           
     input  [3 :0] rid          ,
-    input  [31:0] rdata        ,
+     input  [31:0] rdata       ,
     input  [1 :0] rresp        ,
     input         rlast        ,
     input         rvalid       ,
@@ -533,7 +617,7 @@ module mycpu_top(
 	output [4:0] debug_wb_rf_wnum,
 	output [31:0] debug_wb_rf_wdata
 	);
-
+/*    
     ila_0 ila(
         .clk        (clk),
         .probe0     (IF.PCout),
@@ -542,7 +626,7 @@ module mycpu_top(
         .probe3     (MEM.WritetoRFdata),
         .probe4     (WB.PCout)
     );
-
+*/
 	logic rst;
 
 	IF_interface IF;
@@ -553,6 +637,7 @@ module mycpu_top(
 	Hazard_interface Hazard;
 	Exception_interface Exception;    
     axi_interface axi;
+    tlb_interface tlb;
 
     wire   [3:0] awqos,  arqos;
     assign awqos = 4'b0000;
@@ -658,9 +743,17 @@ module mycpu_top(
 	assign IF.beq_addr                      = ID.Branch_addr;
 	assign IF.StallF                        = Hazard.StallF;
 	assign IF.Error_happend					= Exception.Stall;
-
+    assign IF.inst_rdata                    = axi.inst_rdata;
+    assign IF.inst_addr_ok                  = axi.inst_addr_ok;
+    assign IF.inst_data_ok                  = axi.inst_data_ok;
+    assign IF.instr_paddr                   = tlb.instr_paddr;
+    assign IF.instr_avalid                  = tlb.instr_avalid;
+    assign IF.instr_amiss                   = tlb.instr_amiss;
+    assign IF.instr_acache                  = tlb.instr_acache;
+    assign IF.TLB_Refill                    = (Exception.exception == `EXP_ITLBR || Exception.exception == `EXP_DTLBR) ? 1 : 0;
+    
     assign ID.reg_file_byte_we              = WB.reg_file_byte_we;
-	assign ID.RegWriteW                     = WB.RegWrite;
+    assign ID.RegWriteW                     = WB.RegWrite;
 	assign ID.WriteRegW                     = WB.WritetoRFaddrout;
 	assign ID.ResultW                       = WB.WritetoRFdata;
 	assign ID.HI_LO_write_enable_from_WB    = WB.HI_LO_writeenableout;
@@ -679,11 +772,25 @@ module mycpu_top(
 	assign ID.hardware_interruption			= ext_int;
 	assign ID.BADADDR						= Exception.BadVAddr;
     assign ID.StallD                        = Hazard.StallD;
+    assign ID.Index_in                      = Exception.Index_out;
+    assign ID.EntryLo0_in                   = Exception.EntryLo0_out;
+    assign ID.EntryLo1_in                   = Exception.EntryLo1_out;
+    assign ID.PageMask_in                   = Exception.PageMask_out;
+    assign ID.EntryHi_in                    = Exception.EntryHi_out;
 
 	assign EX.ForwardMEM                    = MEM.ALUout;
 	assign EX.ForwardWB                     = WB.WritetoRFdata;
 	assign EX.ForwardA                      = Hazard.ForwardAE;
 	assign EX.ForwardB                      = Hazard.ForwardBE;
+
+    assign MEM.mem_rdata                    = axi.data_rdata;
+    assign MEM.mem_addr_ok                  = axi.data_addr_ok;
+    assign MEM.mem_data_ok                  = axi.data_data_ok;
+    assign MEM.data_paddr                   = tlb.data_paddr;
+    assign MEM.data_avalid                  = tlb.data_avalid;
+    assign MEM.data_amiss                   = tlb.data_amiss;
+    assign MEM.data_adirty                  = tlb.data_adirty;
+    assign MEM.data_acache                  = tlb.data_acache;
 
 	assign WB.EPCD							= ID.EPCout;
 
@@ -718,7 +825,7 @@ module mycpu_top(
 	assign Exception._break					= (WB.exception_out == `EXP_BREAK)		? 1 : 0;
 	assign Exception.syscall				= (WB.exception_out == `EXP_SYSCALL)	? 1 : 0;
     assign Exception.address_error          = (WB.exception_out == `EXP_ADDRERR)   	? 1 : 0;
-	assign Exception.ErrorAddr				= (WB.exception_out == `EXP_ADDRERR)	? WB.aluout : 0;
+	assign Exception.ErrorAddr				= WB.aluout;
 	assign Exception.isERET 				= (WB.exception_out == `EXP_ERET)   	? 1 : 0;
 	assign Exception.reserved				= (WB.exception_out == `EXP_RESERVED)	? 1 : 0;
 	assign Exception.MemWrite 				= WB.MemWrite;
@@ -730,24 +837,35 @@ module mycpu_top(
 	assign Exception.EPCD					= ID.EPCout;
     assign Exception.StallW                 = Hazard.StallW;
     assign Exception.FlushW                 = Hazard.FlushW;
-    
+    assign Exception.TLB_we                 = WB.TLB_we_out;
+    assign Exception.TLB_CP0we              = WB.TLB_CP0we_out;
+    assign Exception.exception              = WB.exception_out;
+    assign Exception.Index_in               = tlb.result_Index;
+    assign Exception.EntryLo0_in            = tlb.rd_EntryLo0;
+    assign Exception.EntryLo1_in            = tlb.rd_EntryLo1;
+    assign Exception.PageMask_in            = tlb.rd_PageMask;
+    assign Exception.EntryHi_in             = tlb.rd_EntryHi;
+
     assign axi.inst_req                     = IF.inst_req;
     assign axi.inst_wr                      = IF.inst_wr;
     assign axi.inst_size                    = IF.inst_size;
     assign axi.inst_addr                    = IF.inst_addr;
     assign axi.inst_wdata                   = IF.inst_wdata;
-    assign IF.inst_rdata                    = axi.inst_rdata;
-    assign IF.inst_addr_ok                  = axi.inst_addr_ok;
-    assign IF.inst_data_ok                  = axi.inst_data_ok;
-    
     assign axi.data_req                     = MEM.mem_req;
     assign axi.data_wr                      = MEM.mem_wr;
     assign axi.data_size                    = MEM.mem_size;
     assign axi.data_addr                    = MEM.mem_addr;
     assign axi.data_wdata                   = MEM.mem_wdata;
-    assign MEM.mem_rdata                    = axi.data_rdata;
-    assign MEM.mem_addr_ok                  = axi.data_addr_ok;
-    assign MEM.mem_data_ok                  = axi.data_data_ok;
+
+    assign tlb.we                           = WB.TLB_we_out;
+    assign tlb.Index_in                     = ID.Index_data;
+    assign tlb.EntryHi_in                   = ID.EntryHi_data;
+    assign tlb.PageMask_in                  = ID.PageMask_data;
+    assign tlb.EntryLo0_in                  = ID.EntryLo0_data;
+    assign tlb.EntryLo1_in                  = ID.EntryLo1_data;
+    assign tlb.rd_Index                     = ID.Index_data;
+    assign tlb.instr_vaddr                  = IF.instr_vaddr;
+    assign tlb.data_vaddr                   = MEM.data_vaddr;
 
 	// IF/ID registers
 
@@ -778,6 +896,14 @@ module mycpu_top(
         .q(ID.instr)
     );
 
+    register #(4) IF_ID_exceptionF (
+		.clk(clk),
+		.rst(rst),
+		.Flush(Hazard.FlushD),
+		.en(~Hazard.StallD),
+        .d(IF.exception),
+        .q(ID.exceptionF)
+    );
 	// ID/EX registers
 
 	register #(6) ID_EX_ALUControl (
@@ -951,7 +1077,7 @@ module mycpu_top(
 		.q(EX.PCin)
 	);
 
-	register #(1) ID_EX_exception (
+	register #(4) ID_EX_exception (
 		.clk(clk),
 		.rst(rst),
         .Flush(Hazard.FlushE),
@@ -967,6 +1093,24 @@ module mycpu_top(
 		.en(~Hazard.StallE),
         .d(ID.is_ds),
         .q(EX.is_ds_in)
+    );
+
+    register #(1) ID_EX_TLB_we (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+        .d(ID.TLB_we),
+        .q(EX.TLB_we_in)
+    );
+
+    register #(2) ID_EX_TLB_CP0we (
+		.clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushE),
+		.en(~Hazard.StallE),
+        .d(ID.TLB_CP0we),
+        .q(EX.TLB_CP0we_in)
     );
 
 	// EX/MEM registers
@@ -1088,6 +1232,24 @@ module mycpu_top(
         .q(MEM.is_ds_in)
     );
 
+    register #(1) EX_MEM_TLB_we (
+        .clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushM),
+		.en(~Hazard.StallM),
+        .d(EX.TLB_we_out),
+        .q(MEM.TLB_we_in)
+    );
+
+    register #(2) EX_MEM_TLB_CP0we (
+        .clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushM),
+		.en(~Hazard.StallM),
+        .d(EX.TLB_CP0we_out),
+        .q(MEM.TLB_CP0we_in)
+    );
+
 	// MEM/WB registers
 
 	register #(1) MEM_WB_MemtoRegW (
@@ -1207,6 +1369,24 @@ module mycpu_top(
         .q(WB.reg_file_byte_we)
     );
 
+    register #(1) MEM_WB_TLB_we (
+        .clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushW),
+		.en(~Hazard.StallW),
+        .d(MEM.TLB_we_out),
+        .q(WB.TLB_we_in)
+    );
+
+    register #(2) MEM_WB_TLB_CP0we (
+        .clk(clk),
+		.rst(rst),
+        .Flush(Hazard.FlushW),
+		.en(~Hazard.StallW),
+        .d(MEM.TLB_CP0we_out),
+        .q(WB.TLB_CP0we_in)
+    );
+
 	IF_module IF_module(
 		.clk                        (clk),
 		.rst                        (rst),
@@ -1319,7 +1499,17 @@ module mycpu_top(
         .pre_fetch_bid                  (IF.pre_fetch_bid),
         .pre_fetch_bresp                (IF.pre_fetch_bresp),
         .pre_fetch_bvalid               (IF.pre_fetch_bvalid),
-        .pre_fetch_bready               (IF.pre_fetch_bready)
+        .pre_fetch_bready               (IF.pre_fetch_bready),
+
+        //TLB ports
+        .instr_vaddr                    (IF.instr_vaddr),
+        .instr_paddr                    (IF.instr_paddr),
+        .instr_avalid                   (IF.instr_avalid),
+        .instr_amiss                    (IF.instr_amiss),
+        .instr_acache                   (IF.instr_acache),
+
+        .exception                      (IF.exception),
+        .TLB_Refill                     (IF.TLB_Refill)
 
 	);
 	
@@ -1347,6 +1537,8 @@ module mycpu_top(
 		.ALUSrcDA                   (ID.ALUSrcDA),
 		.ALUSrcDB                   (ID.ALUSrcDB),
 		.RegDstD                    (ID.RegDstD),
+        .TLB_we                     (ID.TLB_we),
+        .TLB_CP0we                  (ID.TLB_CP0we),
         .Imm_sel                    (ID.Imm_sel),
 		.RsValue                    (ID.RsValue),
 		.RtValue                    (ID.RtValue),
@@ -1379,7 +1571,20 @@ module mycpu_top(
 		.isBranch					(ID.isBranch),
         .is_ds                      (ID.is_ds),
         .StallD                     (ID.StallD),
-        .reg_file_byte_we           (ID.reg_file_byte_we)
+        .reg_file_byte_we           (ID.reg_file_byte_we),
+        .Index_in                   (ID.Index_in),
+        .EntryLo0_in                (ID.EntryLo0_in),
+        .EntryLo1_in                (ID.EntryLo1_in),
+        .PageMask_in                (ID.PageMask_in),
+        .EntryHi_in                 (ID.EntryHi_in),
+
+        .Index_data                 (ID.Index_data),
+        .EntryLo0_data              (ID.EntryLo0_data),
+        .EntryLo1_data              (ID.EntryLo1_data),
+        .PageMask_data              (ID.PageMask_data),
+        .EntryHi_data               (ID.EntryHi_data),
+
+        .exceptionF                 (ID.exceptionF)
 	);
 
 	EX_module EX_module(
@@ -1426,7 +1631,11 @@ module mycpu_top(
 		.PCout						(EX.PCout),
 		.exceptionD					(EX.exceptionD),
         .is_ds_in                   (EX.is_ds_in),
-        .is_ds_out                  (EX.is_ds_out)
+        .is_ds_out                  (EX.is_ds_out),
+        .TLB_we_in                  (EX.TLB_we_in),
+        .TLB_we_out                 (EX.TLB_we_out),
+        .TLB_CP0we_in               (EX.TLB_CP0we_in),
+        .TLB_CP0we_out              (EX.TLB_CP0we_out)
 	);
 
 	MEM_module MEM_module(
@@ -1456,6 +1665,11 @@ module mycpu_top(
 		.MemWriteW					(MEM.MemWriteW),
         .is_ds_in                   (MEM.is_ds_in),
         .is_ds_out                  (MEM.is_ds_out),
+        .TLB_we_in                  (MEM.TLB_we_in),
+        .TLB_we_out                 (MEM.TLB_we_out),
+        .TLB_CP0we_in               (MEM.TLB_CP0we_in),
+        .TLB_CP0we_out              (MEM.TLB_CP0we_out),
+
         .WritetoRFdata              (MEM.WritetoRFdata),
         //========MEM_AXI_BUS========
         //ar
@@ -1512,7 +1726,15 @@ module mycpu_top(
 
         .CLR                        (MEM.CLR),
         .stall                      (MEM.stall),
-        .reg_file_byte_we           (MEM.reg_file_byte_we)
+        .reg_file_byte_we           (MEM.reg_file_byte_we),
+
+        //TLB ports
+        .data_vaddr                 (MEM.data_vaddr),
+        .data_paddr                 (MEM.data_paddr),
+        .data_avalid                (MEM.data_avalid),
+        .data_amiss                 (MEM.data_amiss),
+        .data_adirty                (MEM.data_adirty),
+        .data_acache                (MEM.data_acache)
 	);
 
 	WB_module WB_module(
@@ -1537,7 +1759,12 @@ module mycpu_top(
 		.MemWrite					(WB.MemWrite),
 		.EPCD						(WB.EPCD),
         .is_ds_in                   (WB.is_ds_in),
-        .is_ds_out                  (WB.is_ds_out)
+        .is_ds_out                  (WB.is_ds_out),
+        .TLB_we_in                  (WB.TLB_we_in),
+        .TLB_we_out                 (WB.TLB_we_out),
+        .TLB_CP0we_in               (WB.TLB_CP0we_in),
+        .TLB_CP0we_out              (WB.TLB_CP0we_out)
+
 	);
 
 	Hazard_module Hazard_module(
@@ -1611,7 +1838,20 @@ module mycpu_top(
 		.isERET						(Exception.isERET),
         .is_ds                      (Exception.is_ds),
         .StallW                     (Exception.StallW),
-        .FlushW                     (Exception.FlushW)
+        .FlushW                     (Exception.FlushW),
+        .TLB_we                     (Exception.TLB_we),
+        .TLB_CP0we                  (Exception.TLB_CP0we),
+        .exception                  (Exception.exception),
+        .Index_in                   (Exception.Index_in),
+        .EntryLo0_in                (Exception.EntryLo0_in),
+        .EntryLo1_in                (Exception.EntryLo1_in),
+        .PageMask_in                (Exception.PageMask_in),
+        .EntryHi_in                 (Exception.EntryHi_in),
+        .Index_out                  (Exception.Index_out),
+        .EntryLo0_out               (Exception.EntryLo0_out),
+        .EntryLo1_out               (Exception.EntryLo1_out),
+        .PageMask_out               (Exception.PageMask_out),
+        .EntryHi_out                (Exception.EntryHi_out)
 	);
 
     cpu_axi_interface cpu_axi_interface(
@@ -1678,4 +1918,37 @@ module mycpu_top(
         .bready                     (axi.bready)
         );
         
+    tlb_module tlb_module(
+        .clk                        (clk),
+        .rst                        (rst),
+
+        .we                         (tlb.we),
+        .Index_in                   (tlb.Index_in),
+        .EntryHi_in                 (tlb.EntryHi_in),
+        .PageMask_in                (tlb.PageMask_in),
+        .EntryLo0_in                (tlb.EntryLo0_in),
+        .EntryLo1_in                (tlb.EntryLo1_in),
+
+        .rd_Index                   (tlb.rd_Index),
+        .rd_EntryHi                 (tlb.rd_EntryHi),
+        .rd_PageMask                (tlb.rd_PageMask),
+        .rd_EntryLo0                (tlb.rd_EntryLo0),
+        .rd_EntryLo1                (tlb.rd_EntryLo1),
+
+        .result_Index               (tlb.result_Index),
+
+        .instr_vaddr                (tlb.instr_vaddr),
+        .instr_paddr                (tlb.instr_paddr),
+        .instr_avalid               (tlb.instr_avalid),
+        .instr_amiss                (tlb.instr_amiss),
+        .instr_acache               (tlb.instr_acache),
+
+        .data_vaddr                 (tlb.data_vaddr),
+        .data_paddr                 (tlb.data_paddr),
+        .data_avalid                (tlb.data_avalid),
+        .data_amiss                 (tlb.data_amiss),
+        .data_adirty                (tlb.data_adirty),
+        .data_acache                (tlb.data_acache)
+    );
+
 endmodule

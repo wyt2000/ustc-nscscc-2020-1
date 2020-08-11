@@ -59,17 +59,16 @@
 `define FUNC_SYSCALL    6'b001100
 `define FUNC_SYNC       6'b001111
 
+
 `define OP_PRIV         6'b010000
-`define ERET_LAST       6'b011000
-
-`define TLBP_LAST       6'b001000
-`define TLBR_LAST       6'b000001
-`define TLBWI_LAST      6'b000010
-`define TLBWR_LAST      6'b000110
-
+//`define ERET_LAST       6'b011000
 `define FUNC_ERET       5'b10000
 `define FUNC_MFC0       5'b00000
 `define FUNC_MTC0       5'b00100
+`define FUNC_TLBP       6'b001000
+`define FUNC_TLBR       6'b000001
+`define FUNC_TLBWI      6'b000010
+`define FUNC_TLBWR      6'b000110
 
 `define OP_BELSE        6'b000001 
 `define FUNC_BGEZ       6'b000001
@@ -82,3 +81,4 @@
 
 `define HI_ADDR         7'b1111111
 `define LO_ADDR         7'b1000000
+`define ERET_LAST       6'b011000
