@@ -617,7 +617,7 @@ module mycpu_top(
 	output [4:0] debug_wb_rf_wnum,
 	output [31:0] debug_wb_rf_wdata
 	);
- /*   
+
     ila_0 ila(
         .clk        (clk),
         .probe0     (IF.PCout),
@@ -626,7 +626,7 @@ module mycpu_top(
         .probe3     (MEM.WritetoRFdata),
         .probe4     (WB.PCout)
     );
-*/
+
 	logic rst;
 
 	IF_interface IF;

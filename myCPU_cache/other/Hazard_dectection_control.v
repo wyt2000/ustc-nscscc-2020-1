@@ -51,14 +51,14 @@ module Hazard_module(
         else if (Exception_clean || Exception_Stall)                                                            state = `CLEAN_ALL_2; //Exception: clean all registers
         else if (ALU_stall && !ALU_done)                                                                        state = `STALL_ALL; //mul/div: stall all pipeline
         else if (MEM_stall)                                                                                     state = `STALL_ALL; //load/store: stall all pipeline
-        else if (MemReadM && ((WriteRegM == RsD) || (WriteRegM == RtD)) && RegWriteM && isaBranchInstruction)   state = `STALL_EX;  //Branch: wait MemData to WB
         else if (MemReadM && ((WriteRegM == RsE) || (WriteRegM == RtE)) && RegWriteM && WriteRegM)              state = `STALL_EX;  //R-Type: wait MemData to WB
+        else if (MemReadM && ((WriteRegM == RsD) || (WriteRegM == RtD)) && RegWriteM && isaBranchInstruction)   state = `STALL_ID;  //Branch: wait MemData to WB
+        else if (((WriteRegE == RsD) || (WriteRegE == RtD)) && RegWriteE && isaBranchInstruction)               state = `STALL_ID;  //Branch: wait EX.ALUout to MEM
         else if ((WriteRegE[5] && !WriteRegE[6]) && RegWriteE)                                                  state = `STALL_ID;  //mtc0: in EX
         else if ((WriteRegM[5] && !WriteRegM[6]) && RegWriteM)                                                  state = `STALL_ID;  //mtc0: in MEM
         else if ((WriteRegW[5] && !WriteRegW[6]) && RegWriteW)                                                  state = `STALL_ID;  //mtc0: in WB
         else if (EX_HILOwe)                                                                                     state = `STALL_ID;  //mul/div: in MEM
         else if (MEM_HILOwe)                                                                                    state = `STALL_ID;  //mul/div: in WB
-        else if (((WriteRegE == RsD) || (WriteRegE == RtD)) && RegWriteE && isaBranchInstruction)               state = `STALL_ID;  //Branch: wait EX.ALUout to MEM
         else if (IF_stall)                                                                                      state = `STALL_ID;  //IF operates RAM
         else                                                                                                    state = `STALL_IDLE;
     end
