@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`define MAP_UNCACHED
+// `define MAP_UNCACHED
 `include "../other/aluop.vh"
 
 module MEM_module (
@@ -92,6 +92,7 @@ module MEM_module (
     input       [1:0]   data_bresp     ,
     input               data_bvalid    ,
     output              data_bready    ,
+    output  reg [3:0]   reg_file_byte_we,
 
     //TLB ports
     output      [31:0]  data_vaddr,
@@ -163,6 +164,50 @@ module MEM_module (
                     calWE = 4'b1111;
                     TrueRamData = RamData; 
                 end
+                2'b11: begin    //unaligned store
+                    case (MemReadType[1:0])
+                        1'b0: begin     //swl
+                            case (ALUout[1:0])
+                                2'b00: begin
+                                    calWE = 4'b0001;
+                                    TrueRamData[7:0] = RamData[31:24];
+                                end
+                                2'b01: begin
+                                    calWE = 4'b0011;
+                                    TrueRamData[15:0] = RamData[31:16];
+                                end
+                                2'b10: begin
+                                    calWE = 4'b0111;
+                                    TrueRamData[23:0] = RamData[31:8];
+                                end
+                                2'b11: begin
+                                    calWE = 4'b1111;
+                                    TrueRamData = RamData;
+                                end
+                            endcase
+                        end
+                        1'b1: begin     //swr
+                            case (ALUout[1:0])
+                                2'b00: begin
+                                    calWE = 4'b1111;
+                                    TrueRamData = RamData;
+                                end
+                                2'b01: begin
+                                    calWE = 4'b1110;
+                                    TrueRamData[31:8] = RamData[23:0];
+                                end
+                                2'b10: begin
+                                    calWE = 4'b1100;
+                                    TrueRamData[31:16] = RamData[15:0];
+                                end
+                                2'b11: begin
+                                    calWE = 4'b1000;
+                                    TrueRamData[31:24] = RamData[7:0];
+                                end
+                            endcase
+                        end
+                    endcase
+                end
             endcase
         end
     end
@@ -196,11 +241,6 @@ module MEM_module (
     reg     [31:0]  rd_addr;
 
     `ifdef MAP_UNCACHED
-        // assign MemRead_cache    =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? MemReadM : 0;
-        // assign MemRead_uncache  =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? MemReadM : 0;
-        // assign MemWrite_cache   =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? TrueMemWrite : 0;
-        // assign MemWrite_uncache =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? TrueMemWrite : 0;
-        // assign Memdata          =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? Memdata_cache : Memdata_uncache;
         always@(*) begin
             exception_out       =   exception_in;
             MemRead_cache       =   0;
@@ -213,13 +253,13 @@ module MEM_module (
                 MemRead_uncache     =   MemReadM;
                 MemWrite_uncache    =   TrueMemWrite;
                 Memdata             =   Memdata_uncache;
-                rd_addr             =   {3'b000, ALUout[28:0]};
+                rd_addr             =   {3'b000, ALUout[28:2], 2'b00};
             end
             else if((ALUout > 32'h7FFF_FFFF && ALUout < 32'hA000_0000)) begin
                 MemRead_cache       =   MemReadM;
                 MemWrite_cache      =   TrueMemWrite;
                 Memdata             =   Memdata_cache;
-                rd_addr             =   {3'b000, ALUout[28:0]};
+                rd_addr             =   {3'b000, ALUout[28:2], 2'b00};
             end
             else if(data_avalid && ~data_amiss) begin
                 if(~(TrueMemWrite && ~data_adirty)) begin
@@ -249,11 +289,6 @@ module MEM_module (
             end
         end
     `else
-        // assign MemRead_cache    =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? MemReadM : 0;
-        // assign MemRead_uncache  =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? MemReadM : 0;
-        // assign MemWrite_cache   =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? TrueMemWrite : 0;
-        // assign MemWrite_uncache =   ({3'b000,ALUout[28:0]} > 32'h1faf0000) && ({3'b000,ALUout[28:0]} < 32'h1fafffff) ? TrueMemWrite : 0;
-        // assign Memdata          =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? Memdata_cache : Memdata_uncache;
         always@(*) begin
             exception_out           =   exception_in;
             MemRead_cache           =   ({3'b000,ALUout[28:0]} < 32'h1faf0000) || ({3'b000,ALUout[28:0]} > 32'h1fafffff) ? MemReadM : 0;
@@ -266,7 +301,7 @@ module MEM_module (
     `endif
 
     assign stall = miss || stall_uncache;
-    assign data_vaddr = ALUout;
+    assign data_vaddr = {ALUout[31:2], 2'b00};
     dcache data_cache(
         .clk            (clk),
         .rst            (rst),
@@ -374,6 +409,7 @@ module MEM_module (
     
     always @(*) begin
         TrueMemData = Memdata;
+        reg_file_byte_we = 4'b1111;
         case (MemReadType[1:0])
             2'b00: begin
                 case (ALUout[1:0])
@@ -387,6 +423,50 @@ module MEM_module (
                 case (ALUout[1:0])
                     2'b00: TrueMemData = MemReadType[2] ? {{16{Memdata[15]}},Memdata[15:0]} : {16'b0,Memdata[15:0]};
                     2'b10: TrueMemData = MemReadType[2] ? {{16{Memdata[31]}},Memdata[31:16]} : {16'b0,Memdata[31:16]};
+                endcase
+            end
+                        2'b11: begin    //unaligned load
+                case (MemReadType[2])
+                    1'b0: begin     //lwl
+                        case (ALUout)
+                            2'b00: begin
+                                reg_file_byte_we = 4'b1000;
+                                TrueMemData[31:24] = Memdata[7:0];
+                            end
+                            2'b01: begin
+                                reg_file_byte_we = 4'b1100;
+                                TrueMemData[31:16] = Memdata[15:0];
+                            end
+                            2'b10: begin
+                                reg_file_byte_we = 4'b1110;
+                                TrueMemData[31:8] = Memdata[23:0];
+                            end
+                            2'b11: begin
+                                reg_file_byte_we = 4'b1111;
+                                TrueMemData = Memdata;
+                            end
+                        endcase
+                    end
+                    1'b1: begin     //lwr
+                        case (ALUout)
+                            2'b00: begin
+                                reg_file_byte_we = 4'b1111;
+                                TrueMemData = Memdata;
+                            end
+                            2'b01: begin
+                                reg_file_byte_we = 4'b0111;
+                                TrueMemData[23:0] = Memdata[31:8];
+                            end
+                            2'b10: begin
+                                reg_file_byte_we = 4'b0011;
+                                TrueMemData[15:0] = Memdata[31:16];
+                            end
+                            2'b11: begin
+                                reg_file_byte_we = 4'b0001;
+                                TrueMemData[7:0] = Memdata[31:24];
+                            end
+                        endcase
+                    end
                 endcase
             end
         endcase

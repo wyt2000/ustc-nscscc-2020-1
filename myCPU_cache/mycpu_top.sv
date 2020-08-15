@@ -72,48 +72,48 @@ typedef struct packed {
     logic       [1:0]   instr_bresp     ;
     logic               instr_bvalid    ;
     logic               instr_bready    ;
-//========pre fetch axi bus========
-    //ar
-    logic       [3:0]   pre_fetch_arid      ;
-    logic       [31:0]  pre_fetch_araddr    ;
-    logic       [3:0]   pre_fetch_arlen     ;
-    logic       [2:0]   pre_fetch_arsize    ;
-    logic       [1:0]   pre_fetch_arburst   ;
-    logic       [1:0]   pre_fetch_arlock    ;
-    logic       [3:0]   pre_fetch_arcache   ;
-    logic       [2:0]   pre_fetch_arprot    ;
-    logic               pre_fetch_arvalid   ;
-    logic               pre_fetch_arready   ;
-    //r
-    logic       [3:0]   pre_fetch_rid       ;
-    logic       [31:0]  pre_fetch_rdata     ;
-    logic       [1:0]   pre_fetch_rresp     ;
-    logic               pre_fetch_rlast     ;
-    logic               pre_fetch_rvalid    ;
-    logic               pre_fetch_rready    ;
-    //aw
-    logic       [3:0]   pre_fetch_awid      ;
-    logic       [31:0]  pre_fetch_awaddr    ;
-    logic       [3:0]   pre_fetch_awlen     ;
-    logic       [2:0]   pre_fetch_awsize    ;
-    logic       [1:0]   pre_fetch_awburst   ;
-    logic       [1:0]   pre_fetch_awlock    ;
-    logic       [3:0]   pre_fetch_awcache   ;
-    logic       [2:0]   pre_fetch_awprot    ;
-    logic               pre_fetch_awvalid   ;
-    logic               pre_fetch_awready   ;
-    //w
-    logic       [3:0]   pre_fetch_wid       ;
-    logic       [31:0]  pre_fetch_wdata     ;
-    logic       [3:0]   pre_fetch_wstrb     ;
-    logic               pre_fetch_wlast     ;
-    logic               pre_fetch_wvalid    ;
-    logic               pre_fetch_wready    ;
-    //b
-    logic       [3:0]   pre_fetch_bid       ;
-    logic       [1:0]   pre_fetch_bresp     ;
-    logic               pre_fetch_bvalid    ;
-    logic               pre_fetch_bready    ;
+// //========pre fetch axi bus========
+//     //ar
+//     logic       [3:0]   pre_fetch_arid      ;
+//     logic       [31:0]  pre_fetch_araddr    ;
+//     logic       [3:0]   pre_fetch_arlen     ;
+//     logic       [2:0]   pre_fetch_arsize    ;
+//     logic       [1:0]   pre_fetch_arburst   ;
+//     logic       [1:0]   pre_fetch_arlock    ;
+//     logic       [3:0]   pre_fetch_arcache   ;
+//     logic       [2:0]   pre_fetch_arprot    ;
+//     logic               pre_fetch_arvalid   ;
+//     logic               pre_fetch_arready   ;
+//     //r
+//     logic       [3:0]   pre_fetch_rid       ;
+//     logic       [31:0]  pre_fetch_rdata     ;
+//     logic       [1:0]   pre_fetch_rresp     ;
+//     logic               pre_fetch_rlast     ;
+//     logic               pre_fetch_rvalid    ;
+//     logic               pre_fetch_rready    ;
+//     //aw
+//     logic       [3:0]   pre_fetch_awid      ;
+//     logic       [31:0]  pre_fetch_awaddr    ;
+//     logic       [3:0]   pre_fetch_awlen     ;
+//     logic       [2:0]   pre_fetch_awsize    ;
+//     logic       [1:0]   pre_fetch_awburst   ;
+//     logic       [1:0]   pre_fetch_awlock    ;
+//     logic       [3:0]   pre_fetch_awcache   ;
+//     logic       [2:0]   pre_fetch_awprot    ;
+//     logic               pre_fetch_awvalid   ;
+//     logic               pre_fetch_awready   ;
+//     //w
+//     logic       [3:0]   pre_fetch_wid       ;
+//     logic       [31:0]  pre_fetch_wdata     ;
+//     logic       [3:0]   pre_fetch_wstrb     ;
+//     logic               pre_fetch_wlast     ;
+//     logic               pre_fetch_wvalid    ;
+//     logic               pre_fetch_wready    ;
+//     //b
+//     logic       [3:0]   pre_fetch_bid       ;
+//     logic       [1:0]   pre_fetch_bresp     ;
+//     logic               pre_fetch_bvalid    ;
+//     logic               pre_fetch_bready    ;
 
     logic       [31:0]  instr_vaddr;
     logic       [31:0]  instr_paddr;
@@ -183,6 +183,7 @@ typedef struct packed {
     logic Branch_delay;
     logic is_ds;
     logic StallD;
+    logic [3:0] reg_file_byte_we;
 
     logic [31:0] Index_in;
     logic [31:0] EntryLo0_in;
@@ -338,7 +339,7 @@ typedef struct packed {
 
     logic stall;
     logic [31:0] WritetoRFdata;
-
+    logic [3:0] reg_file_byte_we;
     logic [31:0] data_vaddr;
     logic [31:0] data_paddr;
     logic        data_avalid;
@@ -372,6 +373,7 @@ typedef struct packed {
     logic is_ds_out;
 	logic [31:0] EPCD;
     logic [31:0] WritetoRFdatain;
+    logic [3:0] reg_file_byte_we;
     logic TLB_we_in;
     logic TLB_we_out;
     logic [1:0] TLB_CP0we_in;
@@ -638,44 +640,44 @@ module mycpu_top(
         .aclk           (aclk),
         .aresetn        (aresetn),
 
-        .s_axi_awid     ({MEM.data_awid,        IF.instr_awid,          axi.awid,       IF.pre_fetch_awid}),
-        .s_axi_awaddr   ({MEM.data_awaddr,      IF.instr_awaddr,        axi.awaddr,     IF.pre_fetch_awaddr}),
-        .s_axi_awlen    ({MEM.data_awlen,       IF.instr_awlen,         axi.awlen,      IF.pre_fetch_awlen}),
-        .s_axi_awsize   ({MEM.data_awsize,      IF.instr_awsize,        axi.awsize,     IF.pre_fetch_awsize}),
-        .s_axi_awburst  ({MEM.data_awburst,     IF.instr_awburst,       axi.awburst,    IF.pre_fetch_awburst}),
-        .s_axi_awlock   ({MEM.data_awlock,      IF.instr_awlock,        axi.awlock,     IF.pre_fetch_awlock}),
-        .s_axi_awcache  ({MEM.data_awcache,     IF.instr_awcache,       axi.awcache,    IF.pre_fetch_awcache}),
-        .s_axi_awprot   ({MEM.data_awprot,      IF.instr_awprot,        axi.awprot,     IF.pre_fetch_awprot}),
+        .s_axi_awid     ({MEM.data_awid,        IF.instr_awid,          axi.awid       /* IF.pre_fetch_awid*/ }),
+        .s_axi_awaddr   ({MEM.data_awaddr,      IF.instr_awaddr,        axi.awaddr     /* IF.pre_fetch_awaddr*/ }),
+        .s_axi_awlen    ({MEM.data_awlen,       IF.instr_awlen,         axi.awlen      /* IF.pre_fetch_awlen*/ }),
+        .s_axi_awsize   ({MEM.data_awsize,      IF.instr_awsize,        axi.awsize     /* IF.pre_fetch_awsize*/ }),
+        .s_axi_awburst  ({MEM.data_awburst,     IF.instr_awburst,       axi.awburst    /* IF.pre_fetch_awburst*/ }),
+        .s_axi_awlock   ({MEM.data_awlock,      IF.instr_awlock,        axi.awlock     /* IF.pre_fetch_awlock*/ }),
+        .s_axi_awcache  ({MEM.data_awcache,     IF.instr_awcache,       axi.awcache    /* IF.pre_fetch_awcache*/ }),
+        .s_axi_awprot   ({MEM.data_awprot,      IF.instr_awprot,        axi.awprot     /* IF.pre_fetch_awprot*/ }),
         .s_axi_awqos    (0),
-        .s_axi_awvalid  ({MEM.data_awvalid,     IF.instr_awvalid,       axi.awvalid,    IF.pre_fetch_awvalid}),
-        .s_axi_awready  ({MEM.data_awready,     IF.instr_awready,       axi.awready,    IF.pre_fetch_awready}),
-        .s_axi_wid      ({MEM.data_wid,         IF.instr_wid,           axi.wid,        IF.pre_fetch_wid}),
-        .s_axi_wdata    ({MEM.data_wdata,       IF.instr_wdata,         axi.wdata,      IF.pre_fetch_wdata}),
-        .s_axi_wstrb    ({MEM.data_wstrb,       IF.instr_wstrb,         axi.wstrb,      IF.pre_fetch_wstrb}),
-        .s_axi_wlast    ({MEM.data_wlast,       IF.instr_wlast,         axi.wlast,      IF.pre_fetch_wlast}),
-        .s_axi_wvalid   ({MEM.data_wvalid,      IF.instr_wvalid,        axi.wvalid,     IF.pre_fetch_wvalid}),
-        .s_axi_wready   ({MEM.data_wready,      IF.instr_wready,        axi.wready,     IF.pre_fetch_wready}),
-        .s_axi_bid      ({MEM.data_bid,         IF.instr_bid,           axi.bid,        IF.pre_fetch_bid}),
-        .s_axi_bresp    ({MEM.data_bresp,       IF.instr_bresp,         axi.bresp,      IF.pre_fetch_bresp}),
-        .s_axi_bvalid   ({MEM.data_bvalid,      IF.instr_bvalid,        axi.bvalid,     IF.pre_fetch_bvalid}),
-        .s_axi_bready   ({MEM.data_bready,      IF.instr_bready,        axi.bready,     IF.pre_fetch_bready}),
-        .s_axi_arid     ({MEM.data_arid,        IF.instr_arid,          axi.arid,       IF.pre_fetch_arid}),
-        .s_axi_araddr   ({MEM.data_araddr,      IF.instr_araddr,        axi.araddr,     IF.pre_fetch_araddr}),
-        .s_axi_arlen    ({MEM.data_arlen,       IF.instr_arlen,         axi.arlen,      IF.pre_fetch_arlen}),
-        .s_axi_arsize   ({MEM.data_arsize,      IF.instr_arsize,        axi.arsize,     IF.pre_fetch_arsize}),
-        .s_axi_arburst  ({MEM.data_arburst,     IF.instr_arburst,       axi.arburst,    IF.pre_fetch_arburst}),
-        .s_axi_arlock   ({MEM.data_arlock,      IF.instr_arlock,        axi.arlock,     IF.pre_fetch_arlock}),
-        .s_axi_arcache  ({MEM.data_arcache,     IF.instr_arcache,       axi.arcache,    IF.pre_fetch_arcache}),
-        .s_axi_arprot   ({MEM.data_arprot,      IF.instr_arprot,        axi.arprot,     IF.pre_fetch_arprot}),
+        .s_axi_awvalid  ({MEM.data_awvalid,     IF.instr_awvalid,       axi.awvalid    /* IF.pre_fetch_awvalid*/ }),
+        .s_axi_awready  ({MEM.data_awready,     IF.instr_awready,       axi.awready    /* IF.pre_fetch_awready*/ }),
+        .s_axi_wid      ({MEM.data_wid,         IF.instr_wid,           axi.wid        /* IF.pre_fetch_wid*/ }),
+        .s_axi_wdata    ({MEM.data_wdata,       IF.instr_wdata,         axi.wdata      /* IF.pre_fetch_wdata*/ }),
+        .s_axi_wstrb    ({MEM.data_wstrb,       IF.instr_wstrb,         axi.wstrb      /* IF.pre_fetch_wstrb*/ }),
+        .s_axi_wlast    ({MEM.data_wlast,       IF.instr_wlast,         axi.wlast      /* IF.pre_fetch_wlast*/ }),
+        .s_axi_wvalid   ({MEM.data_wvalid,      IF.instr_wvalid,        axi.wvalid     /* IF.pre_fetch_wvalid*/ }),
+        .s_axi_wready   ({MEM.data_wready,      IF.instr_wready,        axi.wready     /* IF.pre_fetch_wready*/ }),
+        .s_axi_bid      ({MEM.data_bid,         IF.instr_bid,           axi.bid        /* IF.pre_fetch_bid*/ }),
+        .s_axi_bresp    ({MEM.data_bresp,       IF.instr_bresp,         axi.bresp      /* IF.pre_fetch_bresp*/ }),
+        .s_axi_bvalid   ({MEM.data_bvalid,      IF.instr_bvalid,        axi.bvalid     /* IF.pre_fetch_bvalid*/ }),
+        .s_axi_bready   ({MEM.data_bready,      IF.instr_bready,        axi.bready     /* IF.pre_fetch_bready*/ }),
+        .s_axi_arid     ({MEM.data_arid,        IF.instr_arid,          axi.arid       /* IF.pre_fetch_arid*/ }),
+        .s_axi_araddr   ({MEM.data_araddr,      IF.instr_araddr,        axi.araddr     /* IF.pre_fetch_araddr*/ }),
+        .s_axi_arlen    ({MEM.data_arlen,       IF.instr_arlen,         axi.arlen      /* IF.pre_fetch_arlen*/ }),
+        .s_axi_arsize   ({MEM.data_arsize,      IF.instr_arsize,        axi.arsize     /* IF.pre_fetch_arsize*/ }),
+        .s_axi_arburst  ({MEM.data_arburst,     IF.instr_arburst,       axi.arburst    /* IF.pre_fetch_arburst*/ }),
+        .s_axi_arlock   ({MEM.data_arlock,      IF.instr_arlock,        axi.arlock     /* IF.pre_fetch_arlock*/ }),
+        .s_axi_arcache  ({MEM.data_arcache,     IF.instr_arcache,       axi.arcache    /* IF.pre_fetch_arcache*/ }),
+        .s_axi_arprot   ({MEM.data_arprot,      IF.instr_arprot,        axi.arprot     /* IF.pre_fetch_arprot*/ }),
         .s_axi_arqos    ({0}),
-        .s_axi_arvalid  ({MEM.data_arvalid,     IF.instr_arvalid,       axi.arvalid,    IF.pre_fetch_arvalid}),
-        .s_axi_arready  ({MEM.data_arready,     IF.instr_arready,       axi.arready,    IF.pre_fetch_arready}),
-        .s_axi_rid      ({MEM.data_rid,         IF.instr_rid,           axi.rid,        IF.pre_fetch_rid}),
-        .s_axi_rdata    ({MEM.data_rdata,       IF.instr_rdata,         axi.rdata,      IF.pre_fetch_rdata}),
-        .s_axi_rresp    ({MEM.data_rresp,       IF.instr_rresp,         axi.rresp,      IF.pre_fetch_rresp}),
-        .s_axi_rlast    ({MEM.data_rlast,       IF.instr_rlast,         axi.rlast,      IF.pre_fetch_rlast}),
-        .s_axi_rvalid   ({MEM.data_rvalid,      IF.instr_rvalid,        axi.rvalid,     IF.pre_fetch_rvalid}),
-        .s_axi_rready   ({MEM.data_rready,      IF.instr_rready,        axi.rready,     IF.pre_fetch_rready}),
+        .s_axi_arvalid  ({MEM.data_arvalid,     IF.instr_arvalid,       axi.arvalid    /* IF.pre_fetch_arvalid*/ }),
+        .s_axi_arready  ({MEM.data_arready,     IF.instr_arready,       axi.arready    /* IF.pre_fetch_arready*/ }),
+        .s_axi_rid      ({MEM.data_rid,         IF.instr_rid,           axi.rid        /* IF.pre_fetch_rid*/ }),
+        .s_axi_rdata    ({MEM.data_rdata,       IF.instr_rdata,         axi.rdata      /* IF.pre_fetch_rdata*/ }),
+        .s_axi_rresp    ({MEM.data_rresp,       IF.instr_rresp,         axi.rresp      /* IF.pre_fetch_rresp*/ }),
+        .s_axi_rlast    ({MEM.data_rlast,       IF.instr_rlast,         axi.rlast      /* IF.pre_fetch_rlast*/ }),
+        .s_axi_rvalid   ({MEM.data_rvalid,      IF.instr_rvalid,        axi.rvalid     /* IF.pre_fetch_rvalid*/ }),
+        .s_axi_rready   ({MEM.data_rready,      IF.instr_rready,        axi.rready     /* IF.pre_fetch_rready*/ }),
 
         .m_axi_awid     (awid),
         .m_axi_awaddr   (awaddr),
@@ -744,7 +746,8 @@ module mycpu_top(
     assign IF.instr_acache                  = tlb.instr_acache;
     assign IF.TLB_Refill                    = (Exception.exception == `EXP_ITLBR || Exception.exception == `EXP_DTLBR) ? 1 : 0;
 
-	assign ID.RegWriteW                     = WB.RegWrite;
+    assign ID.reg_file_byte_we              = WB.reg_file_byte_we;
+    assign ID.RegWriteW                     = WB.RegWrite;
 	assign ID.WriteRegW                     = WB.WritetoRFaddrout;
 	assign ID.ResultW                       = WB.WritetoRFdata;
 	assign ID.HI_LO_write_enable_from_WB    = WB.HI_LO_writeenableout;
@@ -1360,6 +1363,15 @@ module mycpu_top(
         .q(WB.WritetoRFdatain)
     );
 
+    register #(4) MEM_WB_reg_file_byte_we (
+        .clk(clk),
+		.rst(rst),
+        .Flush(0),
+		.en(~Hazard.StallW),
+        .d(MEM.reg_file_byte_we),
+        .q(WB.reg_file_byte_we)
+    );
+
     register #(1) MEM_WB_TLB_we (
         .clk(clk),
 		.rst(rst),
@@ -1449,48 +1461,48 @@ module mycpu_top(
         .instr_bvalid               (IF.instr_bvalid),
         .instr_bready               (IF.instr_bready),
 
-        //========PRE_FETCH_AXI_BUS========
-        //ar
-        .pre_fetch_arid                 (IF.pre_fetch_arid),
-        .pre_fetch_araddr               (IF.pre_fetch_araddr),
-        .pre_fetch_arlen                (IF.pre_fetch_arlen),
-        .pre_fetch_arsize               (IF.pre_fetch_arsize),
-        .pre_fetch_arburst              (IF.pre_fetch_arburst),
-        .pre_fetch_arlock               (IF.pre_fetch_arlock),
-        .pre_fetch_arcache              (IF.pre_fetch_arcache),
-        .pre_fetch_arprot               (IF.pre_fetch_arprot),
-        .pre_fetch_arvalid              (IF.pre_fetch_arvalid),
-        .pre_fetch_arready              (IF.pre_fetch_arready),
-        //r
-        .pre_fetch_rid                  (IF.pre_fetch_rid),
-        .pre_fetch_rdata                (IF.pre_fetch_rdata),
-        .pre_fetch_rresp                (IF.pre_fetch_rresp),
-        .pre_fetch_rlast                (IF.pre_fetch_rlast),
-        .pre_fetch_rvalid               (IF.pre_fetch_rvalid),
-        .pre_fetch_rready               (IF.pre_fetch_rready),
-        //aw
-        .pre_fetch_awid                 (IF.pre_fetch_awid),
-        .pre_fetch_awaddr               (IF.pre_fetch_awaddr),
-        .pre_fetch_awlen                (IF.pre_fetch_awlen),
-        .pre_fetch_awsize               (IF.pre_fetch_awsize),
-        .pre_fetch_awburst              (IF.pre_fetch_awburst),
-        .pre_fetch_awlock               (IF.pre_fetch_awlock),
-        .pre_fetch_awcache              (IF.pre_fetch_awcache),
-        .pre_fetch_awprot               (IF.pre_fetch_awprot),
-        .pre_fetch_awvalid              (IF.pre_fetch_awvalid),
-        .pre_fetch_awready              (IF.pre_fetch_awready),
-        //w
-        .pre_fetch_wid                  (IF.pre_fetch_wid),
-        .pre_fetch_wdata                (IF.pre_fetch_wdata),
-        .pre_fetch_wstrb                (IF.pre_fetch_wstrb),
-        .pre_fetch_wlast                (IF.pre_fetch_wlast),
-        .pre_fetch_wvalid               (IF.pre_fetch_wvalid),
-        .pre_fetch_wready               (IF.pre_fetch_wready),
-        //b
-        .pre_fetch_bid                  (IF.pre_fetch_bid),
-        .pre_fetch_bresp                (IF.pre_fetch_bresp),
-        .pre_fetch_bvalid               (IF.pre_fetch_bvalid),
-        .pre_fetch_bready               (IF.pre_fetch_bready),
+        // //========PRE_FETCH_AXI_BUS========
+        // //ar
+        // .pre_fetch_arid                 (IF.pre_fetch_arid),
+        // .pre_fetch_araddr               (IF.pre_fetch_araddr),
+        // .pre_fetch_arlen                (IF.pre_fetch_arlen),
+        // .pre_fetch_arsize               (IF.pre_fetch_arsize),
+        // .pre_fetch_arburst              (IF.pre_fetch_arburst),
+        // .pre_fetch_arlock               (IF.pre_fetch_arlock),
+        // .pre_fetch_arcache              (IF.pre_fetch_arcache),
+        // .pre_fetch_arprot               (IF.pre_fetch_arprot),
+        // .pre_fetch_arvalid              (IF.pre_fetch_arvalid),
+        // .pre_fetch_arready              (IF.pre_fetch_arready),
+        // //r
+        // .pre_fetch_rid                  (IF.pre_fetch_rid),
+        // .pre_fetch_rdata                (IF.pre_fetch_rdata),
+        // .pre_fetch_rresp                (IF.pre_fetch_rresp),
+        // .pre_fetch_rlast                (IF.pre_fetch_rlast),
+        // .pre_fetch_rvalid               (IF.pre_fetch_rvalid),
+        // .pre_fetch_rready               (IF.pre_fetch_rready),
+        // //aw
+        // .pre_fetch_awid                 (IF.pre_fetch_awid),
+        // .pre_fetch_awaddr               (IF.pre_fetch_awaddr),
+        // .pre_fetch_awlen                (IF.pre_fetch_awlen),
+        // .pre_fetch_awsize               (IF.pre_fetch_awsize),
+        // .pre_fetch_awburst              (IF.pre_fetch_awburst),
+        // .pre_fetch_awlock               (IF.pre_fetch_awlock),
+        // .pre_fetch_awcache              (IF.pre_fetch_awcache),
+        // .pre_fetch_awprot               (IF.pre_fetch_awprot),
+        // .pre_fetch_awvalid              (IF.pre_fetch_awvalid),
+        // .pre_fetch_awready              (IF.pre_fetch_awready),
+        // //w
+        // .pre_fetch_wid                  (IF.pre_fetch_wid),
+        // .pre_fetch_wdata                (IF.pre_fetch_wdata),
+        // .pre_fetch_wstrb                (IF.pre_fetch_wstrb),
+        // .pre_fetch_wlast                (IF.pre_fetch_wlast),
+        // .pre_fetch_wvalid               (IF.pre_fetch_wvalid),
+        // .pre_fetch_wready               (IF.pre_fetch_wready),
+        // //b
+        // .pre_fetch_bid                  (IF.pre_fetch_bid),
+        // .pre_fetch_bresp                (IF.pre_fetch_bresp),
+        // .pre_fetch_bvalid               (IF.pre_fetch_bvalid),
+        // .pre_fetch_bready               (IF.pre_fetch_bready),
 
         //TLB ports
         .instr_vaddr                    (IF.instr_vaddr),
@@ -1562,7 +1574,7 @@ module mycpu_top(
 		.isBranch					(ID.isBranch),
         .is_ds                      (ID.is_ds),
         .StallD                     (ID.StallD),
-
+        .reg_file_byte_we           (ID.reg_file_byte_we),
         .Index_in                   (ID.Index_in),
         .EntryLo0_in                (ID.EntryLo0_in),
         .EntryLo1_in                (ID.EntryLo1_in),
@@ -1717,6 +1729,7 @@ module mycpu_top(
 
         .CLR                        (MEM.CLR),
         .stall                      (MEM.stall),
+        .reg_file_byte_we           (MEM.reg_file_byte_we),
 
         //TLB ports
         .data_vaddr                 (MEM.data_vaddr),
@@ -1796,7 +1809,9 @@ module mycpu_top(
 		.ForwardAE                  (Hazard.ForwardAE),
 		.ForwardBE                  (Hazard.ForwardBE),
         .IF_stall                   (Hazard.IF_stall),
-        .MEM_stall                  (Hazard.MEM_stall)
+        .MEM_stall                  (Hazard.MEM_stall),
+        .EX_HILOwe                  (EX.hiloWrite_i),
+        .MEM_HILOwe                 (MEM.HI_LO_write_enableM)
 	);
 
 	Exception_module Exception_module(

@@ -146,7 +146,8 @@ module alu(
                 result = b >> a[10:6];
             `ALU_LB, `ALU_LBU, `ALU_SB,
             `ALU_LH, `ALU_LHU, `ALU_SH,
-            `ALU_LW, `ALU_SW:
+            `ALU_LW, `ALU_SW, `ALU_LWL,
+            `ALU_LWR, `ALU_SWL, `ALU_SWR:
                 result = a + signed_extend;
         endcase
     end

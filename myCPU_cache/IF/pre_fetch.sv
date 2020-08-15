@@ -101,28 +101,28 @@ module pre_fetch (
     //next state logic
     always@(*) begin
         case(current_state)
-        // IDLE:   begin
-        //     if(rst)
-        //         next_state  =   IDLE;
-        //     else if((!(|way_hit) && !miss && rd_req))
-        //         next_state  =   HDSK;
-        //     else
-        //         next_state  =   IDLE;
-        // end
+        IDLE:   begin
+            if(rst)
+                next_state  =   IDLE;
+            else if((!(|way_hit) && !miss && rd_req))
+                next_state  =   HDSK;
+            else
+                next_state  =   IDLE;
+        end
 
-        // HDSK:   begin
-        //     if(arvalid && arready)
-        //         next_state  =   TRAN;
-        //     else
-        //         next_state  =   HDSK;
-        // end
+        HDSK:   begin
+            if(arvalid && arready)
+                next_state  =   TRAN;
+            else
+                next_state  =   HDSK;
+        end
 
-        // TRAN:   begin
-        //     if(count == BURST_LENGTH - 1 && rlast && rvalid && rready)
-        //         next_state  =   IDLE;
-        //     else
-        //         next_state  =   TRAN;
-        // end
+        TRAN:   begin
+            if(count == BURST_LENGTH - 1 && rlast && rvalid && rready)
+                next_state  =   IDLE;
+            else
+                next_state  =   TRAN;
+        end
         default:begin
             next_state  =   IDLE;
         end

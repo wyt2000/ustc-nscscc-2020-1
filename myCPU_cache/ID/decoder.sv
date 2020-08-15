@@ -56,6 +56,7 @@ module decoder(
                     `FUNC_JR,`FUNC_JALR,
                     `FUNC_MFHI,`FUNC_MFLO,
                     `FUNC_MTHI,`FUNC_MTLO:  ALUop = `ALU_ADDU;
+                    `FUNC_SYNC:             ALUop = `ALU_NOP;
                 endcase
             `OP_PRIV:                       begin   //changed by jbz 7.8.2020
                                             ALUop = `ALU_ADD; 
@@ -83,6 +84,11 @@ module decoder(
             `OP_BGTZ,`OP_BLEZ,
             `OP_BELSE:                      ALUop = `ALU_ADDU;
             `OP_MUL:                        ALUop = `ALU_MUL;
+            `OP_CACHE,`OP_BEQL:             ALUop = `ALU_NOP;
+            `OP_LWL:                        ALUop = `ALU_LWL;
+            `OP_LWR:                        ALUop = `ALU_LWR;
+            `OP_SWL:                        ALUop = `ALU_SWL;
+            `OP_SWR:                        ALUop = `ALU_SWR;
         endcase
     end
 
@@ -117,7 +123,9 @@ module decoder(
                     `FUNC_MFHI,`FUNC_MFLO:
                         if(rs == 0 && rt == 0 && sa == 0) exception = 0;
                     `FUNC_BREAK,`FUNC_SYSCALL:
-                        exception = 0;     
+                        exception = 0;
+                    `FUNC_SYNC:
+                        if(rs == 0 && rt == 0 && rd == 0) exception = 0;         
                     endcase
             `OP_PRIV:
                 case (rs)
@@ -140,7 +148,10 @@ module decoder(
             `OP_SW,`OP_J,
             `OP_JAL,`OP_BEQ,
             `OP_BNE,`OP_BGTZ,
-            `OP_BLEZ:
+            `OP_BLEZ,`OP_CACHE,
+            `OP_BEQL,`OP_LWL,
+            `OP_LWR,`OP_SWL,
+            `OP_SWR:
                 exception = 0;
             `OP_LUI:
                 if(rs == 0) exception = 0;

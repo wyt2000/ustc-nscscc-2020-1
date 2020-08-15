@@ -72,4 +72,7 @@
 `define ALU_MFC0        56
 `define ALU_MTC0        57
 `define ALU_MUL         58
-
+`define ALU_LWL         59
+`define ALU_LWR         60
+`define ALU_SWL         61
+`define ALU_SWR         62

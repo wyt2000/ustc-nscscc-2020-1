@@ -79,10 +79,10 @@ module CP0
             Index   <=  32'b0;
         else if(we[0]) begin
             Index[31]   <=  Index_in[31];
-            Index[4:0]  <=  Index_in[4:0];
+            Index[2:0]  <=  Index_in[2:0];
         end
         else if(waddr == 0 && general_write_in)
-            Index[4:0]  <=  Index_in[4:0];
+            Index[2:0]  <=  Index_in[2:0];
     end
 
     always@(posedge clk) begin

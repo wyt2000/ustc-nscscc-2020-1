@@ -21,7 +21,12 @@
 `define OP_BGTZ         6'b000111
 `define OP_BLEZ         6'b000110
 `define OP_MUL          6'b011100
-
+`define OP_CACHE        6'b101111
+`define OP_BEQL         6'b010100
+`define OP_LWL          6'b100010
+`define OP_LWR          6'b100110
+`define OP_SWL          6'b101010
+`define OP_SWR          6'b101110
 
 `define OP_ZERO         6'b000000
 `define FUNC_ADD        6'b100000
@@ -52,6 +57,8 @@
 `define FUNC_MTLO       6'b010011  
 `define FUNC_BREAK      6'b001101
 `define FUNC_SYSCALL    6'b001100
+`define FUNC_SYNC       6'b001111
+
 
 `define OP_PRIV         6'b010000
 //`define ERET_LAST       6'b011000
@@ -61,6 +68,7 @@
 `define FUNC_TLBP       6'b001000
 `define FUNC_TLBR       6'b000001
 `define FUNC_TLBWI      6'b000010
+`define FUNC_TLBWR      6'b000110
 
 `define OP_BELSE        6'b000001 
 `define FUNC_BGEZ       6'b000001

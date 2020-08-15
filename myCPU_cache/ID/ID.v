@@ -84,6 +84,7 @@ module ID_module(
     output is_ds,
 
     input StallD,
+    input [3:0] reg_file_byte_we,
 
     input  [31:0] Index_in,
     input  [31:0] EntryLo0_in,
@@ -154,6 +155,7 @@ module ID_module(
                            .epc(EPCin),
                            .BADADDR(BADADDR),
                            .Branch_delay(Branch_delay),
+                           .reg_file_byte_we(reg_file_byte_we),
                            .Index_in(Index_in),
                            .EntryLo0_in(EntryLo0_in),
                            .EntryLo1_in(EntryLo1_in),

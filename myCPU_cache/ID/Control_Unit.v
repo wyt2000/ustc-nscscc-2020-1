@@ -36,7 +36,8 @@ module Control_Unit(
 
     //MemReadType
     always@(*) begin
-        MemReadType = 3'b111;
+        //IDLE
+        MemReadType = 3'b110;
         case(Op)
         `OP_LB:  begin
             //LB
@@ -70,6 +71,22 @@ module Control_Unit(
             //SW
             MemReadType = 3'b010;
         end
+        `OP_LWL: begin
+            //LWL
+            MemReadType = 3'b011;
+        end
+        `OP_LWR: begin
+            //LWR
+            MemReadType = 3'b111;
+        end
+        `OP_SWL: begin
+            //SWL
+            MemReadType = 3'b011;
+        end
+        `OP_SWR: begin
+            //SWR
+            MemReadType = 3'b111;
+        end
         default: ;
         endcase
     end
@@ -99,17 +116,21 @@ module Control_Unit(
     always@(*) begin
         RegWriteCD = 1;
         if(Op == `OP_BELSE ||
-           Op == `OP_BEQ ||
-           Op == `OP_BNE ||
-           Op == `OP_BGTZ ||
-           Op == `OP_BLEZ ||
-           Op == `OP_J ||
-           (Op == `OP_ZERO && func == `FUNC_JR) ||
-           (Op == `OP_ZERO && func == `FUNC_BREAK) ||
-           (Op == `OP_ZERO && func == `FUNC_SYSCALL) ||
-           Op == `OP_SB ||
-           Op == `OP_SH ||
-           Op == `OP_SW
+            Op == `OP_BEQ ||
+            Op == `OP_BNE ||
+            Op == `OP_BGTZ ||
+            Op == `OP_BLEZ ||
+            Op == `OP_J ||
+            (Op == `OP_ZERO && func == `FUNC_JR) ||
+            (Op == `OP_ZERO && func == `FUNC_BREAK) ||
+            (Op == `OP_ZERO && func == `FUNC_SYSCALL) ||
+            (Op == `OP_ZERO && func == `FUNC_SYNC) ||
+            Op == `OP_SB ||
+            Op == `OP_SH ||
+            Op == `OP_SW ||
+            Op == `OP_CACHE ||
+            Op == `OP_BEQL ||
+            (Op == `OP_PRIV && func == `FUNC_TLBWR) //tlbwr -> nop
            )
            RegWriteCD = 0;
     end
