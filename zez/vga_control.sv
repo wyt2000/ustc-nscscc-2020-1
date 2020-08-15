@@ -86,7 +86,7 @@ assign curv=v_cnt-11'd35;
 assign cur_vga_addr={curv[9:3],curh[9:3]};
 assign real_vga_addr=we?addr[14:1]:cur_vga_addr;
 assign input_data = (we==4'b1100) ? data[27:16]:data[11:0];
-vga_Ram(
+vga_Ram run_vga_ram(
     .a(real_vga_addr),
     .d(input_data),
     .we(we),
