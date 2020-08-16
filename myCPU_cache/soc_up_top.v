@@ -962,7 +962,7 @@ confreg CONFREG(
 .btn_key_row       (btn_key_row ),
 .btn_step          (btn_step    ),
 .led_dot_r         (led_dot_r   ),
-.led_dot_c         (led_dot_c   )         
+.led_dot_c         (led_dot_c   )
 );
 
 //MAC top

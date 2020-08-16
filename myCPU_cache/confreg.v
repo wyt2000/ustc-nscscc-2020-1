@@ -183,11 +183,8 @@ wire [31:0] switch_data;
 wire [31:0] btn_key_data;
 wire [31:0] btn_step_data;
 reg  [31:0] timer;
-wire [31:0] led_dot_data_4;
-wire [31:0] led_dot_data_8;
-
-assign led_dot_data_4 = 32'hffff_ffff;
-assign led_dot_data_8 = 32'hffff_ffff;
+reg  [31:0] led_dot_data_4;
+reg  [31:0] led_dot_data_8;
 
 reg [31:0] cr00,cr01,cr02,cr03,cr04,cr05,cr06,cr07;
 reg busy,write,R_or_W;
@@ -293,7 +290,10 @@ wire [31:0] rdata_d = buf_addr[15:2] == 14'd0 ? cr00 :
                       buf_addr[15:0] == `SWITCH_ADDR    ? switch_data    :
                       buf_addr[15:0] == `BTN_KEY_ADDR   ? btn_key_data   :
                       buf_addr[15:0] == `BTN_STEP_ADDR  ? btn_step_data  :
-                      buf_addr[15:0] == `TIMER_ADDR     ? timer          : 32'd0;
+                      buf_addr[15:0] == `TIMER_ADDR     ? timer          : 
+                      buf_addr[15:0] == `DOT_ADDR_4     ? led_dot_data_4 :
+                      buf_addr[15:0] == `DOT_ADDR_8     ? led_dot_data_8 :
+                      32'd0;
 
 always@(posedge aclk)
     if(~aresetn) begin
@@ -706,6 +706,32 @@ end
 //----------------------------{digital number}end------------------------//
 
 //---------------------------{dot matrix}begin---------------------------//
+wire write_led_dot_data_4 = w_enter & (buf_addr[15:0]==`DOT_ADDR_4);
+wire write_led_dot_data_8 = w_enter & (buf_addr[15:0]==`DOT_ADDR_8);
+
+always @(posedge aclk)
+begin
+    if(!aresetn)
+    begin
+        led_dot_data_4 <= 32'hffff_ffff;
+    end
+    else if(write_led_dot_data_4)
+    begin
+        led_dot_data_4 <= s_wdata[31:0];
+    end
+end
+
+always @(posedge aclk)
+begin
+    if(!aresetn)
+    begin
+        led_dot_data_8 <= 32'hffff_ffff;
+    end
+    else if(write_led_dot_data_8)
+    begin
+        led_dot_data_8 <= s_wdata[31:0];
+    end
+end
 
 always @ ( posedge aclk )  
 begin
@@ -718,35 +744,35 @@ begin
     begin
         case(count[19:17])
             3'b000 : begin
-                led_dot_r[0]    <= 1'b1;
+                led_dot_r[0]    <= 8'b0000_0001;
                 led_dot_c       <= led_dot_data_4[7 : 0];
             end
             3'b001 : begin
-                led_dot_r[1]    <= 1'b1;
+                led_dot_r[1]    <= 8'b0000_0010;
                 led_dot_c       <= led_dot_data_4[15: 8];
             end
             3'b010 : begin
-                led_dot_r[2]    <= 1'b1;
+                led_dot_r[2]    <= 8'b0000_0100;
                 led_dot_c       <= led_dot_data_4[23:16];
             end
             3'b011 : begin
-                led_dot_r[3]    <= 1'b1;
+                led_dot_r[3]    <= 8'b0000_1000;
                 led_dot_c       <= led_dot_data_4[31:24];
             end
             3'b100 : begin
-                led_dot_r[4]    <= 1'b1;
+                led_dot_r[4]    <= 8'b0001_0000;
                 led_dot_c       <= led_dot_data_8[7 : 0];
             end
             3'b101 : begin
-                led_dot_r[5]    <= 1'b1;
+                led_dot_r[5]    <= 8'b0010_0000;
                 led_dot_c       <= led_dot_data_8[15: 8];
             end
             3'b110 : begin
-                led_dot_r[6]    <= 1'b1;
+                led_dot_r[6]    <= 8'b0100_0000;
                 led_dot_c       <= led_dot_data_8[23:16];
             end
             3'b111 : begin
-                led_dot_r[7]    <= 1'b1;
+                led_dot_r[7]    <= 8'b1000_0000;
                 led_dot_c       <= led_dot_data_8[31:24];
             end
         endcase
