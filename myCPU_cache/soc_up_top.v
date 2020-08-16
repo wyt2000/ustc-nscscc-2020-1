@@ -47,6 +47,8 @@ module soc_up_top(
     output [3 :0] btn_key_col,
     input  [3 :0] btn_key_row,
     input  [1 :0] btn_step,
+    output [7 :0] led_dot_r,
+    output [7 :0] led_dot_c,
 
     //------DDR3 interface------
     inout  [15:0] ddr3_dq,
@@ -108,6 +110,7 @@ module soc_up_top(
     output        SPI_CS,
     inout         SPI_MISO,
     inout         SPI_MOSI
+
 );
 wire        aclk;
 wire        aresetn;
@@ -957,7 +960,9 @@ confreg CONFREG(
 .switch            (switch      ),
 .btn_key_col       (btn_key_col ),
 .btn_key_row       (btn_key_row ),
-.btn_step          (btn_step    )
+.btn_step          (btn_step    ),
+.led_dot_r         (led_dot_r   ),
+.led_dot_c         (led_dot_c   )         
 );
 
 //MAC top

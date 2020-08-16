@@ -92,15 +92,15 @@ module MEM_module (
     input       [1:0]   data_bresp     ,
     input               data_bvalid    ,
     output              data_bready    ,
-    output  reg [3:0]   reg_file_byte_we,
+    output  reg [3:0]   reg_file_byte_we
 
     //TLB ports
-    output      [31:0]  data_vaddr,
-    input       [31:0]  data_paddr,
-    input               data_avalid,
-    input               data_amiss,
-    input               data_adirty,
-    input       [2:0]   data_acache
+    // output      [31:0]  data_vaddr,
+    // input       [31:0]  data_paddr,
+    // input               data_avalid,
+    // input               data_amiss,
+    // input               data_adirty,
+    // input       [2:0]   data_acache
     );
 
     reg [3:0] calWE;
@@ -242,52 +242,62 @@ module MEM_module (
 
     `ifdef MAP_UNCACHED
         always@(*) begin
-            exception_out       =   exception_in;
-            MemRead_cache       =   0;
-            MemRead_uncache     =   0;
-            MemWrite_cache      =   0;
-            MemWrite_uncache    =   0;
-            Memdata             =   0;
-            rd_addr             =   0;
-            if((ALUout > 32'h9FFF_FFFF && ALUout < 32'hC000_0000)) begin
-                MemRead_uncache     =   MemReadM;
-                MemWrite_uncache    =   TrueMemWrite;
-                Memdata             =   Memdata_uncache;
-                rd_addr             =   {3'b000, ALUout[28:2], 2'b00};
-            end
-            else if((ALUout > 32'h7FFF_FFFF && ALUout < 32'hA000_0000)) begin
-                MemRead_cache       =   MemReadM;
-                MemWrite_cache      =   TrueMemWrite;
-                Memdata             =   Memdata_cache;
-                rd_addr             =   {3'b000, ALUout[28:2], 2'b00};
-            end
-            else if(data_avalid && ~data_amiss) begin
-                if(~(TrueMemWrite && ~data_adirty)) begin
-                    if(data_acache == 3'd3) begin
-                        MemRead_cache   =   MemReadM;
-                        MemWrite_cache  =   TrueMemWrite;
-                        Memdata         =   Memdata_cache;
-                        rd_addr         =   data_paddr;
-                    end
-                    else begin
-                        MemRead_uncache =   MemReadM;
-                        MemWrite_uncache=   TrueMemWrite;
-                        Memdata         =   Memdata_uncache;
-                        rd_addr         =   data_paddr;
-                    end
-                end
-                else begin
-                    if(exception_in == 0 && TrueMemWrite)
-                        exception_out = `EXP_DTLBM;
-                end
-            end
-            else begin
-                if(data_amiss && exception_in == 0 && (MemReadM || TrueMemWrite))
-                    exception_out = `EXP_DTLBR;
-                else if(exception_in == 0 && ~data_avalid && (MemReadM || TrueMemWrite))
-                    exception_out = `EXP_DTLBI;
-            end
+            exception_out    =   exception_in;
+            MemRead_cache    =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? MemReadM : 0;
+            MemRead_uncache  =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? MemReadM : 0;
+            MemWrite_cache   =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? TrueMemWrite : 0;
+            MemWrite_uncache =   ((ALUout > 32'h9FFF_FFFF) && (ALUout < 32'hC000_0000)) ? TrueMemWrite : 0;
+            Memdata          =   ((ALUout < 32'hA000_0000) || (ALUout > 32'hBFFF_FFFF)) ? Memdata_cache : Memdata_uncache;
+            rd_addr          =   {3'b000, ALUout[28:0]};
         end
+
+        // always@(*) begin
+        //     exception_out       =   exception_in;
+        //     MemRead_cache       =   0;
+        //     MemRead_uncache     =   0;
+        //     MemWrite_cache      =   0;
+        //     MemWrite_uncache    =   0;
+        //     Memdata             =   0;
+        //     rd_addr             =   0;
+        //     if((ALUout > 32'h9FFF_FFFF && ALUout < 32'hC000_0000)) begin
+        //         MemRead_uncache     =   MemReadM;
+        //         MemWrite_uncache    =   TrueMemWrite;
+        //         Memdata             =   Memdata_uncache;
+        //         rd_addr             =   {3'b000, ALUout[28:2], 2'b00};
+        //     end
+        //     else if((ALUout > 32'h7FFF_FFFF && ALUout < 32'hA000_0000)) begin
+        //         MemRead_cache       =   MemReadM;
+        //         MemWrite_cache      =   TrueMemWrite;
+        //         Memdata             =   Memdata_cache;
+        //         rd_addr             =   {3'b000, ALUout[28:2], 2'b00};
+        //     end
+        //     else if(data_avalid && ~data_amiss) begin
+        //         if(~(TrueMemWrite && ~data_adirty)) begin
+        //             if(data_acache == 3'd3) begin
+        //                 MemRead_cache   =   MemReadM;
+        //                 MemWrite_cache  =   TrueMemWrite;
+        //                 Memdata         =   Memdata_cache;
+        //                 rd_addr         =   data_paddr;
+        //             end
+        //             else begin
+        //                 MemRead_uncache =   MemReadM;
+        //                 MemWrite_uncache=   TrueMemWrite;
+        //                 Memdata         =   Memdata_uncache;
+        //                 rd_addr         =   data_paddr;
+        //             end
+        //         end
+        //         else begin
+        //             if(exception_in == 0 && TrueMemWrite)
+        //                 exception_out = `EXP_DTLBM;
+        //         end
+        //     end
+        //     else begin
+        //         if(data_amiss && exception_in == 0 && (MemReadM || TrueMemWrite))
+        //             exception_out = `EXP_DTLBR;
+        //         else if(exception_in == 0 && ~data_avalid && (MemReadM || TrueMemWrite))
+        //             exception_out = `EXP_DTLBI;
+        //     end
+        // end
     `else
         always@(*) begin
             exception_out           =   exception_in;

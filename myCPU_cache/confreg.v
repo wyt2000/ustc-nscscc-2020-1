@@ -40,6 +40,9 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 `define BTN_KEY_ADDR   16'hf024   //32'hbfd0_f024
 `define BTN_STEP_ADDR  16'hf028   //32'hbfd0_f028
 `define TIMER_ADDR     16'he000   //32'hbfd0_e000 
+`define DOT_ADDR_4     16'he010   //32'hbfd0_e010
+`define DOT_ADDR_8     16'he020   //32'hbfd0_e020
+
 module confreg(
     aclk,
     aresetn,
@@ -102,7 +105,9 @@ module confreg(
     switch,
     btn_key_col,
     btn_key_row,
-    btn_step
+    btn_step,
+    led_dot_r,
+    led_dot_c
 );
     input           aclk;
     input           aresetn;
@@ -166,6 +171,8 @@ module confreg(
     output     [3 :0] btn_key_col;
     input      [3 :0] btn_key_row;
     input      [1 :0] btn_step;
+    output reg [7 :0] led_dot_r;
+    output reg [7 :0] led_dot_c;
 
 //
 reg  [31:0] led_data;
@@ -176,6 +183,11 @@ wire [31:0] switch_data;
 wire [31:0] btn_key_data;
 wire [31:0] btn_step_data;
 reg  [31:0] timer;
+wire [31:0] led_dot_data_4;
+wire [31:0] led_dot_data_8;
+
+assign led_dot_data_4 = 32'hffff_ffff;
+assign led_dot_data_8 = 32'hffff_ffff;
 
 reg [31:0] cr00,cr01,cr02,cr03,cr04,cr05,cr06,cr07;
 reg busy,write,R_or_W;
@@ -692,4 +704,56 @@ begin
     end
 end
 //----------------------------{digital number}end------------------------//
+
+//---------------------------{dot matrix}begin---------------------------//
+
+always @ ( posedge aclk )  
+begin
+    if ( !aresetn )
+    begin
+        led_dot_r <= 32'b0;
+        led_dot_c <= 32'b0;
+    end
+    else
+    begin
+        case(count[19:17])
+            3'b000 : begin
+                led_dot_r[0]    <= 1'b1;
+                led_dot_c       <= led_dot_data_4[7 : 0];
+            end
+            3'b001 : begin
+                led_dot_r[1]    <= 1'b1;
+                led_dot_c       <= led_dot_data_4[15: 8];
+            end
+            3'b010 : begin
+                led_dot_r[2]    <= 1'b1;
+                led_dot_c       <= led_dot_data_4[23:16];
+            end
+            3'b011 : begin
+                led_dot_r[3]    <= 1'b1;
+                led_dot_c       <= led_dot_data_4[31:24];
+            end
+            3'b100 : begin
+                led_dot_r[4]    <= 1'b1;
+                led_dot_c       <= led_dot_data_8[7 : 0];
+            end
+            3'b101 : begin
+                led_dot_r[5]    <= 1'b1;
+                led_dot_c       <= led_dot_data_8[15: 8];
+            end
+            3'b110 : begin
+                led_dot_r[6]    <= 1'b1;
+                led_dot_c       <= led_dot_data_8[23:16];
+            end
+            3'b111 : begin
+                led_dot_r[7]    <= 1'b1;
+                led_dot_c       <= led_dot_data_8[31:24];
+            end
+        endcase
+    end
+end
+
+//----------------------------{dot matrix}end----------------------------//
+
+
 endmodule
