@@ -713,7 +713,7 @@ always @(posedge aclk)
 begin
     if(!aresetn)
     begin
-        led_dot_data_4 <= 32'hffff_ffff;
+        led_dot_data_4 <= 32'b0;
     end
     else if(write_led_dot_data_4)
     begin
@@ -725,7 +725,7 @@ always @(posedge aclk)
 begin
     if(!aresetn)
     begin
-        led_dot_data_8 <= 32'hffff_ffff;
+        led_dot_data_8 <= 32'b0;
     end
     else if(write_led_dot_data_8)
     begin
@@ -738,42 +738,42 @@ begin
     if ( !aresetn )
     begin
         led_dot_r <= 32'b0;
-        led_dot_c <= 32'b0;
+        led_dot_c <= 32'hffff_ffff;
     end
     else
     begin
-        case(count[19:17])
+        case(count[18:16])
             3'b000 : begin
-                led_dot_r[0]    <= 8'b0000_0001;
-                led_dot_c       <= led_dot_data_4[7 : 0];
+                led_dot_r       <= 8'b0000_0001;
+                led_dot_c       <= ~led_dot_data_4[7 : 0];
             end
             3'b001 : begin
-                led_dot_r[1]    <= 8'b0000_0010;
-                led_dot_c       <= led_dot_data_4[15: 8];
+                led_dot_r       <= 8'b0000_0010;
+                led_dot_c       <= ~led_dot_data_4[15: 8];
             end
             3'b010 : begin
-                led_dot_r[2]    <= 8'b0000_0100;
-                led_dot_c       <= led_dot_data_4[23:16];
+                led_dot_r       <= 8'b0000_0100;
+                led_dot_c       <= ~led_dot_data_4[23:16];
             end
             3'b011 : begin
-                led_dot_r[3]    <= 8'b0000_1000;
-                led_dot_c       <= led_dot_data_4[31:24];
+                led_dot_r       <= 8'b0000_1000;
+                led_dot_c       <= ~led_dot_data_4[31:24];
             end
             3'b100 : begin
-                led_dot_r[4]    <= 8'b0001_0000;
-                led_dot_c       <= led_dot_data_8[7 : 0];
+                led_dot_r       <= 8'b0001_0000;
+                led_dot_c       <= ~led_dot_data_8[7 : 0];
             end
             3'b101 : begin
-                led_dot_r[5]    <= 8'b0010_0000;
-                led_dot_c       <= led_dot_data_8[15: 8];
+                led_dot_r       <= 8'b0010_0000;
+                led_dot_c       <= ~led_dot_data_8[15: 8];
             end
             3'b110 : begin
-                led_dot_r[6]    <= 8'b0100_0000;
-                led_dot_c       <= led_dot_data_8[23:16];
+                led_dot_r       <= 8'b0100_0000;
+                led_dot_c       <= ~led_dot_data_8[23:16];
             end
             3'b111 : begin
-                led_dot_r[7]    <= 8'b1000_0000;
-                led_dot_c       <= led_dot_data_8[31:24];
+                led_dot_r       <= 8'b1000_0000;
+                led_dot_c       <= ~led_dot_data_8[31:24];
             end
         endcase
     end
