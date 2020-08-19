@@ -358,7 +358,7 @@ initmips(unsigned int memsz)
 
 	//VGA
 	int i;
-	for (i = 0; image[i] < 307200; i++){
+	for (i = 0; image[i] != -1; i++){
 		setVGA(i, image[i]);
 	}
 
