@@ -109,8 +109,12 @@ module soc_up_top(
     output        SPI_CLK,
     output        SPI_CS,
     inout         SPI_MISO,
-    inout         SPI_MOSI
+    inout         SPI_MOSI,
 
+    //------VGA-------------
+    output        hs,
+    output        vs,
+    output [11:0] vga_data
 );
 wire        aclk;
 wire        aresetn;
@@ -962,7 +966,13 @@ confreg CONFREG(
 .btn_key_row       (btn_key_row ),
 .btn_step          (btn_step    ),
 .led_dot_r         (led_dot_r   ),
-.led_dot_c         (led_dot_c   )
+.led_dot_c         (led_dot_c   ),
+
+.clk               (clk         ),
+.rst               (~resetn     ),
+.hs                (hs          ),
+.vs                (vs          ),
+.vga_data          (vga_data    )
 );
 
 //MAC top
@@ -1501,4 +1511,5 @@ axi2apb_misc APB_DEV
 
 .nand_int           (nand_int         )
 );
+
 endmodule

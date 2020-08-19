@@ -42,6 +42,9 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 `define TIMER_ADDR     16'he000   //32'hbfd0_e000 
 `define DOT_ADDR_4     16'he010   //32'hbfd0_e010
 `define DOT_ADDR_8     16'he020   //32'hbfd0_e020
+`define VGA_ADDR_ADDR  16'he030   //32'hbfd0_e030
+`define VGA_DATA_ADDR  16'he040   //32'hbfd0_e040
+`define VGA_WE_ADDR    16'he050   //32'hbfd0_e050
 
 module confreg(
     aclk,
@@ -107,7 +110,12 @@ module confreg(
     btn_key_row,
     btn_step,
     led_dot_r,
-    led_dot_c
+    led_dot_c,
+    clk,
+    rst,
+    hs,
+    vs,
+    vga_data
 );
     input           aclk;
     input           aresetn;
@@ -173,6 +181,13 @@ module confreg(
     input      [1 :0] btn_step;
     output reg [7 :0] led_dot_r;
     output reg [7 :0] led_dot_c;
+    
+    // vga
+    input           clk;
+    input           rst;
+    output            hs;
+    output            vs;
+    output     [11:0] vga_data;
 
 //
 reg  [31:0] led_data;
@@ -185,6 +200,9 @@ wire [31:0] btn_step_data;
 reg  [31:0] timer;
 reg  [31:0] led_dot_data_4;
 reg  [31:0] led_dot_data_8;
+reg  [31:0] vga_write_addr;
+reg  [31:0] vga_write_data;
+reg         vga_write_enable;
 
 reg [31:0] cr00,cr01,cr02,cr03,cr04,cr05,cr06,cr07;
 reg busy,write,R_or_W;
@@ -780,6 +798,62 @@ begin
 end
 
 //----------------------------{dot matrix}end----------------------------//
+
+//----------------------------{VGA}begin---------------------------------//
+
+vga_top vga_top(
+    .clk                (clk),
+    .rst                (rst),
+    .hs                 (hs),
+    .vs                 (vs),
+    .vga_data           (vga_data),
+    .vga_write_addr     (vga_write_addr[18:0]),
+    .vga_write_data     (vga_write_data[11:0]),
+    .vga_write_enable   (vga_write_enable),
+    .aclk               (aclk)
+);
+
+wire write_vga_write_addr       = w_enter & (buf_addr[15:0]==`VGA_ADDR_ADDR);
+wire write_vga_write_data       = w_enter & (buf_addr[15:0]==`VGA_DATA_ADDR);
+wire write_vga_write_enable     = w_enter & (buf_addr[15:0]==`VGA_WE_ADDR);
+
+always @(posedge aclk)
+begin
+    if(!aresetn)
+    begin
+        vga_write_addr <= 32'b0;
+    end
+    else if(write_vga_write_addr)
+    begin
+        vga_write_addr <= s_wdata[31:0];
+    end
+end
+
+always @(posedge aclk)
+begin
+    if(!aresetn)
+    begin
+        vga_write_data <= 32'b0;
+    end
+    else if(write_vga_write_data)
+    begin
+        vga_write_data <= s_wdata[31:0];
+    end
+end
+
+always @(posedge aclk)
+begin
+    if(!aresetn)
+    begin
+        vga_write_enable <= 32'b0;
+    end
+    else if(write_vga_write_enable)
+    begin
+        vga_write_enable <= s_wdata[31:0];
+    end
+end
+
+//----------------------------{VGA}end-----------------------------------//
 
 
 endmodule
