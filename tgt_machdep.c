@@ -355,6 +355,7 @@ initmips(unsigned int memsz)
 	setDots(0x00000000, 0x00006000); //.
 	delay(500000);
 	setDots(0x00083818, 0x18181800); //1
+	delay(2000000);
 
 	//VGA
 	int i;
